@@ -6,5 +6,9 @@ public enum IncidentStatus {
     IN_PROGRESS,
     RESOLVED,
     CLOSED,
-    CANCELLED
+    CANCELLED;
+
+    public boolean allowsAssignment() {
+        return this == OPEN || this == ASSIGNED;
+    }
 }

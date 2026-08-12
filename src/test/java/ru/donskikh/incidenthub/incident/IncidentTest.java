@@ -1,6 +1,8 @@
 package ru.donskikh.incidenthub.incident;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import ru.donskikh.incidenthub.identity.User;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -81,6 +83,64 @@ class IncidentTest {
         assertThat(incident.getDescription()).isEqualTo("Updated description");
         assertThat(incident.getCategory()).isEqualTo("Application");
         assertThat(incident.getPriority()).isEqualTo(IncidentPriority.CRITICAL);
+    }
+
+    @Test
+    void assignsOpenIncident() {
+        Incident incident = createIncident();
+        User assignee = new User("assignee@example.com", "Assignee");
+
+        incident.assignTo(assignee);
+
+        assertThat(incident.getAssignee()).isSameAs(assignee);
+        assertThat(incident.getStatus()).isEqualTo(IncidentStatus.ASSIGNED);
+    }
+
+    @Test
+    void reassignsAssignedIncidentToAnotherUser() {
+        Incident incident = createIncident();
+        User firstAssignee = new User("first@example.com", "First Assignee");
+        User secondAssignee = new User("second@example.com", "Second Assignee");
+        incident.assignTo(firstAssignee);
+
+        incident.assignTo(secondAssignee);
+
+        assertThat(incident.getAssignee()).isSameAs(secondAssignee);
+        assertThat(incident.getStatus()).isEqualTo(IncidentStatus.ASSIGNED);
+    }
+
+    @Test
+    void allowsReassignmentToSameUser() {
+        Incident incident = createIncident();
+        User assignee = new User("assignee@example.com", "Assignee");
+        incident.assignTo(assignee);
+
+        incident.assignTo(assignee);
+
+        assertThat(incident.getAssignee()).isSameAs(assignee);
+        assertThat(incident.getStatus()).isEqualTo(IncidentStatus.ASSIGNED);
+    }
+
+    @Test
+    void rejectsNullAssignee() {
+        Incident incident = createIncident();
+
+        assertThatThrownBy(() -> incident.assignTo(null))
+                .isInstanceOf(NullPointerException.class)
+                .hasMessage("assignee must not be null");
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "OPEN, true",
+            "ASSIGNED, true",
+            "IN_PROGRESS, false",
+            "RESOLVED, false",
+            "CLOSED, false",
+            "CANCELLED, false"
+    })
+    void reportsWhetherStatusAllowsAssignment(IncidentStatus status, boolean expected) {
+        assertThat(status.allowsAssignment()).isEqualTo(expected);
     }
 
     private static Incident createIncident() {

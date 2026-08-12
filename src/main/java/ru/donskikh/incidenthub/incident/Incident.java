@@ -98,6 +98,17 @@ public class Incident {
         this.priority = Objects.requireNonNull(priority, "priority must not be null");
     }
 
+    public void assignTo(User assignee) {
+        Objects.requireNonNull(assignee, "assignee must not be null");
+
+        if (!status.allowsAssignment()) {
+            throw new IncidentAssignmentNotAllowedException(id, status);
+        }
+
+        this.assignee = assignee;
+        this.status = IncidentStatus.ASSIGNED;
+    }
+
     public Long getId() {
         return id;
     }
