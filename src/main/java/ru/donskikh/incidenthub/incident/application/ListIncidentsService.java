@@ -11,6 +11,7 @@ import ru.donskikh.incidenthub.identity.User;
 import ru.donskikh.incidenthub.incident.Incident;
 import ru.donskikh.incidenthub.incident.IncidentRepository;
 import ru.donskikh.incidenthub.incident.infrastructure.IncidentSpecifications;
+import ru.donskikh.incidenthub.team.Team;
 
 import java.util.Objects;
 
@@ -33,7 +34,9 @@ public class ListIncidentsService {
         Specification<Incident> specification = IncidentSpecifications.withFilters(
                 query.status(),
                 query.priority(),
-                query.category()
+                query.category(),
+                query.source(),
+                query.responsibleTeamId()
         );
         Pageable pageable = PageRequest.of(
                 query.page(),
@@ -60,16 +63,21 @@ public class ListIncidentsService {
 
     private ListIncidentItem toItem(Incident incident) {
         User reporter = incident.getReporter();
+        Team responsibleTeam = incident.getResponsibleTeam();
         User assignee = incident.getAssignee();
 
         return new ListIncidentItem(
                 incident.getId(),
                 incident.getTitle(),
                 incident.getCategory(),
+                incident.getSource(),
                 incident.getPriority(),
                 incident.getStatus(),
                 reporter.getId(),
                 reporter.getDisplayName(),
+                responsibleTeam == null ? null : responsibleTeam.getId(),
+                responsibleTeam == null ? null : responsibleTeam.getName(),
+                responsibleTeam == null ? null : responsibleTeam.getCode(),
                 assignee == null ? null : assignee.getId(),
                 assignee == null ? null : assignee.getDisplayName(),
                 incident.getCreatedAt(),
