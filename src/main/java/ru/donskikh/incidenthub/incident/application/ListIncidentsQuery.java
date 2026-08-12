@@ -1,6 +1,8 @@
 package ru.donskikh.incidenthub.incident.application;
 
+import ru.donskikh.incidenthub.incident.IncidentCategory;
 import ru.donskikh.incidenthub.incident.IncidentPriority;
+import ru.donskikh.incidenthub.incident.IncidentSource;
 import ru.donskikh.incidenthub.incident.IncidentStatus;
 
 public record ListIncidentsQuery(
@@ -8,7 +10,9 @@ public record ListIncidentsQuery(
         int size,
         IncidentStatus status,
         IncidentPriority priority,
-        String category
+        IncidentCategory category,
+        IncidentSource source,
+        Long responsibleTeamId
 ) {
 
     private static final int MAX_PAGE_SIZE = 100;
@@ -26,12 +30,8 @@ public record ListIncidentsQuery(
             throw new IllegalArgumentException("size must not exceed " + MAX_PAGE_SIZE);
         }
 
-        if (category != null) {
-            category = category.trim();
-
-            if (category.isEmpty()) {
-                category = null;
-            }
+        if (responsibleTeamId != null && responsibleTeamId <= 0) {
+            throw new IllegalArgumentException("responsibleTeamId must be positive");
         }
     }
 }

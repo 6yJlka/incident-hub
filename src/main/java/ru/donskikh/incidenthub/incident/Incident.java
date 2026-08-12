@@ -14,6 +14,7 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import ru.donskikh.incidenthub.identity.User;
+import ru.donskikh.incidenthub.team.Team;
 
 import java.time.Instant;
 import java.util.Objects;
@@ -33,8 +34,13 @@ public class Incident {
     @Column(name = "description", nullable = false, columnDefinition = "text")
     private String description;
 
-    @Column(name = "category", nullable = false, length = 100)
-    private String category;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "category", nullable = false, length = 30)
+    private IncidentCategory category;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "source", nullable = false, length = 20)
+    private IncidentSource source;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "priority", nullable = false, length = 20)
@@ -49,6 +55,10 @@ public class Incident {
     private User reporter;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "responsible_team_id")
+    private Team responsibleTeam;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "assignee_id")
     private User assignee;
 
@@ -61,13 +71,23 @@ public class Incident {
     protected Incident() {
     }
 
-    public Incident(String title, String description, String category, IncidentPriority priority, User reporter) {
+    public Incident(
+            String title,
+            String description,
+            IncidentCategory category,
+            IncidentSource source,
+            IncidentPriority priority,
+            User reporter,
+            Team responsibleTeam
+    ) {
         this.title = requireText(title, "title");
         this.description = requireText(description, "description");
-        this.category = requireText(category, "category");
+        this.category = Objects.requireNonNull(category, "category must not be null");
+        this.source = Objects.requireNonNull(source, "source must not be null");
         this.priority = Objects.requireNonNull(priority, "priority must not be null");
         this.status = IncidentStatus.OPEN;
         this.reporter = Objects.requireNonNull(reporter, "reporter must not be null");
+        this.responsibleTeam = responsibleTeam;
     }
 
     @PrePersist
@@ -90,8 +110,8 @@ public class Incident {
         this.description = requireText(description, "description");
     }
 
-    public void changeCategory(String category) {
-        this.category = requireText(category, "category");
+    public void changeCategory(IncidentCategory category) {
+        this.category = Objects.requireNonNull(category, "category must not be null");
     }
 
     public void changePriority(IncidentPriority priority) {
@@ -121,8 +141,12 @@ public class Incident {
         return description;
     }
 
-    public String getCategory() {
+    public IncidentCategory getCategory() {
         return category;
+    }
+
+    public IncidentSource getSource() {
+        return source;
     }
 
     public IncidentPriority getPriority() {
@@ -135,6 +159,10 @@ public class Incident {
 
     public User getReporter() {
         return reporter;
+    }
+
+    public Team getResponsibleTeam() {
+        return responsibleTeam;
     }
 
     public User getAssignee() {

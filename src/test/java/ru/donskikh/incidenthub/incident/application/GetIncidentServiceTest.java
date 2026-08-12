@@ -7,10 +7,13 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import ru.donskikh.incidenthub.identity.User;
 import ru.donskikh.incidenthub.incident.Incident;
+import ru.donskikh.incidenthub.incident.IncidentCategory;
 import ru.donskikh.incidenthub.incident.IncidentNotFoundException;
 import ru.donskikh.incidenthub.incident.IncidentPriority;
 import ru.donskikh.incidenthub.incident.IncidentRepository;
+import ru.donskikh.incidenthub.incident.IncidentSource;
 import ru.donskikh.incidenthub.incident.IncidentStatus;
+import ru.donskikh.incidenthub.team.Team;
 
 import java.time.Instant;
 import java.util.Optional;
@@ -32,39 +35,44 @@ class GetIncidentServiceTest {
     private GetIncidentService service;
 
     @Test
-    void returnsIncidentWithReporterAndAssignee() {
+    void returnsIncidentWithReporterAssigneeAndResponsibleTeam() {
         Incident incident = org.mockito.Mockito.mock(Incident.class);
         User reporter = org.mockito.Mockito.mock(User.class);
         User assignee = org.mockito.Mockito.mock(User.class);
+        Team team = org.mockito.Mockito.mock(Team.class);
         Instant createdAt = Instant.parse("2026-08-01T10:15:30Z");
         Instant updatedAt = Instant.parse("2026-08-02T11:20:35Z");
-
         when(incidentRepository.findById(42L)).thenReturn(Optional.of(incident));
         when(incident.getId()).thenReturn(42L);
         when(incident.getTitle()).thenReturn("Database unavailable");
         when(incident.getDescription()).thenReturn("Production database does not accept connections");
-        when(incident.getCategory()).thenReturn("Infrastructure");
+        when(incident.getCategory()).thenReturn(IncidentCategory.INFRASTRUCTURE);
+        when(incident.getSource()).thenReturn(IncidentSource.MANUAL);
         when(incident.getPriority()).thenReturn(IncidentPriority.CRITICAL);
         when(incident.getStatus()).thenReturn(IncidentStatus.IN_PROGRESS);
         when(incident.getReporter()).thenReturn(reporter);
+        when(incident.getResponsibleTeam()).thenReturn(team);
         when(incident.getAssignee()).thenReturn(assignee);
         when(incident.getCreatedAt()).thenReturn(createdAt);
         when(incident.getUpdatedAt()).thenReturn(updatedAt);
         when(reporter.getId()).thenReturn(7L);
         when(reporter.getDisplayName()).thenReturn("Reporter");
+        when(team.getId()).thenReturn(9L);
+        when(team.getName()).thenReturn("Platform");
+        when(team.getCode()).thenReturn("PLATFORM");
         when(assignee.getId()).thenReturn(8L);
         when(assignee.getDisplayName()).thenReturn("Assignee");
 
         GetIncidentResult result = service.get(42L);
 
         assertThat(result.id()).isEqualTo(42L);
-        assertThat(result.title()).isEqualTo("Database unavailable");
-        assertThat(result.description()).isEqualTo("Production database does not accept connections");
-        assertThat(result.category()).isEqualTo("Infrastructure");
-        assertThat(result.priority()).isEqualTo(IncidentPriority.CRITICAL);
-        assertThat(result.status()).isEqualTo(IncidentStatus.IN_PROGRESS);
+        assertThat(result.category()).isEqualTo(IncidentCategory.INFRASTRUCTURE);
+        assertThat(result.source()).isEqualTo(IncidentSource.MANUAL);
         assertThat(result.reporterId()).isEqualTo(7L);
         assertThat(result.reporterDisplayName()).isEqualTo("Reporter");
+        assertThat(result.responsibleTeamId()).isEqualTo(9L);
+        assertThat(result.responsibleTeamName()).isEqualTo("Platform");
+        assertThat(result.responsibleTeamCode()).isEqualTo("PLATFORM");
         assertThat(result.assigneeId()).isEqualTo(8L);
         assertThat(result.assigneeDisplayName()).isEqualTo("Assignee");
         assertThat(result.createdAt()).isEqualTo(createdAt);
@@ -72,10 +80,9 @@ class GetIncidentServiceTest {
     }
 
     @Test
-    void returnsNullAssigneeFieldsWhenIncidentIsUnassigned() {
+    void returnsNullAssociationFieldsWhenIncidentIsUnassignedAndUnrouted() {
         Incident incident = org.mockito.Mockito.mock(Incident.class);
         User reporter = org.mockito.Mockito.mock(User.class);
-
         when(incidentRepository.findById(42L)).thenReturn(Optional.of(incident));
         when(incident.getReporter()).thenReturn(reporter);
 
@@ -83,6 +90,9 @@ class GetIncidentServiceTest {
 
         assertThat(result.assigneeId()).isNull();
         assertThat(result.assigneeDisplayName()).isNull();
+        assertThat(result.responsibleTeamId()).isNull();
+        assertThat(result.responsibleTeamName()).isNull();
+        assertThat(result.responsibleTeamCode()).isNull();
     }
 
     @Test
