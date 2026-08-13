@@ -11,4 +11,8 @@ public enum IncidentStatus {
     public boolean allowsAssignment() {
         return this == OPEN || this == ASSIGNED;
     }
+
+    public boolean allowsStartProgress() {
+        return this == ASSIGNED;
+    }
 }

@@ -3,6 +3,7 @@ package ru.donskikh.incidenthub.incident;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.EnumSource;
 import ru.donskikh.incidenthub.identity.User;
 import ru.donskikh.incidenthub.team.Team;
 
@@ -204,6 +205,57 @@ class IncidentTest {
         assertThat(status.allowsAssignment()).isEqualTo(expected);
     }
 
+    @Test
+    void startsProgressForAssignedIncidentWithoutChangingClassificationOrAssignment() {
+        User assignee = new User("assignee@example.com", "Assignee");
+        Team team = new Team("Platform", "platform");
+        Incident incident = new Incident(
+                "Title",
+                "Description",
+                IncidentCategory.APPLICATION,
+                IncidentSource.AUTOMATIC,
+                IncidentPriority.HIGH,
+                new User("reporter@example.com", "Reporter"),
+                team
+        );
+        incident.assignTo(assignee);
+
+        incident.startProgress();
+
+        assertThat(incident.getStatus()).isEqualTo(IncidentStatus.IN_PROGRESS);
+        assertThat(incident.getAssignee()).isSameAs(assignee);
+        assertThat(incident.getResponsibleTeam()).isSameAs(team);
+        assertThat(incident.getCategory()).isEqualTo(IncidentCategory.APPLICATION);
+        assertThat(incident.getSource()).isEqualTo(IncidentSource.AUTOMATIC);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = IncidentStatus.class, names = "ASSIGNED", mode = EnumSource.Mode.EXCLUDE)
+    void rejectsStartingProgressFromAnyStatusExceptAssigned(IncidentStatus status) throws Exception {
+        Incident incident = createIncident();
+        setStatus(incident, status);
+
+        assertThatThrownBy(incident::startProgress)
+                .isInstanceOf(IncidentStartProgressNotAllowedException.class)
+                .hasMessage("Incident cannot start progress in status " + status)
+                .extracting("status")
+                .isEqualTo(status);
+        assertThat(incident.getStatus()).isEqualTo(status);
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "OPEN, false",
+            "ASSIGNED, true",
+            "IN_PROGRESS, false",
+            "RESOLVED, false",
+            "CLOSED, false",
+            "CANCELLED, false"
+    })
+    void reportsWhetherStatusAllowsStartingProgress(IncidentStatus status, boolean expected) {
+        assertThat(status.allowsStartProgress()).isEqualTo(expected);
+    }
+
     private static Incident createIncident() {
         return new Incident(
                 "Title",
@@ -214,5 +266,11 @@ class IncidentTest {
                 new User("reporter@example.com", "Reporter"),
                 null
         );
+    }
+
+    private static void setStatus(Incident incident, IncidentStatus status) throws Exception {
+        var statusField = Incident.class.getDeclaredField("status");
+        statusField.setAccessible(true);
+        statusField.set(incident, status);
     }
 }
