@@ -129,6 +129,14 @@ public class Incident {
         this.status = IncidentStatus.ASSIGNED;
     }
 
+    public void startProgress() {
+        if (!status.allowsStartProgress()) {
+            throw new IncidentStartProgressNotAllowedException(id, status);
+        }
+
+        this.status = IncidentStatus.IN_PROGRESS;
+    }
+
     public Long getId() {
         return id;
     }
