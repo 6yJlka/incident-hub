@@ -27,4 +27,8 @@ public enum IncidentStatus {
     public boolean allowsReopen() {
         return this == RESOLVED;
     }
+
+    public boolean allowsCancellation() {
+        return this == OPEN || this == ASSIGNED || this == IN_PROGRESS;
+    }
 }

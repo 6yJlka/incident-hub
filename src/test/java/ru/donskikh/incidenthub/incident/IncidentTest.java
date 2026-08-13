@@ -426,6 +426,94 @@ class IncidentTest {
         assertThat(status.allowsReopen()).isEqualTo(expected);
     }
 
+    @Test
+    void cancelsOpenIncident() {
+        Incident incident = createIncident();
+
+        incident.cancel();
+
+        assertThat(incident.getStatus()).isEqualTo(IncidentStatus.CANCELLED);
+    }
+
+    @Test
+    void cancelsAssignedIncidentWithoutChangingClassificationOrAssignment() {
+        User reporter = new User("reporter@example.com", "Reporter");
+        User assignee = new User("assignee@example.com", "Assignee");
+        Team team = new Team("Platform", "platform");
+        Incident incident = new Incident(
+                "Title",
+                "Description",
+                IncidentCategory.APPLICATION,
+                IncidentSource.AUTOMATIC,
+                IncidentPriority.HIGH,
+                reporter,
+                team
+        );
+        incident.assignTo(assignee);
+
+        incident.cancel();
+
+        assertThat(incident.getStatus()).isEqualTo(IncidentStatus.CANCELLED);
+        assertThat(incident.getAssignee()).isSameAs(assignee);
+        assertThat(incident.getReporter()).isSameAs(reporter);
+        assertThat(incident.getResponsibleTeam()).isSameAs(team);
+        assertThat(incident.getCategory()).isEqualTo(IncidentCategory.APPLICATION);
+        assertThat(incident.getSource()).isEqualTo(IncidentSource.AUTOMATIC);
+    }
+
+    @Test
+    void cancelsInProgressIncident() {
+        Incident incident = createIncident();
+        incident.assignTo(new User("assignee@example.com", "Assignee"));
+        incident.startProgress();
+
+        incident.cancel();
+
+        assertThat(incident.getStatus()).isEqualTo(IncidentStatus.CANCELLED);
+    }
+
+    @Test
+    void rejectsCancellingResolvedIncident() {
+        Incident incident = createIncident();
+        incident.assignTo(new User("assignee@example.com", "Assignee"));
+        incident.startProgress();
+        incident.resolve();
+
+        assertCancellationNotAllowed(incident, IncidentStatus.RESOLVED);
+    }
+
+    @Test
+    void rejectsCancellingClosedIncident() {
+        Incident incident = createIncident();
+        incident.assignTo(new User("assignee@example.com", "Assignee"));
+        incident.startProgress();
+        incident.resolve();
+        incident.close();
+
+        assertCancellationNotAllowed(incident, IncidentStatus.CLOSED);
+    }
+
+    @Test
+    void rejectsCancellingAlreadyCancelledIncident() {
+        Incident incident = createIncident();
+        incident.cancel();
+
+        assertCancellationNotAllowed(incident, IncidentStatus.CANCELLED);
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "OPEN, true",
+            "ASSIGNED, true",
+            "IN_PROGRESS, true",
+            "RESOLVED, false",
+            "CLOSED, false",
+            "CANCELLED, false"
+    })
+    void reportsWhetherStatusAllowsCancellation(IncidentStatus status, boolean expected) {
+        assertThat(status.allowsCancellation()).isEqualTo(expected);
+    }
+
     private static Incident createIncident() {
         return new Incident(
                 "Title",
@@ -448,6 +536,15 @@ class IncidentTest {
         assertThatThrownBy(incident::reopen)
                 .isInstanceOf(IncidentReopenNotAllowedException.class)
                 .hasMessage("Incident cannot be reopened in status " + status)
+                .extracting("status")
+                .isEqualTo(status);
+        assertThat(incident.getStatus()).isEqualTo(status);
+    }
+
+    private static void assertCancellationNotAllowed(Incident incident, IncidentStatus status) {
+        assertThatThrownBy(incident::cancel)
+                .isInstanceOf(IncidentCancellationNotAllowedException.class)
+                .hasMessage("Incident cannot be cancelled in status " + status)
                 .extracting("status")
                 .isEqualTo(status);
         assertThat(incident.getStatus()).isEqualTo(status);
