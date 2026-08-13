@@ -161,6 +161,14 @@ public class Incident {
         this.status = IncidentStatus.IN_PROGRESS;
     }
 
+    public void cancel() {
+        if (!status.allowsCancellation()) {
+            throw new IncidentCancellationNotAllowedException(id, status);
+        }
+
+        this.status = IncidentStatus.CANCELLED;
+    }
+
     public Long getId() {
         return id;
     }
