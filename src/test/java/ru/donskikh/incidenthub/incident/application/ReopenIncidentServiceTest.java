@@ -5,6 +5,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import ru.donskikh.incidenthub.audit.IncidentAuditEventType;
+import ru.donskikh.incidenthub.audit.IncidentAuditService;
 import ru.donskikh.incidenthub.incident.Incident;
 import ru.donskikh.incidenthub.incident.IncidentNotFoundException;
 import ru.donskikh.incidenthub.incident.IncidentReopenNotAllowedException;
@@ -27,6 +29,9 @@ class ReopenIncidentServiceTest {
     @Mock
     private IncidentRepository incidentRepository;
 
+    @Mock
+    private IncidentAuditService auditService;
+
     @InjectMocks
     private ReopenIncidentService service;
 
@@ -35,12 +40,15 @@ class ReopenIncidentServiceTest {
         Incident incident = org.mockito.Mockito.mock(Incident.class);
         when(incidentRepository.findById(42L)).thenReturn(Optional.of(incident));
         when(incident.getId()).thenReturn(42L);
-        when(incident.getStatus()).thenReturn(IncidentStatus.IN_PROGRESS);
+        when(incident.getStatus()).thenReturn(IncidentStatus.RESOLVED, IncidentStatus.IN_PROGRESS);
 
         ReopenIncidentResult result = service.reopen(new ReopenIncidentCommand(42L));
 
         verify(incident).reopen();
         verify(incidentRepository, never()).save(incident);
+        verify(auditService).record(
+                42L, IncidentAuditEventType.REOPENED, IncidentStatus.RESOLVED, IncidentStatus.IN_PROGRESS
+        );
         assertThat(result.incidentId()).isEqualTo(42L);
         assertThat(result.status()).isEqualTo(IncidentStatus.IN_PROGRESS);
     }
@@ -52,6 +60,8 @@ class ReopenIncidentServiceTest {
         assertThatThrownBy(() -> service.reopen(new ReopenIncidentCommand(99L)))
                 .isInstanceOf(IncidentNotFoundException.class)
                 .hasMessage("Incident not found: 99");
+
+        verifyNoInteractions(auditService);
     }
 
     @Test
@@ -66,6 +76,7 @@ class ReopenIncidentServiceTest {
                 .isSameAs(exception);
 
         verify(incidentRepository, never()).save(incident);
+        verifyNoInteractions(auditService);
     }
 
     @Test
@@ -74,7 +85,7 @@ class ReopenIncidentServiceTest {
                 .isInstanceOf(NullPointerException.class)
                 .hasMessage("command must not be null");
 
-        verifyNoInteractions(incidentRepository);
+        verifyNoInteractions(incidentRepository, auditService);
     }
 
     @Test
@@ -86,6 +97,6 @@ class ReopenIncidentServiceTest {
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("incidentId must be positive");
 
-        verifyNoInteractions(incidentRepository);
+        verifyNoInteractions(incidentRepository, auditService);
     }
 }

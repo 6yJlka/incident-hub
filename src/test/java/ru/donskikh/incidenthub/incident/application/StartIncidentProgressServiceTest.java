@@ -5,6 +5,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import ru.donskikh.incidenthub.audit.IncidentAuditEventType;
+import ru.donskikh.incidenthub.audit.IncidentAuditService;
 import ru.donskikh.incidenthub.incident.Incident;
 import ru.donskikh.incidenthub.incident.IncidentNotFoundException;
 import ru.donskikh.incidenthub.incident.IncidentRepository;
@@ -27,6 +29,9 @@ class StartIncidentProgressServiceTest {
     @Mock
     private IncidentRepository incidentRepository;
 
+    @Mock
+    private IncidentAuditService auditService;
+
     @InjectMocks
     private StartIncidentProgressService service;
 
@@ -35,12 +40,15 @@ class StartIncidentProgressServiceTest {
         Incident incident = org.mockito.Mockito.mock(Incident.class);
         when(incidentRepository.findById(42L)).thenReturn(Optional.of(incident));
         when(incident.getId()).thenReturn(42L);
-        when(incident.getStatus()).thenReturn(IncidentStatus.IN_PROGRESS);
+        when(incident.getStatus()).thenReturn(IncidentStatus.ASSIGNED, IncidentStatus.IN_PROGRESS);
 
         StartIncidentProgressResult result = service.start(new StartIncidentProgressCommand(42L));
 
         verify(incident).startProgress();
         verify(incidentRepository, never()).save(incident);
+        verify(auditService).record(
+                42L, IncidentAuditEventType.STARTED, IncidentStatus.ASSIGNED, IncidentStatus.IN_PROGRESS
+        );
         assertThat(result.incidentId()).isEqualTo(42L);
         assertThat(result.status()).isEqualTo(IncidentStatus.IN_PROGRESS);
     }
@@ -52,6 +60,8 @@ class StartIncidentProgressServiceTest {
         assertThatThrownBy(() -> service.start(new StartIncidentProgressCommand(99L)))
                 .isInstanceOf(IncidentNotFoundException.class)
                 .hasMessage("Incident not found: 99");
+
+        verifyNoInteractions(auditService);
     }
 
     @Test
@@ -66,6 +76,7 @@ class StartIncidentProgressServiceTest {
                 .isSameAs(exception);
 
         verify(incidentRepository, never()).save(incident);
+        verifyNoInteractions(auditService);
     }
 
     @Test
@@ -74,7 +85,7 @@ class StartIncidentProgressServiceTest {
                 .isInstanceOf(NullPointerException.class)
                 .hasMessage("command must not be null");
 
-        verifyNoInteractions(incidentRepository);
+        verifyNoInteractions(incidentRepository, auditService);
     }
 
     @Test
@@ -86,6 +97,6 @@ class StartIncidentProgressServiceTest {
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("incidentId must be positive");
 
-        verifyNoInteractions(incidentRepository);
+        verifyNoInteractions(incidentRepository, auditService);
     }
 }

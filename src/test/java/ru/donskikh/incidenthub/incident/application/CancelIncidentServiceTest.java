@@ -5,6 +5,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import ru.donskikh.incidenthub.audit.IncidentAuditEventType;
+import ru.donskikh.incidenthub.audit.IncidentAuditService;
 import ru.donskikh.incidenthub.incident.Incident;
 import ru.donskikh.incidenthub.incident.IncidentCancellationNotAllowedException;
 import ru.donskikh.incidenthub.incident.IncidentNotFoundException;
@@ -27,37 +29,40 @@ class CancelIncidentServiceTest {
     @Mock
     private IncidentRepository incidentRepository;
 
+    @Mock
+    private IncidentAuditService auditService;
+
     @InjectMocks
     private CancelIncidentService service;
 
     @Test
     void cancelsOpenIncident() {
-        Incident incident = cancelledIncident(42L);
+        Incident incident = cancelledIncident(42L, IncidentStatus.OPEN);
         when(incidentRepository.findById(42L)).thenReturn(Optional.of(incident));
 
         CancelIncidentResult result = service.cancel(new CancelIncidentCommand(42L));
 
-        assertSuccessfulCancellation(incident, result);
+        assertSuccessfulCancellation(incident, IncidentStatus.OPEN, result);
     }
 
     @Test
     void cancelsAssignedIncident() {
-        Incident incident = cancelledIncident(42L);
+        Incident incident = cancelledIncident(42L, IncidentStatus.ASSIGNED);
         when(incidentRepository.findById(42L)).thenReturn(Optional.of(incident));
 
         CancelIncidentResult result = service.cancel(new CancelIncidentCommand(42L));
 
-        assertSuccessfulCancellation(incident, result);
+        assertSuccessfulCancellation(incident, IncidentStatus.ASSIGNED, result);
     }
 
     @Test
     void cancelsInProgressIncident() {
-        Incident incident = cancelledIncident(42L);
+        Incident incident = cancelledIncident(42L, IncidentStatus.IN_PROGRESS);
         when(incidentRepository.findById(42L)).thenReturn(Optional.of(incident));
 
         CancelIncidentResult result = service.cancel(new CancelIncidentCommand(42L));
 
-        assertSuccessfulCancellation(incident, result);
+        assertSuccessfulCancellation(incident, IncidentStatus.IN_PROGRESS, result);
     }
 
     @Test
@@ -67,6 +72,8 @@ class CancelIncidentServiceTest {
         assertThatThrownBy(() -> service.cancel(new CancelIncidentCommand(99L)))
                 .isInstanceOf(IncidentNotFoundException.class)
                 .hasMessage("Incident not found: 99");
+
+        verifyNoInteractions(auditService);
     }
 
     @Test
@@ -80,6 +87,7 @@ class CancelIncidentServiceTest {
                 .isSameAs(exception);
 
         verify(incidentRepository, never()).save(incident);
+        verifyNoInteractions(auditService);
     }
 
     @Test
@@ -93,6 +101,7 @@ class CancelIncidentServiceTest {
                 .isSameAs(exception);
 
         verify(incidentRepository, never()).save(incident);
+        verifyNoInteractions(auditService);
     }
 
     @Test
@@ -101,7 +110,7 @@ class CancelIncidentServiceTest {
                 .isInstanceOf(NullPointerException.class)
                 .hasMessage("command must not be null");
 
-        verifyNoInteractions(incidentRepository);
+        verifyNoInteractions(incidentRepository, auditService);
     }
 
     @Test
@@ -113,13 +122,13 @@ class CancelIncidentServiceTest {
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("incidentId must be positive");
 
-        verifyNoInteractions(incidentRepository);
+        verifyNoInteractions(incidentRepository, auditService);
     }
 
-    private Incident cancelledIncident(long incidentId) {
+    private Incident cancelledIncident(long incidentId, IncidentStatus fromStatus) {
         Incident incident = org.mockito.Mockito.mock(Incident.class);
         when(incident.getId()).thenReturn(incidentId);
-        when(incident.getStatus()).thenReturn(IncidentStatus.CANCELLED);
+        when(incident.getStatus()).thenReturn(fromStatus, IncidentStatus.CANCELLED);
         return incident;
     }
 
@@ -129,9 +138,16 @@ class CancelIncidentServiceTest {
         return incident;
     }
 
-    private void assertSuccessfulCancellation(Incident incident, CancelIncidentResult result) {
+    private void assertSuccessfulCancellation(
+            Incident incident,
+            IncidentStatus fromStatus,
+            CancelIncidentResult result
+    ) {
         verify(incident).cancel();
         verify(incidentRepository, never()).save(incident);
+        verify(auditService).record(
+                42L, IncidentAuditEventType.CANCELLED, fromStatus, IncidentStatus.CANCELLED
+        );
         assertThat(result.incidentId()).isEqualTo(42L);
         assertThat(result.status()).isEqualTo(IncidentStatus.CANCELLED);
     }
