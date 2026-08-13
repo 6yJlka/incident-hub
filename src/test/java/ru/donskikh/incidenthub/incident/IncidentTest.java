@@ -365,6 +365,67 @@ class IncidentTest {
         assertThat(status.allowsClose()).isEqualTo(expected);
     }
 
+    @Test
+    void reopensResolvedIncidentWithoutChangingClassificationOrAssignment() {
+        User reporter = new User("reporter@example.com", "Reporter");
+        User assignee = new User("assignee@example.com", "Assignee");
+        Team team = new Team("Platform", "platform");
+        Incident incident = new Incident(
+                "Title",
+                "Description",
+                IncidentCategory.APPLICATION,
+                IncidentSource.AUTOMATIC,
+                IncidentPriority.HIGH,
+                reporter,
+                team
+        );
+        incident.assignTo(assignee);
+        incident.startProgress();
+        incident.resolve();
+
+        incident.reopen();
+
+        assertThat(incident.getStatus()).isEqualTo(IncidentStatus.IN_PROGRESS);
+        assertThat(incident.getAssignee()).isSameAs(assignee);
+        assertThat(incident.getReporter()).isSameAs(reporter);
+        assertThat(incident.getResponsibleTeam()).isSameAs(team);
+        assertThat(incident.getCategory()).isEqualTo(IncidentCategory.APPLICATION);
+        assertThat(incident.getSource()).isEqualTo(IncidentSource.AUTOMATIC);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = IncidentStatus.class, names = {"OPEN", "ASSIGNED", "IN_PROGRESS", "CANCELLED"})
+    void rejectsReopeningFromNonResolvedStatus(IncidentStatus status) throws Exception {
+        Incident incident = createIncident();
+        setStatus(incident, status);
+
+        assertReopenNotAllowed(incident, status);
+    }
+
+    @Test
+    void rejectsReopeningClosedIncidentReachedThroughLifecycle() {
+        Incident incident = createIncident();
+        incident.assignTo(new User("assignee@example.com", "Assignee"));
+        incident.startProgress();
+        incident.resolve();
+        incident.close();
+
+        assertReopenNotAllowed(incident, IncidentStatus.CLOSED);
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "OPEN, false",
+            "ASSIGNED, false",
+            "IN_PROGRESS, false",
+            "RESOLVED, true",
+            "CLOSED, false",
+            "CANCELLED, false"
+    })
+    void reportsWhetherStatusAllowsReopening(IncidentStatus status, boolean expected) {
+        assertThat(status.allowsReopen()).isEqualTo(expected);
+    }
+
     private static Incident createIncident() {
         return new Incident(
                 "Title",
@@ -381,5 +442,14 @@ class IncidentTest {
         var statusField = Incident.class.getDeclaredField("status");
         statusField.setAccessible(true);
         statusField.set(incident, status);
+    }
+
+    private static void assertReopenNotAllowed(Incident incident, IncidentStatus status) {
+        assertThatThrownBy(incident::reopen)
+                .isInstanceOf(IncidentReopenNotAllowedException.class)
+                .hasMessage("Incident cannot be reopened in status " + status)
+                .extracting("status")
+                .isEqualTo(status);
+        assertThat(incident.getStatus()).isEqualTo(status);
     }
 }

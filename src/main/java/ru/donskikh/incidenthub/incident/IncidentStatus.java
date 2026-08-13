@@ -23,4 +23,8 @@ public enum IncidentStatus {
     public boolean allowsClose() {
         return this == RESOLVED;
     }
+
+    public boolean allowsReopen() {
+        return this == RESOLVED;
+    }
 }

@@ -153,6 +153,14 @@ public class Incident {
         this.status = IncidentStatus.CLOSED;
     }
 
+    public void reopen() {
+        if (!status.allowsReopen()) {
+            throw new IncidentReopenNotAllowedException(id, status);
+        }
+
+        this.status = IncidentStatus.IN_PROGRESS;
+    }
+
     public Long getId() {
         return id;
     }
