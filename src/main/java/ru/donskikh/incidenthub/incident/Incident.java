@@ -145,6 +145,14 @@ public class Incident {
         this.status = IncidentStatus.RESOLVED;
     }
 
+    public void close() {
+        if (!status.allowsClose()) {
+            throw new IncidentClosureNotAllowedException(id, status);
+        }
+
+        this.status = IncidentStatus.CLOSED;
+    }
+
     public Long getId() {
         return id;
     }

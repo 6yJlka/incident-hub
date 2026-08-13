@@ -19,4 +19,8 @@ public enum IncidentStatus {
     public boolean allowsResolve() {
         return this == IN_PROGRESS;
     }
+
+    public boolean allowsClose() {
+        return this == RESOLVED;
+    }
 }
