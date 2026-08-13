@@ -6,6 +6,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import ru.donskikh.incidenthub.audit.IncidentAuditEventType;
+import ru.donskikh.incidenthub.audit.IncidentAuditService;
 import ru.donskikh.incidenthub.identity.User;
 import ru.donskikh.incidenthub.identity.UserNotFoundException;
 import ru.donskikh.incidenthub.identity.UserRepository;
@@ -41,6 +43,9 @@ class CreateIncidentServiceTest {
     @Mock
     private IncidentRepository incidentRepository;
 
+    @Mock
+    private IncidentAuditService auditService;
+
     @InjectMocks
     private CreateIncidentService service;
 
@@ -67,6 +72,7 @@ class CreateIncidentServiceTest {
         assertThat(incident.getAssignee()).isNull();
         assertThat(result.incidentId()).isEqualTo(42L);
         assertThat(result.status()).isEqualTo(IncidentStatus.OPEN);
+        verify(auditService).record(42L, IncidentAuditEventType.CREATED, null, IncidentStatus.OPEN);
         verifyNoInteractions(teamRepository);
     }
 
@@ -105,7 +111,7 @@ class CreateIncidentServiceTest {
                 .isInstanceOf(UserNotFoundException.class)
                 .hasMessage("User not found: 99");
 
-        verifyNoInteractions(teamRepository, incidentRepository);
+        verifyNoInteractions(teamRepository, incidentRepository, auditService);
     }
 
     @Test
@@ -118,7 +124,7 @@ class CreateIncidentServiceTest {
                 .isInstanceOf(TeamNotFoundException.class)
                 .hasMessage("Team not found: 99");
 
-        verifyNoInteractions(incidentRepository);
+        verifyNoInteractions(incidentRepository, auditService);
     }
 
     @Test
@@ -149,6 +155,7 @@ class CreateIncidentServiceTest {
                 .hasMessage("title must not be blank");
 
         verify(incidentRepository, never()).save(any(Incident.class));
+        verifyNoInteractions(auditService);
     }
 
     private static CreateIncidentCommand command(Long responsibleTeamId) {

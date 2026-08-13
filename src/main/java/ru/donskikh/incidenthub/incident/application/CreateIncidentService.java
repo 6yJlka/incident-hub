@@ -2,6 +2,8 @@ package ru.donskikh.incidenthub.incident.application;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.donskikh.incidenthub.audit.IncidentAuditEventType;
+import ru.donskikh.incidenthub.audit.IncidentAuditService;
 import ru.donskikh.incidenthub.identity.User;
 import ru.donskikh.incidenthub.identity.UserNotFoundException;
 import ru.donskikh.incidenthub.identity.UserRepository;
@@ -20,15 +22,18 @@ public class CreateIncidentService {
     private final UserRepository userRepository;
     private final TeamRepository teamRepository;
     private final IncidentRepository incidentRepository;
+    private final IncidentAuditService auditService;
 
     public CreateIncidentService(
             UserRepository userRepository,
             TeamRepository teamRepository,
-            IncidentRepository incidentRepository
+            IncidentRepository incidentRepository,
+            IncidentAuditService auditService
     ) {
         this.userRepository = userRepository;
         this.teamRepository = teamRepository;
         this.incidentRepository = incidentRepository;
+        this.auditService = auditService;
     }
 
     @Transactional
@@ -55,6 +60,13 @@ public class CreateIncidentService {
         );
 
         Incident savedIncident = incidentRepository.save(incident);
+
+        auditService.record(
+                savedIncident.getId(),
+                IncidentAuditEventType.CREATED,
+                null,
+                savedIncident.getStatus()
+        );
 
         return new CreateIncidentResult(savedIncident.getId(), savedIncident.getStatus());
     }
