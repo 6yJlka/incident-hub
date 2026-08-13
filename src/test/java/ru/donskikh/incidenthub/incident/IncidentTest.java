@@ -256,6 +256,60 @@ class IncidentTest {
         assertThat(status.allowsStartProgress()).isEqualTo(expected);
     }
 
+    @Test
+    void resolvesInProgressIncidentWithoutChangingClassificationOrAssignment() {
+        User reporter = new User("reporter@example.com", "Reporter");
+        User assignee = new User("assignee@example.com", "Assignee");
+        Team team = new Team("Platform", "platform");
+        Incident incident = new Incident(
+                "Title",
+                "Description",
+                IncidentCategory.APPLICATION,
+                IncidentSource.AUTOMATIC,
+                IncidentPriority.HIGH,
+                reporter,
+                team
+        );
+        incident.assignTo(assignee);
+        incident.startProgress();
+
+        incident.resolve();
+
+        assertThat(incident.getStatus()).isEqualTo(IncidentStatus.RESOLVED);
+        assertThat(incident.getAssignee()).isSameAs(assignee);
+        assertThat(incident.getReporter()).isSameAs(reporter);
+        assertThat(incident.getResponsibleTeam()).isSameAs(team);
+        assertThat(incident.getCategory()).isEqualTo(IncidentCategory.APPLICATION);
+        assertThat(incident.getSource()).isEqualTo(IncidentSource.AUTOMATIC);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = IncidentStatus.class, names = "IN_PROGRESS", mode = EnumSource.Mode.EXCLUDE)
+    void rejectsResolvingFromAnyStatusExceptInProgress(IncidentStatus status) throws Exception {
+        Incident incident = createIncident();
+        setStatus(incident, status);
+
+        assertThatThrownBy(incident::resolve)
+                .isInstanceOf(IncidentResolutionNotAllowedException.class)
+                .hasMessage("Incident cannot be resolved in status " + status)
+                .extracting("status")
+                .isEqualTo(status);
+        assertThat(incident.getStatus()).isEqualTo(status);
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "OPEN, false",
+            "ASSIGNED, false",
+            "IN_PROGRESS, true",
+            "RESOLVED, false",
+            "CLOSED, false",
+            "CANCELLED, false"
+    })
+    void reportsWhetherStatusAllowsResolving(IncidentStatus status, boolean expected) {
+        assertThat(status.allowsResolve()).isEqualTo(expected);
+    }
+
     private static Incident createIncident() {
         return new Incident(
                 "Title",

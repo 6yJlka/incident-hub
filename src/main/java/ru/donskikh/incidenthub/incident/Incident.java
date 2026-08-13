@@ -137,6 +137,14 @@ public class Incident {
         this.status = IncidentStatus.IN_PROGRESS;
     }
 
+    public void resolve() {
+        if (!status.allowsResolve()) {
+            throw new IncidentResolutionNotAllowedException(id, status);
+        }
+
+        this.status = IncidentStatus.RESOLVED;
+    }
+
     public Long getId() {
         return id;
     }

@@ -15,4 +15,8 @@ public enum IncidentStatus {
     public boolean allowsStartProgress() {
         return this == ASSIGNED;
     }
+
+    public boolean allowsResolve() {
+        return this == IN_PROGRESS;
+    }
 }
