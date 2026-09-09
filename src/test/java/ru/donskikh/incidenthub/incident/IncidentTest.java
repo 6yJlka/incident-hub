@@ -4,6 +4,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
+import ru.donskikh.incidenthub.catalog.BusinessService;
+import ru.donskikh.incidenthub.catalog.ServiceTier;
 import ru.donskikh.incidenthub.identity.User;
 import ru.donskikh.incidenthub.team.Team;
 
@@ -13,12 +15,13 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class IncidentTest {
 
     @Test
-    void createsIncidentWithOpenStatusAndClassification() {
+    void createsIncidentWithOpenStatusServiceAndSeverity() {
         Incident incident = createIncident();
 
         assertThat(incident.getStatus()).isEqualTo(IncidentStatus.OPEN);
-        assertThat(incident.getCategory()).isEqualTo(IncidentCategory.INFRASTRUCTURE);
+        assertThat(incident.getAffectedService().getCode()).isEqualTo("PAYMENTS");
         assertThat(incident.getSource()).isEqualTo(IncidentSource.MANUAL);
+        assertThat(incident.getSeverity()).isEqualTo(IncidentSeverity.SEV2);
     }
 
     @Test
@@ -28,9 +31,10 @@ class IncidentTest {
         Incident incident = new Incident(
                 "Title",
                 "Description",
-                IncidentCategory.INFRASTRUCTURE,
+                createBusinessService(),
                 IncidentSource.MANUAL,
                 IncidentPriority.HIGH,
+                IncidentSeverity.SEV2,
                 reporter,
                 null
         );
@@ -55,9 +59,10 @@ class IncidentTest {
         Incident incident = new Incident(
                 "Title",
                 "Description",
-                IncidentCategory.APPLICATION,
+                createBusinessService(),
                 IncidentSource.AUTOMATIC,
                 IncidentPriority.HIGH,
+                IncidentSeverity.SEV2,
                 new User("reporter@example.com", "Reporter"),
                 team
         );
@@ -70,26 +75,26 @@ class IncidentTest {
         User reporter = new User("reporter@example.com", "Reporter");
 
         assertThatThrownBy(() -> new Incident(
-                "   ", "Description", IncidentCategory.INFRASTRUCTURE, IncidentSource.MANUAL,
-                IncidentPriority.HIGH, reporter, null
+                "   ", "Description", createBusinessService(), IncidentSource.MANUAL,
+                IncidentPriority.HIGH, IncidentSeverity.SEV2, reporter, null
         )).isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("title must not be blank");
         assertThatThrownBy(() -> new Incident(
-                "Title", "   ", IncidentCategory.INFRASTRUCTURE, IncidentSource.MANUAL,
-                IncidentPriority.HIGH, reporter, null
+                "Title", "   ", createBusinessService(), IncidentSource.MANUAL,
+                IncidentPriority.HIGH, IncidentSeverity.SEV2, reporter, null
         )).isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("description must not be blank");
     }
 
     @Test
-    void rejectsNullCategory() {
+    void rejectsNullAffectedService() {
         User reporter = new User("reporter@example.com", "Reporter");
 
         assertThatThrownBy(() -> new Incident(
                 "Title", "Description", null, IncidentSource.MANUAL,
-                IncidentPriority.HIGH, reporter, null
+                IncidentPriority.HIGH, IncidentSeverity.SEV2, reporter, null
         )).isInstanceOf(NullPointerException.class)
-                .hasMessage("category must not be null");
+                .hasMessage("affectedService must not be null");
     }
 
     @Test
@@ -97,8 +102,8 @@ class IncidentTest {
         User reporter = new User("reporter@example.com", "Reporter");
 
         assertThatThrownBy(() -> new Incident(
-                "Title", "Description", IncidentCategory.INFRASTRUCTURE, null,
-                IncidentPriority.HIGH, reporter, null
+                "Title", "Description", createBusinessService(), null,
+                IncidentPriority.HIGH, IncidentSeverity.SEV2, reporter, null
         )).isInstanceOf(NullPointerException.class)
                 .hasMessage("source must not be null");
     }
@@ -108,43 +113,72 @@ class IncidentTest {
         User reporter = new User("reporter@example.com", "Reporter");
 
         assertThatThrownBy(() -> new Incident(
-                "Title", "Description", IncidentCategory.INFRASTRUCTURE, IncidentSource.MANUAL,
-                null, reporter, null
+                "Title", "Description", createBusinessService(), IncidentSource.MANUAL,
+                null, IncidentSeverity.SEV2, reporter, null
         )).isInstanceOf(NullPointerException.class)
                 .hasMessage("priority must not be null");
     }
 
     @Test
+    void rejectsNullSeverity() {
+        User reporter = new User("reporter@example.com", "Reporter");
+
+        assertThatThrownBy(() -> new Incident(
+                "Title", "Description", createBusinessService(), IncidentSource.MANUAL,
+                IncidentPriority.HIGH, null, reporter, null
+        )).isInstanceOf(NullPointerException.class)
+                .hasMessage("severity must not be null");
+    }
+
+    @Test
     void rejectsNullReporter() {
         assertThatThrownBy(() -> new Incident(
-                "Title", "Description", IncidentCategory.INFRASTRUCTURE, IncidentSource.MANUAL,
-                IncidentPriority.HIGH, null, null
+                "Title", "Description", createBusinessService(), IncidentSource.MANUAL,
+                IncidentPriority.HIGH, IncidentSeverity.SEV2, null, null
         )).isInstanceOf(NullPointerException.class)
                 .hasMessage("reporter must not be null");
     }
 
     @Test
-    void changesTitleDescriptionCategoryAndPriority() {
+    void changesTitleDescriptionAffectedServicePriorityAndSeverity() {
         Incident incident = createIncident();
+        BusinessService affectedService = new BusinessService(
+                "CHECKOUT",
+                "Checkout",
+                "Checkout service",
+                new Team("Payments", "PAYMENTS_TEAM"),
+                ServiceTier.TIER_1
+        );
 
         incident.changeTitle("Updated title");
         incident.updateDescription("Updated description");
-        incident.changeCategory(IncidentCategory.APPLICATION);
+        incident.changeAffectedService(affectedService);
         incident.changePriority(IncidentPriority.CRITICAL);
+        incident.changeSeverity(IncidentSeverity.SEV1);
 
         assertThat(incident.getTitle()).isEqualTo("Updated title");
         assertThat(incident.getDescription()).isEqualTo("Updated description");
-        assertThat(incident.getCategory()).isEqualTo(IncidentCategory.APPLICATION);
+        assertThat(incident.getAffectedService()).isSameAs(affectedService);
         assertThat(incident.getPriority()).isEqualTo(IncidentPriority.CRITICAL);
+        assertThat(incident.getSeverity()).isEqualTo(IncidentSeverity.SEV1);
     }
 
     @Test
-    void rejectsNullCategoryChange() {
+    void rejectsNullAffectedServiceChange() {
         Incident incident = createIncident();
 
-        assertThatThrownBy(() -> incident.changeCategory(null))
+        assertThatThrownBy(() -> incident.changeAffectedService(null))
                 .isInstanceOf(NullPointerException.class)
-                .hasMessage("category must not be null");
+                .hasMessage("affectedService must not be null");
+    }
+
+    @Test
+    void rejectsNullSeverityChange() {
+        Incident incident = createIncident();
+
+        assertThatThrownBy(() -> incident.changeSeverity(null))
+                .isInstanceOf(NullPointerException.class)
+                .hasMessage("severity must not be null");
     }
 
     @Test
@@ -206,15 +240,17 @@ class IncidentTest {
     }
 
     @Test
-    void startsProgressForAssignedIncidentWithoutChangingClassificationOrAssignment() {
+    void startsProgressForAssignedIncidentWithoutChangingDetailsOrAssignment() {
         User assignee = new User("assignee@example.com", "Assignee");
         Team team = new Team("Platform", "platform");
+        BusinessService affectedService = createBusinessService();
         Incident incident = new Incident(
                 "Title",
                 "Description",
-                IncidentCategory.APPLICATION,
+                affectedService,
                 IncidentSource.AUTOMATIC,
                 IncidentPriority.HIGH,
+                IncidentSeverity.SEV2,
                 new User("reporter@example.com", "Reporter"),
                 team
         );
@@ -225,7 +261,8 @@ class IncidentTest {
         assertThat(incident.getStatus()).isEqualTo(IncidentStatus.IN_PROGRESS);
         assertThat(incident.getAssignee()).isSameAs(assignee);
         assertThat(incident.getResponsibleTeam()).isSameAs(team);
-        assertThat(incident.getCategory()).isEqualTo(IncidentCategory.APPLICATION);
+        assertThat(incident.getAffectedService()).isSameAs(affectedService);
+        assertThat(incident.getSeverity()).isEqualTo(IncidentSeverity.SEV2);
         assertThat(incident.getSource()).isEqualTo(IncidentSource.AUTOMATIC);
     }
 
@@ -257,16 +294,18 @@ class IncidentTest {
     }
 
     @Test
-    void resolvesInProgressIncidentWithoutChangingClassificationOrAssignment() {
+    void resolvesInProgressIncidentWithoutChangingDetailsOrAssignment() {
         User reporter = new User("reporter@example.com", "Reporter");
         User assignee = new User("assignee@example.com", "Assignee");
         Team team = new Team("Platform", "platform");
+        BusinessService affectedService = createBusinessService();
         Incident incident = new Incident(
                 "Title",
                 "Description",
-                IncidentCategory.APPLICATION,
+                affectedService,
                 IncidentSource.AUTOMATIC,
                 IncidentPriority.HIGH,
+                IncidentSeverity.SEV2,
                 reporter,
                 team
         );
@@ -279,7 +318,8 @@ class IncidentTest {
         assertThat(incident.getAssignee()).isSameAs(assignee);
         assertThat(incident.getReporter()).isSameAs(reporter);
         assertThat(incident.getResponsibleTeam()).isSameAs(team);
-        assertThat(incident.getCategory()).isEqualTo(IncidentCategory.APPLICATION);
+        assertThat(incident.getAffectedService()).isSameAs(affectedService);
+        assertThat(incident.getSeverity()).isEqualTo(IncidentSeverity.SEV2);
         assertThat(incident.getSource()).isEqualTo(IncidentSource.AUTOMATIC);
     }
 
@@ -311,16 +351,18 @@ class IncidentTest {
     }
 
     @Test
-    void closesResolvedIncidentWithoutChangingClassificationOrAssignment() {
+    void closesResolvedIncidentWithoutChangingDetailsOrAssignment() {
         User reporter = new User("reporter@example.com", "Reporter");
         User assignee = new User("assignee@example.com", "Assignee");
         Team team = new Team("Platform", "platform");
+        BusinessService affectedService = createBusinessService();
         Incident incident = new Incident(
                 "Title",
                 "Description",
-                IncidentCategory.APPLICATION,
+                affectedService,
                 IncidentSource.AUTOMATIC,
                 IncidentPriority.HIGH,
+                IncidentSeverity.SEV2,
                 reporter,
                 team
         );
@@ -334,7 +376,8 @@ class IncidentTest {
         assertThat(incident.getAssignee()).isSameAs(assignee);
         assertThat(incident.getReporter()).isSameAs(reporter);
         assertThat(incident.getResponsibleTeam()).isSameAs(team);
-        assertThat(incident.getCategory()).isEqualTo(IncidentCategory.APPLICATION);
+        assertThat(incident.getAffectedService()).isSameAs(affectedService);
+        assertThat(incident.getSeverity()).isEqualTo(IncidentSeverity.SEV2);
         assertThat(incident.getSource()).isEqualTo(IncidentSource.AUTOMATIC);
     }
 
@@ -366,16 +409,18 @@ class IncidentTest {
     }
 
     @Test
-    void reopensResolvedIncidentWithoutChangingClassificationOrAssignment() {
+    void reopensResolvedIncidentWithoutChangingDetailsOrAssignment() {
         User reporter = new User("reporter@example.com", "Reporter");
         User assignee = new User("assignee@example.com", "Assignee");
         Team team = new Team("Platform", "platform");
+        BusinessService affectedService = createBusinessService();
         Incident incident = new Incident(
                 "Title",
                 "Description",
-                IncidentCategory.APPLICATION,
+                affectedService,
                 IncidentSource.AUTOMATIC,
                 IncidentPriority.HIGH,
+                IncidentSeverity.SEV2,
                 reporter,
                 team
         );
@@ -389,7 +434,8 @@ class IncidentTest {
         assertThat(incident.getAssignee()).isSameAs(assignee);
         assertThat(incident.getReporter()).isSameAs(reporter);
         assertThat(incident.getResponsibleTeam()).isSameAs(team);
-        assertThat(incident.getCategory()).isEqualTo(IncidentCategory.APPLICATION);
+        assertThat(incident.getAffectedService()).isSameAs(affectedService);
+        assertThat(incident.getSeverity()).isEqualTo(IncidentSeverity.SEV2);
         assertThat(incident.getSource()).isEqualTo(IncidentSource.AUTOMATIC);
     }
 
@@ -436,16 +482,18 @@ class IncidentTest {
     }
 
     @Test
-    void cancelsAssignedIncidentWithoutChangingClassificationOrAssignment() {
+    void cancelsAssignedIncidentWithoutChangingDetailsOrAssignment() {
         User reporter = new User("reporter@example.com", "Reporter");
         User assignee = new User("assignee@example.com", "Assignee");
         Team team = new Team("Platform", "platform");
+        BusinessService affectedService = createBusinessService();
         Incident incident = new Incident(
                 "Title",
                 "Description",
-                IncidentCategory.APPLICATION,
+                affectedService,
                 IncidentSource.AUTOMATIC,
                 IncidentPriority.HIGH,
+                IncidentSeverity.SEV2,
                 reporter,
                 team
         );
@@ -457,7 +505,8 @@ class IncidentTest {
         assertThat(incident.getAssignee()).isSameAs(assignee);
         assertThat(incident.getReporter()).isSameAs(reporter);
         assertThat(incident.getResponsibleTeam()).isSameAs(team);
-        assertThat(incident.getCategory()).isEqualTo(IncidentCategory.APPLICATION);
+        assertThat(incident.getAffectedService()).isSameAs(affectedService);
+        assertThat(incident.getSeverity()).isEqualTo(IncidentSeverity.SEV2);
         assertThat(incident.getSource()).isEqualTo(IncidentSource.AUTOMATIC);
     }
 
@@ -518,11 +567,22 @@ class IncidentTest {
         return new Incident(
                 "Title",
                 "Description",
-                IncidentCategory.INFRASTRUCTURE,
+                createBusinessService(),
                 IncidentSource.MANUAL,
                 IncidentPriority.HIGH,
+                IncidentSeverity.SEV2,
                 new User("reporter@example.com", "Reporter"),
                 null
+        );
+    }
+
+    private static BusinessService createBusinessService() {
+        return new BusinessService(
+                "PAYMENTS",
+                "Payments",
+                "Payments service",
+                new Team("Payments", "PAYMENTS_TEAM"),
+                ServiceTier.TIER_1
         );
     }
 

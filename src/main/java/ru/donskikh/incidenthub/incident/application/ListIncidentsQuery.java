@@ -1,7 +1,7 @@
 package ru.donskikh.incidenthub.incident.application;
 
-import ru.donskikh.incidenthub.incident.IncidentCategory;
 import ru.donskikh.incidenthub.incident.IncidentPriority;
+import ru.donskikh.incidenthub.incident.IncidentSeverity;
 import ru.donskikh.incidenthub.incident.IncidentSource;
 import ru.donskikh.incidenthub.incident.IncidentStatus;
 
@@ -10,8 +10,9 @@ public record ListIncidentsQuery(
         int size,
         IncidentStatus status,
         IncidentPriority priority,
-        IncidentCategory category,
+        IncidentSeverity severity,
         IncidentSource source,
+        Long affectedServiceId,
         Long responsibleTeamId
 ) {
 
@@ -32,6 +33,10 @@ public record ListIncidentsQuery(
 
         if (responsibleTeamId != null && responsibleTeamId <= 0) {
             throw new IllegalArgumentException("responsibleTeamId must be positive");
+        }
+
+        if (affectedServiceId != null && affectedServiceId <= 0) {
+            throw new IllegalArgumentException("affectedServiceId must be positive");
         }
     }
 }

@@ -1,7 +1,7 @@
 package ru.donskikh.incidenthub.incident.application;
 
-import ru.donskikh.incidenthub.incident.IncidentCategory;
 import ru.donskikh.incidenthub.incident.IncidentPriority;
+import ru.donskikh.incidenthub.incident.IncidentSeverity;
 import ru.donskikh.incidenthub.incident.IncidentSource;
 import ru.donskikh.incidenthub.incident.IncidentStatus;
 
@@ -10,9 +10,12 @@ import java.time.Instant;
 public record ListIncidentItem(
         Long id,
         String title,
-        IncidentCategory category,
+        Long affectedServiceId,
+        String affectedServiceCode,
+        String affectedServiceName,
         IncidentSource source,
         IncidentPriority priority,
+        IncidentSeverity severity,
         IncidentStatus status,
         Long reporterId,
         String reporterDisplayName,

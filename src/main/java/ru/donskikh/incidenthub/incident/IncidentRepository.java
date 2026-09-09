@@ -10,6 +10,6 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 public interface IncidentRepository extends JpaRepository<Incident, Long>, JpaSpecificationExecutor<Incident> {
 
     @Override
-    @EntityGraph(attributePaths = {"reporter", "assignee", "responsibleTeam"})
+    @EntityGraph(attributePaths = {"affectedService", "reporter", "assignee", "responsibleTeam"})
     Page<Incident> findAll(Specification<Incident> specification, Pageable pageable);
 }

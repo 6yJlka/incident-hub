@@ -13,6 +13,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import ru.donskikh.incidenthub.catalog.BusinessService;
 import ru.donskikh.incidenthub.identity.User;
 import ru.donskikh.incidenthub.team.Team;
 
@@ -34,9 +35,9 @@ public class Incident {
     @Column(name = "description", nullable = false, columnDefinition = "text")
     private String description;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "category", nullable = false, length = 30)
-    private IncidentCategory category;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "affected_service_id", nullable = false)
+    private BusinessService affectedService;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "source", nullable = false, length = 20)
@@ -45,6 +46,10 @@ public class Incident {
     @Enumerated(EnumType.STRING)
     @Column(name = "priority", nullable = false, length = 20)
     private IncidentPriority priority;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "severity", nullable = false, length = 10)
+    private IncidentSeverity severity;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 30)
@@ -74,17 +79,19 @@ public class Incident {
     public Incident(
             String title,
             String description,
-            IncidentCategory category,
+            BusinessService affectedService,
             IncidentSource source,
             IncidentPriority priority,
+            IncidentSeverity severity,
             User reporter,
             Team responsibleTeam
     ) {
         this.title = requireText(title, "title");
         this.description = requireText(description, "description");
-        this.category = Objects.requireNonNull(category, "category must not be null");
+        this.affectedService = Objects.requireNonNull(affectedService, "affectedService must not be null");
         this.source = Objects.requireNonNull(source, "source must not be null");
         this.priority = Objects.requireNonNull(priority, "priority must not be null");
+        this.severity = Objects.requireNonNull(severity, "severity must not be null");
         this.status = IncidentStatus.OPEN;
         this.reporter = Objects.requireNonNull(reporter, "reporter must not be null");
         this.responsibleTeam = responsibleTeam;
@@ -110,12 +117,16 @@ public class Incident {
         this.description = requireText(description, "description");
     }
 
-    public void changeCategory(IncidentCategory category) {
-        this.category = Objects.requireNonNull(category, "category must not be null");
+    public void changeAffectedService(BusinessService affectedService) {
+        this.affectedService = Objects.requireNonNull(affectedService, "affectedService must not be null");
     }
 
     public void changePriority(IncidentPriority priority) {
         this.priority = Objects.requireNonNull(priority, "priority must not be null");
+    }
+
+    public void changeSeverity(IncidentSeverity severity) {
+        this.severity = Objects.requireNonNull(severity, "severity must not be null");
     }
 
     public void assignTo(User assignee) {
@@ -181,8 +192,8 @@ public class Incident {
         return description;
     }
 
-    public IncidentCategory getCategory() {
-        return category;
+    public BusinessService getAffectedService() {
+        return affectedService;
     }
 
     public IncidentSource getSource() {
@@ -191,6 +202,10 @@ public class Incident {
 
     public IncidentPriority getPriority() {
         return priority;
+    }
+
+    public IncidentSeverity getSeverity() {
+        return severity;
     }
 
     public IncidentStatus getStatus() {

@@ -22,7 +22,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class IncidentAuditEventRepositoryIntegrationTest {
 
     private static final long REPORTER_ID = 30_001L;
-    private static final long INCIDENT_ID = 30_002L;
+    private static final long TEAM_ID = 30_002L;
+    private static final long SERVICE_ID = 30_003L;
+    private static final long INCIDENT_ID = 30_004L;
 
     @Autowired
     private IncidentAuditEventRepository repository;
@@ -37,6 +39,8 @@ class IncidentAuditEventRepositoryIntegrationTest {
     void setUp() {
         jdbcTemplate.update("delete from incident_audit_events");
         jdbcTemplate.update("delete from incidents");
+        jdbcTemplate.update("delete from service_dependencies");
+        jdbcTemplate.update("delete from business_services");
         jdbcTemplate.update("delete from teams");
         jdbcTemplate.update("delete from users");
 
@@ -45,12 +49,25 @@ class IncidentAuditEventRepositoryIntegrationTest {
                 REPORTER_ID, "audit-reporter@example.com", "Audit Reporter"
         );
         jdbcTemplate.update(
+                "insert into teams (id, name, code) values (?, ?, ?)",
+                TEAM_ID, "Audit Team", "AUDIT_TEAM"
+        );
+        jdbcTemplate.update(
+                """
+                        insert into business_services (
+                            id, code, name, description, owner_team_id, tier
+                        ) values (?, 'AUDIT_SERVICE', 'Audit Service', 'Description', ?, 'TIER_2')
+                        """,
+                SERVICE_ID, TEAM_ID
+        );
+        jdbcTemplate.update(
                 """
                         insert into incidents (
-                            id, title, description, category, source, priority, status, reporter_id
-                        ) values (?, 'Audit incident', 'Description', 'INFRASTRUCTURE', 'MANUAL', 'HIGH', 'OPEN', ?)
+                            id, title, description, affected_service_id, source, priority, severity,
+                            status, reporter_id
+                        ) values (?, 'Audit incident', 'Description', ?, 'MANUAL', 'HIGH', 'SEV2', 'OPEN', ?)
                         """,
-                INCIDENT_ID, REPORTER_ID
+                INCIDENT_ID, SERVICE_ID, REPORTER_ID
         );
     }
 
@@ -106,13 +123,13 @@ class IncidentAuditEventRepositoryIntegrationTest {
     }
 
     @Test
-    void hasAppliedMigrationsFromV1ThroughV3() {
+    void hasAppliedMigrationsFromV1ThroughV6() {
         List<String> versions = jdbcTemplate.queryForList(
                 "select version from flyway_schema_history where success order by installed_rank",
                 String.class
         );
 
-        assertThat(versions).containsSequence("1", "2", "3");
+        assertThat(versions).containsSequence("1", "2", "3", "4", "5", "6");
     }
 
     private long insertAuditEvent(
