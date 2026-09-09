@@ -2,6 +2,7 @@ package ru.donskikh.incidenthub.incident.application;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.donskikh.incidenthub.catalog.BusinessService;
 import ru.donskikh.incidenthub.identity.User;
 import ru.donskikh.incidenthub.incident.Incident;
 import ru.donskikh.incidenthub.incident.IncidentNotFoundException;
@@ -26,6 +27,7 @@ public class GetIncidentService {
         Incident incident = incidentRepository.findById(incidentId)
                 .orElseThrow(() -> new IncidentNotFoundException(incidentId));
 
+        BusinessService affectedService = incident.getAffectedService();
         User reporter = incident.getReporter();
         Team responsibleTeam = incident.getResponsibleTeam();
         User assignee = incident.getAssignee();
@@ -34,9 +36,12 @@ public class GetIncidentService {
                 incident.getId(),
                 incident.getTitle(),
                 incident.getDescription(),
-                incident.getCategory(),
+                affectedService.getId(),
+                affectedService.getCode(),
+                affectedService.getName(),
                 incident.getSource(),
                 incident.getPriority(),
+                incident.getSeverity(),
                 incident.getStatus(),
                 reporter.getId(),
                 reporter.getDisplayName(),

@@ -19,7 +19,9 @@ class IncidentAuditTransactionIntegrationTest {
 
     private static final long REPORTER_ID = 40_001L;
     private static final long ASSIGNEE_ID = 40_002L;
-    private static final long INCIDENT_ID = 40_003L;
+    private static final long TEAM_ID = 40_003L;
+    private static final long SERVICE_ID = 40_004L;
+    private static final long INCIDENT_ID = 40_005L;
     private static final String FAILURE_CONSTRAINT = "chk_test_reject_started_audit";
 
     @Autowired
@@ -41,13 +43,26 @@ class IncidentAuditTransactionIntegrationTest {
                 ASSIGNEE_ID, "transaction-assignee@example.com", "Transaction Assignee"
         );
         jdbcTemplate.update(
+                "insert into teams (id, name, code) values (?, ?, ?)",
+                TEAM_ID, "Transaction Team", "TRANSACTION_TEAM"
+        );
+        jdbcTemplate.update(
+                """
+                        insert into business_services (
+                            id, code, name, description, owner_team_id, tier
+                        ) values (?, 'TRANSACTION_SERVICE', 'Transaction Service', 'Description', ?, 'TIER_2')
+                        """,
+                SERVICE_ID, TEAM_ID
+        );
+        jdbcTemplate.update(
                 """
                         insert into incidents (
-                            id, title, description, category, source, priority, status, reporter_id, assignee_id
-                        ) values (?, 'Transactional audit', 'Description', 'INFRASTRUCTURE', 'MANUAL', 'HIGH',
+                            id, title, description, affected_service_id, source, priority, severity,
+                            status, reporter_id, assignee_id
+                        ) values (?, 'Transactional audit', 'Description', ?, 'MANUAL', 'HIGH', 'SEV2',
                             'ASSIGNED', ?, ?)
                         """,
-                INCIDENT_ID, REPORTER_ID, ASSIGNEE_ID
+                INCIDENT_ID, SERVICE_ID, REPORTER_ID, ASSIGNEE_ID
         );
         jdbcTemplate.execute(
                 "alter table incident_audit_events add constraint " + FAILURE_CONSTRAINT
@@ -81,6 +96,8 @@ class IncidentAuditTransactionIntegrationTest {
     private void deleteTestData() {
         jdbcTemplate.update("delete from incident_audit_events where incident_id = ?", INCIDENT_ID);
         jdbcTemplate.update("delete from incidents where id = ?", INCIDENT_ID);
+        jdbcTemplate.update("delete from business_services where id = ?", SERVICE_ID);
+        jdbcTemplate.update("delete from teams where id = ?", TEAM_ID);
         jdbcTemplate.update("delete from users where id in (?, ?)", REPORTER_ID, ASSIGNEE_ID);
     }
 }

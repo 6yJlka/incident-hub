@@ -47,10 +47,10 @@ class GetAffectedServicesServiceIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        jdbcTemplate.update("delete from service_dependencies");
-        jdbcTemplate.update("delete from business_services");
         jdbcTemplate.update("delete from incident_audit_events");
         jdbcTemplate.update("delete from incidents");
+        jdbcTemplate.update("delete from service_dependencies");
+        jdbcTemplate.update("delete from business_services");
         jdbcTemplate.update("delete from teams");
 
         ownerTeam = teamRepository.saveAndFlush(new Team("Platform", "PLATFORM"));

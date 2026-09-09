@@ -7,6 +7,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.donskikh.incidenthub.catalog.BusinessService;
 import ru.donskikh.incidenthub.identity.User;
 import ru.donskikh.incidenthub.incident.Incident;
 import ru.donskikh.incidenthub.incident.IncidentRepository;
@@ -34,8 +35,9 @@ public class ListIncidentsService {
         Specification<Incident> specification = IncidentSpecifications.withFilters(
                 query.status(),
                 query.priority(),
-                query.category(),
+                query.severity(),
                 query.source(),
+                query.affectedServiceId(),
                 query.responsibleTeamId()
         );
         Pageable pageable = PageRequest.of(
@@ -62,6 +64,7 @@ public class ListIncidentsService {
     }
 
     private ListIncidentItem toItem(Incident incident) {
+        BusinessService affectedService = incident.getAffectedService();
         User reporter = incident.getReporter();
         Team responsibleTeam = incident.getResponsibleTeam();
         User assignee = incident.getAssignee();
@@ -69,9 +72,12 @@ public class ListIncidentsService {
         return new ListIncidentItem(
                 incident.getId(),
                 incident.getTitle(),
-                incident.getCategory(),
+                affectedService.getId(),
+                affectedService.getCode(),
+                affectedService.getName(),
                 incident.getSource(),
                 incident.getPriority(),
+                incident.getSeverity(),
                 incident.getStatus(),
                 reporter.getId(),
                 reporter.getDisplayName(),

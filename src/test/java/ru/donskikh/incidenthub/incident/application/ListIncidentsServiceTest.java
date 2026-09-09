@@ -12,11 +12,12 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import ru.donskikh.incidenthub.catalog.BusinessService;
 import ru.donskikh.incidenthub.identity.User;
 import ru.donskikh.incidenthub.incident.Incident;
-import ru.donskikh.incidenthub.incident.IncidentCategory;
 import ru.donskikh.incidenthub.incident.IncidentPriority;
 import ru.donskikh.incidenthub.incident.IncidentRepository;
+import ru.donskikh.incidenthub.incident.IncidentSeverity;
 import ru.donskikh.incidenthub.incident.IncidentSource;
 import ru.donskikh.incidenthub.incident.IncidentStatus;
 import ru.donskikh.incidenthub.team.Team;
@@ -53,7 +54,7 @@ class ListIncidentsServiceTest {
     void passesSpecificationAndStablePageRequestAndReturnsMetadata() {
         ListIncidentsQuery query = new ListIncidentsQuery(
                 1, 10, IncidentStatus.OPEN, IncidentPriority.HIGH,
-                IncidentCategory.INFRASTRUCTURE, IncidentSource.AUTOMATIC, 9L
+                IncidentSeverity.SEV2, IncidentSource.AUTOMATIC, 11L, 9L
         );
         when(incidentRepository.findAll(
                 ArgumentMatchers.<Specification<Incident>>any(), any(Pageable.class)
@@ -83,6 +84,7 @@ class ListIncidentsServiceTest {
     @Test
     void mapsClassificationReporterAssigneeAndResponsibleTeam() {
         Incident incident = mock(Incident.class);
+        BusinessService affectedService = mock(BusinessService.class);
         User reporter = mock(User.class);
         User assignee = mock(User.class);
         Team team = mock(Team.class);
@@ -93,15 +95,19 @@ class ListIncidentsServiceTest {
         )).thenReturn(new PageImpl<>(List.of(incident), PageRequest.of(0, 20), 1));
         when(incident.getId()).thenReturn(42L);
         when(incident.getTitle()).thenReturn("Database unavailable");
-        when(incident.getCategory()).thenReturn(IncidentCategory.INFRASTRUCTURE);
+        when(incident.getAffectedService()).thenReturn(affectedService);
         when(incident.getSource()).thenReturn(IncidentSource.AUTOMATIC);
         when(incident.getPriority()).thenReturn(IncidentPriority.CRITICAL);
+        when(incident.getSeverity()).thenReturn(IncidentSeverity.SEV1);
         when(incident.getStatus()).thenReturn(IncidentStatus.IN_PROGRESS);
         when(incident.getReporter()).thenReturn(reporter);
         when(incident.getResponsibleTeam()).thenReturn(team);
         when(incident.getAssignee()).thenReturn(assignee);
         when(incident.getCreatedAt()).thenReturn(createdAt);
         when(incident.getUpdatedAt()).thenReturn(updatedAt);
+        when(affectedService.getId()).thenReturn(11L);
+        when(affectedService.getCode()).thenReturn("BILLING");
+        when(affectedService.getName()).thenReturn("Billing");
         when(reporter.getId()).thenReturn(7L);
         when(reporter.getDisplayName()).thenReturn("Reporter");
         when(team.getId()).thenReturn(9L);
@@ -112,8 +118,11 @@ class ListIncidentsServiceTest {
 
         ListIncidentItem item = service.execute(emptyQuery()).items().getFirst();
 
-        assertThat(item.category()).isEqualTo(IncidentCategory.INFRASTRUCTURE);
+        assertThat(item.affectedServiceId()).isEqualTo(11L);
+        assertThat(item.affectedServiceCode()).isEqualTo("BILLING");
+        assertThat(item.affectedServiceName()).isEqualTo("Billing");
         assertThat(item.source()).isEqualTo(IncidentSource.AUTOMATIC);
+        assertThat(item.severity()).isEqualTo(IncidentSeverity.SEV1);
         assertThat(item.reporterId()).isEqualTo(7L);
         assertThat(item.reporterDisplayName()).isEqualTo("Reporter");
         assertThat(item.responsibleTeamId()).isEqualTo(9L);
@@ -128,10 +137,12 @@ class ListIncidentsServiceTest {
     @Test
     void mapsNullTeamAndAssigneeFields() {
         Incident incident = mock(Incident.class);
+        BusinessService affectedService = mock(BusinessService.class);
         User reporter = mock(User.class);
         when(incidentRepository.findAll(
                 ArgumentMatchers.<Specification<Incident>>any(), any(Pageable.class)
         )).thenReturn(new PageImpl<>(List.of(incident), PageRequest.of(0, 20), 1));
+        when(incident.getAffectedService()).thenReturn(affectedService);
         when(incident.getReporter()).thenReturn(reporter);
 
         ListIncidentItem item = service.execute(emptyQuery()).items().getFirst();
@@ -144,6 +155,6 @@ class ListIncidentsServiceTest {
     }
 
     private static ListIncidentsQuery emptyQuery() {
-        return new ListIncidentsQuery(0, 20, null, null, null, null, null);
+        return new ListIncidentsQuery(0, 20, null, null, null, null, null, null);
     }
 }
