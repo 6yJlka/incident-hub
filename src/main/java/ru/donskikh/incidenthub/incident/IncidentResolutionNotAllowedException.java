@@ -1,11 +1,13 @@
 package ru.donskikh.incidenthub.incident;
 
-public class IncidentResolutionNotAllowedException extends RuntimeException {
+import ru.donskikh.incidenthub.common.DomainConflictException;
+
+public class IncidentResolutionNotAllowedException extends DomainConflictException {
 
     private final IncidentStatus status;
 
     public IncidentResolutionNotAllowedException(Long incidentId, IncidentStatus status) {
-        super(createMessage(incidentId, status));
+        super(createMessage(incidentId, status), status, IncidentStatus.IN_PROGRESS);
         this.status = status;
     }
 

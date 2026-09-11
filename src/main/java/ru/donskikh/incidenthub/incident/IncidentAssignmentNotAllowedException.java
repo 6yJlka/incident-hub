@@ -1,9 +1,13 @@
 package ru.donskikh.incidenthub.incident;
 
-public class IncidentAssignmentNotAllowedException extends RuntimeException {
+import ru.donskikh.incidenthub.common.DomainConflictException;
+
+import java.util.List;
+
+public class IncidentAssignmentNotAllowedException extends DomainConflictException {
 
     public IncidentAssignmentNotAllowedException(Long incidentId, IncidentStatus status) {
-        super(createMessage(incidentId, status));
+        super(createMessage(incidentId, status), status, List.of(IncidentStatus.OPEN, IncidentStatus.ASSIGNED));
     }
 
     private static String createMessage(Long incidentId, IncidentStatus status) {

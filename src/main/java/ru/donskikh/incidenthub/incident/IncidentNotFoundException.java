@@ -1,6 +1,8 @@
 package ru.donskikh.incidenthub.incident;
 
-public class IncidentNotFoundException extends RuntimeException {
+import ru.donskikh.incidenthub.common.DomainNotFoundException;
+
+public class IncidentNotFoundException extends DomainNotFoundException {
 
     public IncidentNotFoundException(long incidentId) {
         super("Incident not found: " + incidentId);

@@ -1,6 +1,8 @@
 package ru.donskikh.incidenthub.catalog;
 
-public class ServiceDependencyAlreadyExistsException extends RuntimeException {
+import ru.donskikh.incidenthub.common.DomainConflictException;
+
+public class ServiceDependencyAlreadyExistsException extends DomainConflictException {
 
     public ServiceDependencyAlreadyExistsException(long dependentServiceId, long dependencyServiceId) {
         super("Service dependency already exists: "

@@ -1,11 +1,13 @@
 package ru.donskikh.incidenthub.incident;
 
-public class IncidentClosureNotAllowedException extends RuntimeException {
+import ru.donskikh.incidenthub.common.DomainConflictException;
+
+public class IncidentClosureNotAllowedException extends DomainConflictException {
 
     private final IncidentStatus status;
 
     public IncidentClosureNotAllowedException(Long incidentId, IncidentStatus status) {
-        super(createMessage(incidentId, status));
+        super(createMessage(incidentId, status), status, IncidentStatus.RESOLVED);
         this.status = status;
     }
 
