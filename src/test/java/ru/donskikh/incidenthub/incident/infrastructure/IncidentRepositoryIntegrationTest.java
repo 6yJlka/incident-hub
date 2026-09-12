@@ -14,6 +14,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
+import ru.donskikh.incidenthub.PostgreSQLIntegrationTest;
 import ru.donskikh.incidenthub.incident.Incident;
 import ru.donskikh.incidenthub.incident.IncidentPriority;
 import ru.donskikh.incidenthub.incident.IncidentRepository;
@@ -28,7 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(properties = "spring.jpa.properties.hibernate.generate_statistics=true")
 @Transactional
-class IncidentRepositoryIntegrationTest {
+class IncidentRepositoryIntegrationTest extends PostgreSQLIntegrationTest {
 
     private static final long REPORTER_ID = 10_001L;
     private static final long ASSIGNEE_ID = 10_002L;

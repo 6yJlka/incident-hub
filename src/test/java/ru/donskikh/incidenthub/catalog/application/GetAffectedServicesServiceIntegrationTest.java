@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
+import ru.donskikh.incidenthub.PostgreSQLIntegrationTest;
 import ru.donskikh.incidenthub.catalog.BusinessService;
 import ru.donskikh.incidenthub.catalog.BusinessServiceRepository;
 import ru.donskikh.incidenthub.catalog.DependencyType;
@@ -23,7 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 @Transactional
-class GetAffectedServicesServiceIntegrationTest {
+class GetAffectedServicesServiceIntegrationTest extends PostgreSQLIntegrationTest {
 
     @Autowired
     private GetAffectedServicesService service;

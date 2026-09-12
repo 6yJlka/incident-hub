@@ -8,6 +8,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
+import ru.donskikh.incidenthub.PostgreSQLIntegrationTest;
 import ru.donskikh.incidenthub.incident.IncidentStatus;
 
 import java.sql.Timestamp;
@@ -19,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
 @Transactional
-class IncidentAuditEventRepositoryIntegrationTest {
+class IncidentAuditEventRepositoryIntegrationTest extends PostgreSQLIntegrationTest {
 
     private static final long REPORTER_ID = 30_001L;
     private static final long TEAM_ID = 30_002L;

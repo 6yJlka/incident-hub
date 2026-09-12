@@ -12,12 +12,12 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(properties = {
-        "spring.datasource.url=jdbc:postgresql://127.0.0.1:5433/incident_hub?currentSchema=incident_hub_default_test",
+        "spring.datasource.hikari.schema=incident_hub_default_test",
         "spring.flyway.schemas=incident_hub_default_test",
         "spring.flyway.default-schema=incident_hub_default_test"
 })
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class DefaultMigrationIntegrationTest {
+class DefaultMigrationIntegrationTest extends PostgreSQLIntegrationTest {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;

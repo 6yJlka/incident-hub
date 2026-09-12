@@ -8,6 +8,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
+import ru.donskikh.incidenthub.PostgreSQLIntegrationTest;
 import ru.donskikh.incidenthub.team.Team;
 import ru.donskikh.incidenthub.team.TeamRepository;
 
@@ -16,7 +17,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
 @Transactional
-class BusinessServiceRepositoryIntegrationTest {
+class BusinessServiceRepositoryIntegrationTest extends PostgreSQLIntegrationTest {
 
     @Autowired
     private BusinessServiceRepository businessServiceRepository;
