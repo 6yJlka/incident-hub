@@ -17,13 +17,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(properties = {
-        "spring.datasource.url=jdbc:postgresql://127.0.0.1:5433/incident_hub?currentSchema=incident_hub_demo_test",
+        "spring.datasource.hikari.schema=incident_hub_demo_test",
         "spring.flyway.schemas=incident_hub_demo_test",
         "spring.flyway.default-schema=incident_hub_demo_test"
 })
 @ActiveProfiles("demo")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class DemoDataMigrationIntegrationTest {
+class DemoDataMigrationIntegrationTest extends PostgreSQLIntegrationTest {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;

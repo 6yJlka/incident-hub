@@ -3,13 +3,36 @@ services:
     image: postgres:16-alpine
     container_name: incident-hub-postgres
     environment:
-      POSTGRES_DB: incident_hub
-      POSTGRES_USER: incident_user
-      POSTGRES_PASSWORD: incident_password
+      POSTGRES_DB: ${POSTGRES_DB:-incident_hub}
+      POSTGRES_USER: ${POSTGRES_USER:-incident_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-incident_password}
     ports:
-      - "5433:5432"
+      - "${POSTGRES_PORT:-5433}:5432"
     volumes:
       - incident-hub-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: incident-hub-app
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-incident_hub}
+      DEMO_DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-incident_hub}?currentSchema=incident_hub_demo
+      DB_USERNAME: ${POSTGRES_USER:-incident_user}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-incident_password}
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-}
+    ports:
+      - "${APP_PORT:-8080}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
 
 volumes:
   incident-hub-postgres-data:
