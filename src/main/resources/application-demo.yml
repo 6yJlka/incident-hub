@@ -1,0 +1,10 @@
+spring:
+  datasource:
+    url: ${DEMO_DB_URL:jdbc:postgresql://127.0.0.1:5433/incident_hub?currentSchema=incident_hub_demo}
+
+  flyway:
+    schemas: incident_hub_demo
+    default-schema: incident_hub_demo
+    locations:
+      - classpath:db/migration
+      - classpath:db/demo

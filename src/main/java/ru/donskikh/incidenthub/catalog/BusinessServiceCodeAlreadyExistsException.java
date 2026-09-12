@@ -1,6 +1,8 @@
 package ru.donskikh.incidenthub.catalog;
 
-public class BusinessServiceCodeAlreadyExistsException extends RuntimeException {
+import ru.donskikh.incidenthub.common.DomainConflictException;
+
+public class BusinessServiceCodeAlreadyExistsException extends DomainConflictException {
 
     public BusinessServiceCodeAlreadyExistsException(String code) {
         super("Business service code already exists: " + code);

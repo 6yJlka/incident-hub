@@ -1,6 +1,8 @@
 package ru.donskikh.incidenthub.catalog;
 
-public class ServiceDependencyNotFoundException extends RuntimeException {
+import ru.donskikh.incidenthub.common.DomainNotFoundException;
+
+public class ServiceDependencyNotFoundException extends DomainNotFoundException {
 
     public ServiceDependencyNotFoundException(long dependentServiceId, long dependencyServiceId) {
         super("Service dependency not found: "

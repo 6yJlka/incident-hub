@@ -1,11 +1,13 @@
 package ru.donskikh.incidenthub.incident;
 
-public class IncidentStartProgressNotAllowedException extends RuntimeException {
+import ru.donskikh.incidenthub.common.DomainConflictException;
+
+public class IncidentStartProgressNotAllowedException extends DomainConflictException {
 
     private final IncidentStatus status;
 
     public IncidentStartProgressNotAllowedException(Long incidentId, IncidentStatus status) {
-        super(createMessage(incidentId, status));
+        super(createMessage(incidentId, status), status, IncidentStatus.ASSIGNED);
         this.status = status;
     }
 

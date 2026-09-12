@@ -1,6 +1,8 @@
 package ru.donskikh.incidenthub.catalog;
 
-public class ServiceSelfDependencyNotAllowedException extends RuntimeException {
+import ru.donskikh.incidenthub.common.DomainConflictException;
+
+public class ServiceSelfDependencyNotAllowedException extends DomainConflictException {
 
     public ServiceSelfDependencyNotAllowedException(Long businessServiceId) {
         super(businessServiceId == null
