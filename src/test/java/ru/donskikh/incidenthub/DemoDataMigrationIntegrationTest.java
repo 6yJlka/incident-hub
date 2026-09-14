@@ -1,6 +1,7 @@
 package ru.donskikh.incidenthub;
 
 import com.jayway.jsonpath.JsonPath;
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -17,6 +18,8 @@ import ru.donskikh.incidenthub.catalog.application.AffectedServiceItem;
 import ru.donskikh.incidenthub.catalog.application.GetAffectedServicesQuery;
 import ru.donskikh.incidenthub.catalog.application.GetAffectedServicesResult;
 import ru.donskikh.incidenthub.catalog.application.GetAffectedServicesService;
+import ru.donskikh.incidenthub.incident.IncidentAction;
+import ru.donskikh.incidenthub.incident.IncidentStatus;
 
 import java.util.List;
 
@@ -44,6 +47,9 @@ class DemoDataMigrationIntegrationTest extends PostgreSQLIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private EntityManager entityManager;
 
     @Test
     void appliesDemoMigrationsAndLoadsAConsistentDataset() {
@@ -156,6 +162,66 @@ class DemoDataMigrationIntegrationTest extends PostgreSQLIntegrationTest {
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.type").value("urn:incident-hub:problem:access-denied"))
                 .andExpect(jsonPath("$.detail").value("You do not have permission to perform this action"));
+    }
+
+    @Test
+    @Transactional
+    void availableActionsMatchRealEndpointOutcomesForEveryRoleStatusAndAction() throws Exception {
+        long incidentId = jdbcTemplate.queryForObject(
+                "select id from incidents where title = 'Card payment authorization failures'",
+                Long.class
+        );
+        long assigneeId = jdbcTemplate.queryForObject(
+                "select id from users where email = 'boris.petrov@incidenthub.demo'",
+                Long.class
+        );
+        List<DemoRole> roles = List.of(
+                new DemoRole("REPORTER", login("anna.ivanova@incidenthub.demo")),
+                new DemoRole("ENGINEER", login("boris.petrov@incidenthub.demo")),
+                new DemoRole("ADMIN", login("olga.smirnova@incidenthub.demo"))
+        );
+
+        for (DemoRole role : roles) {
+            for (IncidentStatus incidentStatus : IncidentStatus.values()) {
+                setIncidentStatus(incidentId, incidentStatus);
+                String incidentResponse = mockMvc.perform(get("/api/v1/incidents/{id}", incidentId)
+                                .header(HttpHeaders.AUTHORIZATION, "Bearer " + role.token()))
+                        .andExpect(status().isOk())
+                        .andReturn()
+                        .getResponse()
+                        .getContentAsString();
+                List<String> advertisedActions = JsonPath.read(incidentResponse, "$.availableActions");
+
+                for (IncidentAction action : IncidentAction.values()) {
+                    setIncidentStatus(incidentId, incidentStatus);
+                    boolean expectedSuccess = !role.name().equals("REPORTER")
+                            && action.isAllowedFrom(incidentStatus);
+                    var endpointResult = mockMvc.perform(actionRequest(
+                            incidentId,
+                            assigneeId,
+                            action,
+                            role.token()
+                    ));
+
+                    if (expectedSuccess) {
+                        endpointResult.andExpect(status().isOk());
+                        assertThat(advertisedActions)
+                                .as("%s in %s", action, incidentStatus)
+                                .contains(action.name());
+                    } else if (role.name().equals("REPORTER")) {
+                        endpointResult.andExpect(status().isForbidden());
+                        assertThat(advertisedActions)
+                                .as("%s in %s for REPORTER", action, incidentStatus)
+                                .doesNotContain(action.name());
+                    } else {
+                        endpointResult.andExpect(status().isConflict());
+                        assertThat(advertisedActions)
+                                .as("%s in %s", action, incidentStatus)
+                                .doesNotContain(action.name());
+                    }
+                }
+            }
+        }
     }
 
     @Test
@@ -279,5 +345,45 @@ class DemoDataMigrationIntegrationTest extends PostgreSQLIntegrationTest {
         mockMvc.perform(post("/api/v1/incidents/{id}/{action}", incidentId, action)
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
                 .andExpect(status().isOk());
+    }
+
+    private String login(String email) throws Exception {
+        String response = mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "email": "%s",
+                                  "password": "demo1234"
+                                }
+                                """.formatted(email)))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        return JsonPath.read(response, "$.accessToken");
+    }
+
+    private void setIncidentStatus(long incidentId, IncidentStatus status) {
+        entityManager.flush();
+        jdbcTemplate.update("update incidents set status = ? where id = ?", status.name(), incidentId);
+        entityManager.clear();
+    }
+
+    private org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder actionRequest(
+            long incidentId,
+            long assigneeId,
+            IncidentAction action,
+            String token
+    ) {
+        var request = post("/api/v1/incidents/{id}/{action}", incidentId, action.name().toLowerCase())
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + token);
+        if (action == IncidentAction.ASSIGN) {
+            request.contentType(MediaType.APPLICATION_JSON)
+                    .content("{\"assigneeId\":" + assigneeId + "}");
+        }
+        return request;
+    }
+
+    private record DemoRole(String name, String token) {
     }
 }

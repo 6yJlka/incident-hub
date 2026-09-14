@@ -9,6 +9,8 @@ import ru.donskikh.incidenthub.incident.IncidentNotFoundException;
 import ru.donskikh.incidenthub.incident.IncidentRepository;
 import ru.donskikh.incidenthub.team.Team;
 
+import java.util.List;
+
 @Service
 public class GetIncidentService {
 
@@ -51,7 +53,8 @@ public class GetIncidentService {
                 assignee == null ? null : assignee.getId(),
                 assignee == null ? null : assignee.getDisplayName(),
                 incident.getCreatedAt(),
-                incident.getUpdatedAt()
+                incident.getUpdatedAt(),
+                List.of()
         );
     }
 }

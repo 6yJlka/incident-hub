@@ -86,6 +86,7 @@ class GetIncidentServiceTest {
         assertThat(result.assigneeDisplayName()).isEqualTo("Assignee");
         assertThat(result.createdAt()).isEqualTo(createdAt);
         assertThat(result.updatedAt()).isEqualTo(updatedAt);
+        assertThat(result.availableActions()).isEmpty();
     }
 
     @Test

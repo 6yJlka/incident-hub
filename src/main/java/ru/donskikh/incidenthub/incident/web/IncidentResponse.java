@@ -6,8 +6,10 @@ import ru.donskikh.incidenthub.incident.IncidentPriority;
 import ru.donskikh.incidenthub.incident.IncidentSeverity;
 import ru.donskikh.incidenthub.incident.IncidentSource;
 import ru.donskikh.incidenthub.incident.IncidentStatus;
+import ru.donskikh.incidenthub.incident.IncidentAction;
 
 import java.time.Instant;
+import java.util.List;
 
 public record IncidentResponse(
         @Schema(description = "Incident identifier", example = "73") Long id,
@@ -32,6 +34,14 @@ public record IncidentResponse(
         @Schema(description = "Assigned user display name", example = "Maksim Kuznetsov", nullable = true)
         String assigneeDisplayName,
         @Schema(description = "Creation timestamp", example = "2026-09-01T10:00:00Z") Instant createdAt,
-        @Schema(description = "Last update timestamp", example = "2026-09-01T10:15:00Z") Instant updatedAt
+        @Schema(description = "Last update timestamp", example = "2026-09-01T10:15:00Z") Instant updatedAt,
+        @Schema(
+                description = "Lifecycle actions available to the current user in the current status",
+                example = "[\"ASSIGN\", \"CANCEL\"]"
+        )
+        List<IncidentAction> availableActions
 ) {
+    public IncidentResponse {
+        availableActions = List.copyOf(availableActions);
+    }
 }

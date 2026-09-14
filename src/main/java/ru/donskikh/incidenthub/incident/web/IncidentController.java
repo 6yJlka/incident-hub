@@ -59,6 +59,7 @@ public class IncidentController {
     private final ReopenIncidentService reopenIncidentService;
     private final CancelIncidentService cancelIncidentService;
     private final IncidentWebMapper mapper;
+    private final AvailableIncidentActions availableIncidentActions;
 
     public IncidentController(
             CreateIncidentService createIncidentService,
@@ -71,7 +72,8 @@ public class IncidentController {
             CloseIncidentService closeIncidentService,
             ReopenIncidentService reopenIncidentService,
             CancelIncidentService cancelIncidentService,
-            IncidentWebMapper mapper
+            IncidentWebMapper mapper,
+            AvailableIncidentActions availableIncidentActions
     ) {
         this.createIncidentService = createIncidentService;
         this.listIncidentsService = listIncidentsService;
@@ -84,6 +86,7 @@ public class IncidentController {
         this.reopenIncidentService = reopenIncidentService;
         this.cancelIncidentService = cancelIncidentService;
         this.mapper = mapper;
+        this.availableIncidentActions = availableIncidentActions;
     }
 
     @PostMapping
@@ -162,9 +165,10 @@ public class IncidentController {
                     content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     })
     public IncidentResponse get(
-            @Parameter(description = "Incident identifier", example = "73") @PathVariable long id
+            @Parameter(description = "Incident identifier", example = "73") @PathVariable long id,
+            @AuthenticationPrincipal AuthenticatedUser currentUser
     ) {
-        return mapper.toResponse(getIncidentService.get(id));
+        return currentIncident(id, currentUser);
     }
 
     @GetMapping("/{id}/history")
@@ -186,7 +190,7 @@ public class IncidentController {
     }
 
     @PostMapping("/{id}/assign")
-    @PreAuthorize("hasAnyRole('ENGINEER', 'ADMIN')")
+    @PreAuthorize("@incidentActionAuthorization.isAllowed(principal, T(ru.donskikh.incidenthub.incident.IncidentAction).ASSIGN)")
     @Operation(
             summary = "Assign an incident",
             description = "Assigns or reassigns an existing user. Allowed only while the incident is OPEN or ASSIGNED."
@@ -208,11 +212,11 @@ public class IncidentController {
         long incidentId = assignIncidentService.assign(
                 mapper.toCommand(id, request, currentUser.userId())
         ).incidentId();
-        return currentIncident(incidentId);
+        return currentIncident(incidentId, currentUser);
     }
 
     @PostMapping("/{id}/start")
-    @PreAuthorize("hasAnyRole('ENGINEER', 'ADMIN')")
+    @PreAuthorize("@incidentActionAuthorization.isAllowed(principal, T(ru.donskikh.incidenthub.incident.IncidentAction).START)")
     @Operation(
             summary = "Start incident work",
             description = "Moves an ASSIGNED incident to IN_PROGRESS. No other source status is allowed."
@@ -233,11 +237,11 @@ public class IncidentController {
         long incidentId = startIncidentProgressService.start(
                 new StartIncidentProgressCommand(id, currentUser.userId())
         ).incidentId();
-        return currentIncident(incidentId);
+        return currentIncident(incidentId, currentUser);
     }
 
     @PostMapping("/{id}/resolve")
-    @PreAuthorize("hasAnyRole('ENGINEER', 'ADMIN')")
+    @PreAuthorize("@incidentActionAuthorization.isAllowed(principal, T(ru.donskikh.incidenthub.incident.IncidentAction).RESOLVE)")
     @Operation(
             summary = "Resolve an incident",
             description = "Moves an IN_PROGRESS incident to RESOLVED. No other source status is allowed."
@@ -258,11 +262,11 @@ public class IncidentController {
         long incidentId = resolveIncidentService.resolve(
                 new ResolveIncidentCommand(id, currentUser.userId())
         ).incidentId();
-        return currentIncident(incidentId);
+        return currentIncident(incidentId, currentUser);
     }
 
     @PostMapping("/{id}/close")
-    @PreAuthorize("hasAnyRole('ENGINEER', 'ADMIN')")
+    @PreAuthorize("@incidentActionAuthorization.isAllowed(principal, T(ru.donskikh.incidenthub.incident.IncidentAction).CLOSE)")
     @Operation(
             summary = "Close an incident",
             description = "Moves a RESOLVED incident to CLOSED. No other source status is allowed."
@@ -283,11 +287,11 @@ public class IncidentController {
         long incidentId = closeIncidentService.close(
                 new CloseIncidentCommand(id, currentUser.userId())
         ).incidentId();
-        return currentIncident(incidentId);
+        return currentIncident(incidentId, currentUser);
     }
 
     @PostMapping("/{id}/reopen")
-    @PreAuthorize("hasAnyRole('ENGINEER', 'ADMIN')")
+    @PreAuthorize("@incidentActionAuthorization.isAllowed(principal, T(ru.donskikh.incidenthub.incident.IncidentAction).REOPEN)")
     @Operation(
             summary = "Reopen an incident",
             description = "Moves a RESOLVED incident back to IN_PROGRESS when the problem persists."
@@ -308,11 +312,11 @@ public class IncidentController {
         long incidentId = reopenIncidentService.reopen(
                 new ReopenIncidentCommand(id, currentUser.userId())
         ).incidentId();
-        return currentIncident(incidentId);
+        return currentIncident(incidentId, currentUser);
     }
 
     @PostMapping("/{id}/cancel")
-    @PreAuthorize("hasAnyRole('ENGINEER', 'ADMIN')")
+    @PreAuthorize("@incidentActionAuthorization.isAllowed(principal, T(ru.donskikh.incidenthub.incident.IncidentAction).CANCEL)")
     @Operation(
             summary = "Cancel an incident",
             description = "Moves an OPEN, ASSIGNED, or IN_PROGRESS incident to CANCELLED. Resolved and closed incidents cannot be cancelled."
@@ -333,10 +337,13 @@ public class IncidentController {
         long incidentId = cancelIncidentService.cancel(
                 new CancelIncidentCommand(id, currentUser.userId())
         ).incidentId();
-        return currentIncident(incidentId);
+        return currentIncident(incidentId, currentUser);
     }
 
-    private IncidentResponse currentIncident(long incidentId) {
-        return mapper.toResponse(getIncidentService.get(incidentId));
+    private IncidentResponse currentIncident(long incidentId, AuthenticatedUser currentUser) {
+        var result = getIncidentService.get(incidentId);
+        return mapper.toResponse(result.withAvailableActions(
+                availableIncidentActions.forIncident(result.status(), currentUser)
+        ));
     }
 }

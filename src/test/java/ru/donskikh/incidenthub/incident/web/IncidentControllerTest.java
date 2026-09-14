@@ -1,5 +1,7 @@
 package ru.donskikh.incidenthub.incident.web;
 
+import com.jayway.jsonpath.JsonPath;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -21,13 +23,18 @@ import ru.donskikh.incidenthub.common.web.AuthorizationProblemDetails;
 import ru.donskikh.incidenthub.security.AuthenticatedMockMvcConfiguration;
 import ru.donskikh.incidenthub.security.SecurityConfiguration;
 import ru.donskikh.incidenthub.identity.UserRole;
+import ru.donskikh.incidenthub.incident.IncidentAction;
 import ru.donskikh.incidenthub.incident.IncidentAssignmentNotAllowedException;
+import ru.donskikh.incidenthub.incident.IncidentCancellationNotAllowedException;
 import ru.donskikh.incidenthub.incident.IncidentClosureNotAllowedException;
 import ru.donskikh.incidenthub.incident.IncidentNotFoundException;
 import ru.donskikh.incidenthub.incident.IncidentPriority;
 import ru.donskikh.incidenthub.incident.IncidentSeverity;
 import ru.donskikh.incidenthub.incident.IncidentSource;
 import ru.donskikh.incidenthub.incident.IncidentStatus;
+import ru.donskikh.incidenthub.incident.IncidentReopenNotAllowedException;
+import ru.donskikh.incidenthub.incident.IncidentResolutionNotAllowedException;
+import ru.donskikh.incidenthub.incident.IncidentStartProgressNotAllowedException;
 import ru.donskikh.incidenthub.incident.application.AssignIncidentCommand;
 import ru.donskikh.incidenthub.incident.application.AssignIncidentResult;
 import ru.donskikh.incidenthub.incident.application.AssignIncidentService;
@@ -78,6 +85,8 @@ import static ru.donskikh.incidenthub.security.AuthenticatedMockMvcConfiguration
 @WebMvcTest(IncidentController.class)
 @Import({
         IncidentWebMapper.class,
+        AvailableIncidentActions.class,
+        IncidentActionAuthorization.class,
         GlobalExceptionHandler.class,
         SecurityConfiguration.class,
         AuthenticatedMockMvcConfiguration.class
@@ -233,7 +242,64 @@ class IncidentControllerTest {
                 .andExpect(jsonPath("$.id").value(42))
                 .andExpect(jsonPath("$.title").value("Недоступна оплата"))
                 .andExpect(jsonPath("$.affectedServiceCode").value("PAYMENTS"))
-                .andExpect(jsonPath("$.status").value("OPEN"));
+                .andExpect(jsonPath("$.status").value("OPEN"))
+                .andExpect(jsonPath("$.availableActions[0]").value("ASSIGN"))
+                .andExpect(jsonPath("$.availableActions[1]").value("CANCEL"));
+    }
+
+    @ParameterizedTest
+    @MethodSource("rolesAndStatuses")
+    void returnsActionsAllowedByBothStatusAndRole(
+            UserRole role,
+            IncidentStatus incidentStatus,
+            List<String> expectedActions
+    ) throws Exception {
+        when(getIncidentService.get(42L)).thenReturn(incident(incidentStatus, 21L));
+
+        String response = mockMvc.perform(get("/api/v1/incidents/42").with(authenticatedAs(role)))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        assertThat(JsonPath.<List<String>>read(response, "$.availableActions"))
+                .containsExactlyElementsOf(expectedActions);
+    }
+
+    @ParameterizedTest
+    @MethodSource("rolesStatusesAndActions")
+    void advertisedActionsMatchActualEndpointOutcomes(
+            UserRole role,
+            IncidentStatus incidentStatus,
+            IncidentAction action
+    ) throws Exception {
+        when(getIncidentService.get(42L)).thenReturn(incident(incidentStatus, 21L));
+
+        String getResponse = mockMvc.perform(get("/api/v1/incidents/42").with(authenticatedAs(role)))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        List<String> advertisedActions = JsonPath.read(getResponse, "$.availableActions");
+        boolean expectedToSucceed = role != UserRole.REPORTER && action.isAllowedFrom(incidentStatus);
+
+        if (expectedToSucceed) {
+            stubSuccessfulAction(action, incidentStatus);
+        } else if (role != UserRole.REPORTER) {
+            stubConflictingAction(action, incidentStatus);
+        }
+
+        var endpointResult = mockMvc.perform(actionRequest(action).with(authenticatedAs(role)));
+        if (expectedToSucceed) {
+            endpointResult.andExpect(status().isOk());
+            assertThat(advertisedActions).contains(action.name());
+        } else if (role == UserRole.REPORTER) {
+            endpointResult.andExpect(status().isForbidden());
+            assertThat(advertisedActions).doesNotContain(action.name());
+        } else {
+            endpointResult.andExpect(status().isConflict());
+            assertThat(advertisedActions).doesNotContain(action.name());
+        }
     }
 
     @Test
@@ -472,6 +538,40 @@ class IncidentControllerTest {
         }
     }
 
+    private void stubSuccessfulAction(IncidentAction action, IncidentStatus status) {
+        switch (action) {
+            case ASSIGN -> when(assignIncidentService.assign(any(AssignIncidentCommand.class)))
+                    .thenReturn(new AssignIncidentResult(42L, 21L, status));
+            case START -> when(startIncidentProgressService.start(any(StartIncidentProgressCommand.class)))
+                    .thenReturn(new StartIncidentProgressResult(42L, status));
+            case RESOLVE -> when(resolveIncidentService.resolve(any(ResolveIncidentCommand.class)))
+                    .thenReturn(new ResolveIncidentResult(42L, status));
+            case CLOSE -> when(closeIncidentService.close(any(CloseIncidentCommand.class)))
+                    .thenReturn(new CloseIncidentResult(42L, status));
+            case REOPEN -> when(reopenIncidentService.reopen(any(ReopenIncidentCommand.class)))
+                    .thenReturn(new ReopenIncidentResult(42L, status));
+            case CANCEL -> when(cancelIncidentService.cancel(any(CancelIncidentCommand.class)))
+                    .thenReturn(new CancelIncidentResult(42L, status));
+        }
+    }
+
+    private void stubConflictingAction(IncidentAction action, IncidentStatus status) {
+        switch (action) {
+            case ASSIGN -> when(assignIncidentService.assign(any(AssignIncidentCommand.class)))
+                    .thenThrow(new IncidentAssignmentNotAllowedException(42L, status));
+            case START -> when(startIncidentProgressService.start(any(StartIncidentProgressCommand.class)))
+                    .thenThrow(new IncidentStartProgressNotAllowedException(42L, status));
+            case RESOLVE -> when(resolveIncidentService.resolve(any(ResolveIncidentCommand.class)))
+                    .thenThrow(new IncidentResolutionNotAllowedException(42L, status));
+            case CLOSE -> when(closeIncidentService.close(any(CloseIncidentCommand.class)))
+                    .thenThrow(new IncidentClosureNotAllowedException(42L, status));
+            case REOPEN -> when(reopenIncidentService.reopen(any(ReopenIncidentCommand.class)))
+                    .thenThrow(new IncidentReopenNotAllowedException(42L, status));
+            case CANCEL -> when(cancelIncidentService.cancel(any(CancelIncidentCommand.class)))
+                    .thenThrow(new IncidentCancellationNotAllowedException(42L, status));
+        }
+    }
+
     private void verifyLifecycleActionUsesAuthenticatedUser(LifecycleAction action) {
         switch (action) {
             case START -> verify(startIncidentProgressService).start(new StartIncidentProgressCommand(42L, 42L));
@@ -520,7 +620,8 @@ class IncidentControllerTest {
                 assigneeId,
                 assigneeId == null ? null : "Исполнитель",
                 CREATED_AT,
-                UPDATED_AT
+                UPDATED_AT,
+                List.of()
         );
     }
 
@@ -556,6 +657,44 @@ class IncidentControllerTest {
                 Arguments.of("/api/v1/incidents/42/reopen", LifecycleAction.REOPEN, IncidentStatus.IN_PROGRESS),
                 Arguments.of("/api/v1/incidents/42/cancel", LifecycleAction.CANCEL, IncidentStatus.CANCELLED)
         );
+    }
+
+    private static Stream<Arguments> rolesAndStatuses() {
+        return Stream.of(UserRole.values())
+                .flatMap(role -> Stream.of(IncidentStatus.values())
+                        .map(status -> Arguments.of(role, status, expectedActions(role, status))));
+    }
+
+    private static Stream<Arguments> rolesStatusesAndActions() {
+        return Stream.of(UserRole.values())
+                .flatMap(role -> Stream.of(IncidentStatus.values())
+                        .flatMap(status -> Stream.of(IncidentAction.values())
+                                .map(action -> Arguments.of(role, status, action))));
+    }
+
+    private static List<String> expectedActions(UserRole role, IncidentStatus status) {
+        if (role == UserRole.REPORTER) {
+            return List.of();
+        }
+        return Stream.of(IncidentAction.values())
+                .filter(action -> switch (action) {
+                    case ASSIGN -> status.allowsAssignment();
+                    case START -> status.allowsStartProgress();
+                    case RESOLVE -> status.allowsResolve();
+                    case CLOSE -> status.allowsClose();
+                    case REOPEN -> status.allowsReopen();
+                    case CANCEL -> status.allowsCancellation();
+                })
+                .map(Enum::name)
+                .toList();
+    }
+
+    private static MockHttpServletRequestBuilder actionRequest(IncidentAction action) {
+        MockHttpServletRequestBuilder request = post("/api/v1/incidents/42/" + action.name().toLowerCase());
+        if (action == IncidentAction.ASSIGN) {
+            request.contentType(MediaType.APPLICATION_JSON).content("{\"assigneeId\":21}");
+        }
+        return request;
     }
 
     private static Stream<Arguments> notFoundRequests() {
