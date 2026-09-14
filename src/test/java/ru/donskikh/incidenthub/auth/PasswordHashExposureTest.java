@@ -5,6 +5,10 @@ import ru.donskikh.incidenthub.auth.application.LoginResult;
 import ru.donskikh.incidenthub.auth.application.RegisterUserResult;
 import ru.donskikh.incidenthub.auth.web.LoginResponse;
 import ru.donskikh.incidenthub.auth.web.RegisterResponse;
+import ru.donskikh.incidenthub.identity.application.CreateUserResult;
+import ru.donskikh.incidenthub.identity.application.ListUserItem;
+import ru.donskikh.incidenthub.identity.web.CreateUserResponse;
+import ru.donskikh.incidenthub.identity.web.UserListItemResponse;
 
 import java.lang.reflect.RecordComponent;
 import java.util.Arrays;
@@ -20,7 +24,11 @@ class PasswordHashExposureTest {
                 RegisterUserResult.class,
                 LoginResult.class,
                 RegisterResponse.class,
-                LoginResponse.class
+                LoginResponse.class,
+                CreateUserResult.class,
+                ListUserItem.class,
+                CreateUserResponse.class,
+                UserListItemResponse.class
         );
 
         assertThat(outputTypes

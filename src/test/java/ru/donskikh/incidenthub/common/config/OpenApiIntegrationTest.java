@@ -84,10 +84,22 @@ class OpenApiIntegrationTest extends PostgreSQLIntegrationTest {
                 document,
                 "$.paths['/api/v1/incidents'].get.responses['401'].content['application/problem+json'].schema['$ref']"
         )).isEqualTo("#/components/schemas/ProblemDetail");
+        assertThat(JsonPath.<String>read(
+                document,
+                "$.paths['/api/v1/incidents/{id}/assign'].post.responses['403'].content['application/problem+json'].schema['$ref']"
+        )).isEqualTo("#/components/schemas/ProblemDetail");
+        assertThat(JsonPath.<String>read(
+                document,
+                "$.paths['/api/v1/services'].post.responses['403'].content['application/problem+json'].schema['$ref']"
+        )).isEqualTo("#/components/schemas/ProblemDetail");
+        assertThat(JsonPath.<Map<String, ?>>read(
+                document,
+                "$.paths['/api/v1/incidents'].get.responses"
+        )).doesNotContainKey("403");
         assertThat(JsonPath.<Map<String, ?>>read(
                 document,
                 "$.paths['/api/v1/auth/register'].post.responses"
-        )).doesNotContainKey("401");
+        )).doesNotContainKeys("401", "403");
     }
 
     @Test

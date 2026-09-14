@@ -5,6 +5,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.MockMvcBuilderCustomiz
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import ru.donskikh.incidenthub.identity.UserRole;
 
 import java.util.List;
@@ -17,16 +18,16 @@ public class AuthenticatedMockMvcConfiguration {
 
     @Bean
     MockMvcBuilderCustomizer authenticatedDefaultRequest() {
-        AuthenticatedUser principal = new AuthenticatedUser(
-                42L,
-                "mvc-test@example.com",
-                UserRole.REPORTER
-        );
+        return builder -> builder.defaultRequest(get("/").with(authenticatedAs(UserRole.ADMIN)));
+    }
+
+    public static RequestPostProcessor authenticatedAs(UserRole role) {
+        AuthenticatedUser principal = new AuthenticatedUser(42L, "mvc-test@example.com", role);
         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                 principal,
                 null,
-                List.of(new SimpleGrantedAuthority("ROLE_REPORTER"))
+                List.of(new SimpleGrantedAuthority("ROLE_" + role.name()))
         );
-        return builder -> builder.defaultRequest(get("/").with(authentication(authentication)));
+        return authentication(authentication);
     }
 }

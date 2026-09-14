@@ -8,9 +8,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import ru.donskikh.incidenthub.identity.User;
 import ru.donskikh.incidenthub.identity.UserEmailAlreadyExistsException;
 import ru.donskikh.incidenthub.identity.UserRepository;
+import ru.donskikh.incidenthub.identity.UserRole;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -27,35 +29,44 @@ class CreateUserServiceTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private PasswordEncoder passwordEncoder;
+
     @InjectMocks
     private CreateUserService service;
 
     @Test
     void createsUserWithNormalizedEmail() {
+        when(passwordEncoder.encode("secure-password")).thenReturn("$2a$10$encoded-password");
         User savedUser = mock(User.class);
         when(userRepository.existsByNormalizedEmail("user@example.com")).thenReturn(false);
         when(userRepository.saveAndFlush(any(User.class))).thenReturn(savedUser);
         when(savedUser.getId()).thenReturn(9L);
         when(savedUser.getEmail()).thenReturn("user@example.com");
+        when(savedUser.getDisplayName()).thenReturn("Example User");
+        when(savedUser.getRole()).thenReturn(UserRole.ENGINEER);
         when(savedUser.isActive()).thenReturn(true);
 
-        CreateUserResult result = service.create(new CreateUserCommand(
-                "  User@Example.COM  ",
-                "Example User"
-        ));
+        CreateUserResult result = service.create(command("  User@Example.COM  ", "Example User"));
 
         ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
         verify(userRepository).saveAndFlush(captor.capture());
         assertThat(captor.getValue().getEmail()).isEqualTo("user@example.com");
         assertThat(captor.getValue().getDisplayName()).isEqualTo("Example User");
-        assertThat(result).isEqualTo(new CreateUserResult(9L, "user@example.com", true));
+        assertThat(captor.getValue().getPasswordHash()).isEqualTo("$2a$10$encoded-password");
+        assertThat(captor.getValue().getRole()).isEqualTo(UserRole.ENGINEER);
+        assertThat(result).isEqualTo(new CreateUserResult(
+                9L, "user@example.com", "Example User", UserRole.ENGINEER, true
+        ));
+        verify(passwordEncoder).encode("secure-password");
     }
 
     @Test
     void throwsDomainExceptionWhenNormalizedEmailAlreadyExists() {
+        when(passwordEncoder.encode("secure-password")).thenReturn("$2a$10$encoded-password");
         when(userRepository.existsByNormalizedEmail("user@example.com")).thenReturn(true);
 
-        assertThatThrownBy(() -> service.create(new CreateUserCommand("USER@example.com", "User")))
+        assertThatThrownBy(() -> service.create(command("USER@example.com", "User")))
                 .isInstanceOf(UserEmailAlreadyExistsException.class)
                 .hasMessage("User email already exists: user@example.com");
 
@@ -64,11 +75,12 @@ class CreateUserServiceTest {
 
     @Test
     void translatesConcurrentEmailConflictToDomainException() {
+        when(passwordEncoder.encode("secure-password")).thenReturn("$2a$10$encoded-password");
         DataIntegrityViolationException databaseException = databaseException("uk_users_email_lower");
         when(userRepository.existsByNormalizedEmail("user@example.com")).thenReturn(false);
         when(userRepository.saveAndFlush(any(User.class))).thenThrow(databaseException);
 
-        assertThatThrownBy(() -> service.create(new CreateUserCommand("USER@example.com", "User")))
+        assertThatThrownBy(() -> service.create(command("USER@example.com", "User")))
                 .isInstanceOf(UserEmailAlreadyExistsException.class)
                 .hasMessage("User email already exists: user@example.com")
                 .hasCause(databaseException);
@@ -76,21 +88,23 @@ class CreateUserServiceTest {
 
     @Test
     void doesNotTranslateDifferentIntegrityConstraint() {
+        when(passwordEncoder.encode("secure-password")).thenReturn("$2a$10$encoded-password");
         DataIntegrityViolationException databaseException = databaseException("chk_users_email_not_blank");
         when(userRepository.existsByNormalizedEmail("user@example.com")).thenReturn(false);
         when(userRepository.saveAndFlush(any(User.class))).thenThrow(databaseException);
 
-        assertThatThrownBy(() -> service.create(new CreateUserCommand("user@example.com", "User")))
+        assertThatThrownBy(() -> service.create(command("user@example.com", "User")))
                 .isSameAs(databaseException);
     }
 
     @Test
     void doesNotTranslateIntegrityViolationWithoutConstraintName() {
+        when(passwordEncoder.encode("secure-password")).thenReturn("$2a$10$encoded-password");
         DataIntegrityViolationException databaseException = databaseException(null);
         when(userRepository.existsByNormalizedEmail("user@example.com")).thenReturn(false);
         when(userRepository.saveAndFlush(any(User.class))).thenThrow(databaseException);
 
-        assertThatThrownBy(() -> service.create(new CreateUserCommand("user@example.com", "User")))
+        assertThatThrownBy(() -> service.create(command("user@example.com", "User")))
                 .isSameAs(databaseException);
     }
 
@@ -100,7 +114,11 @@ class CreateUserServiceTest {
                 .isInstanceOf(NullPointerException.class)
                 .hasMessage("command must not be null");
 
-        verifyNoInteractions(userRepository);
+        verifyNoInteractions(userRepository, passwordEncoder);
+    }
+
+    private static CreateUserCommand command(String email, String displayName) {
+        return new CreateUserCommand(email, displayName, "secure-password", UserRole.ENGINEER);
     }
 
     private static DataIntegrityViolationException databaseException(String constraintName) {

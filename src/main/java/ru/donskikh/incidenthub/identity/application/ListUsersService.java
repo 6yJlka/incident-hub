@@ -49,6 +49,7 @@ public class ListUsersService {
                 user.getId(),
                 user.getEmail(),
                 user.getDisplayName(),
+                user.getRole(),
                 user.isActive(),
                 user.getCreatedAt(),
                 user.getUpdatedAt()

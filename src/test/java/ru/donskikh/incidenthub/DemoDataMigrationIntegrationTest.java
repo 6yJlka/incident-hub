@@ -126,6 +126,39 @@ class DemoDataMigrationIntegrationTest extends PostgreSQLIntegrationTest {
     }
 
     @Test
+    void rejectsLifecycleActionForDemoReporter() throws Exception {
+        String loginResponse = mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "email": "anna.ivanova@incidenthub.demo",
+                                  "password": "demo1234"
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        String token = JsonPath.read(loginResponse, "$.accessToken");
+        long incidentId = jdbcTemplate.queryForObject(
+                "select id from incidents where title = 'Card payment authorization failures'",
+                Long.class
+        );
+        long assigneeId = jdbcTemplate.queryForObject(
+                "select id from users where email = 'boris.petrov@incidenthub.demo'",
+                Long.class
+        );
+
+        mockMvc.perform(post("/api/v1/incidents/{id}/assign", incidentId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"assigneeId\":" + assigneeId + "}"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.type").value("urn:incident-hub:problem:access-denied"))
+                .andExpect(jsonPath("$.detail").value("You do not have permission to perform this action"));
+    }
+
+    @Test
     @Transactional
     void recordsAuthenticatedDemoUserForTheCompleteLifecycle() throws Exception {
         String loginResponse = mockMvc.perform(post("/api/v1/auth/login")

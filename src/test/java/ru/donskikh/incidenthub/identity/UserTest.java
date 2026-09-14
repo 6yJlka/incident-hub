@@ -20,7 +20,12 @@ class UserTest {
 
     @Test
     void createsUserWithPasswordHashForRegistration() {
-        User user = new User("user@example.com", "User Name", "$2a$10$encoded-password");
+        User user = new User(
+                "user@example.com",
+                "User Name",
+                "$2a$10$encoded-password",
+                UserRole.REPORTER
+        );
 
         assertThat(user.getPasswordHash()).isEqualTo("$2a$10$encoded-password");
         assertThat(user.getRole()).isEqualTo(UserRole.REPORTER);

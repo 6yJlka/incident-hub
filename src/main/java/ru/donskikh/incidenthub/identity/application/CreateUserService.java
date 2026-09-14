@@ -2,6 +2,7 @@ package ru.donskikh.incidenthub.identity.application;
 
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.donskikh.incidenthub.identity.User;
@@ -16,16 +17,23 @@ public class CreateUserService {
     private static final String EMAIL_UNIQUE_CONSTRAINT = "uk_users_email_lower";
 
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public CreateUserService(UserRepository userRepository) {
+    public CreateUserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Transactional
     public CreateUserResult create(CreateUserCommand command) {
         Objects.requireNonNull(command, "command must not be null");
 
-        User user = new User(command.email(), command.displayName());
+        User user = new User(
+                command.email(),
+                command.displayName(),
+                passwordEncoder.encode(command.password()),
+                command.role()
+        );
         if (userRepository.existsByNormalizedEmail(user.getEmail())) {
             throw new UserEmailAlreadyExistsException(user.getEmail());
         }
@@ -41,6 +49,12 @@ public class CreateUserService {
             throw exception;
         }
 
-        return new CreateUserResult(savedUser.getId(), savedUser.getEmail(), savedUser.isActive());
+        return new CreateUserResult(
+                savedUser.getId(),
+                savedUser.getEmail(),
+                savedUser.getDisplayName(),
+                savedUser.getRole(),
+                savedUser.isActive()
+        );
     }
 }

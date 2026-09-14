@@ -16,6 +16,7 @@ import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.http.MediaType;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.method.HandlerMethod;
 
 @Configuration
@@ -44,10 +45,13 @@ public class OpenApiConfiguration {
     }
 
     @Bean
-    public OperationCustomizer authenticationErrorOperationCustomizer() {
+    public OperationCustomizer securityErrorOperationCustomizer() {
         return (operation, handlerMethod) -> {
             if (!isPublicOperation(handlerMethod)) {
                 addAuthenticationError(operation);
+            }
+            if (isRoleProtectedOperation(handlerMethod)) {
+                addAuthorizationError(operation);
             }
             return operation;
         };
@@ -58,11 +62,29 @@ public class OpenApiConfiguration {
                 || AnnotatedElementUtils.hasAnnotation(handlerMethod.getBeanType(), SecurityRequirements.class);
     }
 
+    private boolean isRoleProtectedOperation(HandlerMethod handlerMethod) {
+        return AnnotatedElementUtils.hasAnnotation(handlerMethod.getMethod(), PreAuthorize.class)
+                || AnnotatedElementUtils.hasAnnotation(handlerMethod.getBeanType(), PreAuthorize.class);
+    }
+
     private void addAuthenticationError(Operation operation) {
         operation.getResponses().addApiResponse(
                 "401",
                 new ApiResponse()
                         .description("Authentication credentials are missing or invalid")
+                        .content(new Content().addMediaType(
+                                MediaType.APPLICATION_PROBLEM_JSON_VALUE,
+                                new io.swagger.v3.oas.models.media.MediaType()
+                                        .schema(new Schema<>().$ref("#/components/schemas/ProblemDetail"))
+                        ))
+        );
+    }
+
+    private void addAuthorizationError(Operation operation) {
+        operation.getResponses().addApiResponse(
+                "403",
+                new ApiResponse()
+                        .description("The authenticated user does not have the required role")
                         .content(new Content().addMediaType(
                                 MediaType.APPLICATION_PROBLEM_JSON_VALUE,
                                 new io.swagger.v3.oas.models.media.MediaType()

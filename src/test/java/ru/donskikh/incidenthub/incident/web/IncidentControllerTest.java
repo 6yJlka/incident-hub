@@ -17,8 +17,10 @@ import ru.donskikh.incidenthub.audit.application.GetIncidentHistoryService;
 import ru.donskikh.incidenthub.audit.application.IncidentHistoryItem;
 import ru.donskikh.incidenthub.catalog.BusinessServiceNotFoundException;
 import ru.donskikh.incidenthub.common.web.GlobalExceptionHandler;
+import ru.donskikh.incidenthub.common.web.AuthorizationProblemDetails;
 import ru.donskikh.incidenthub.security.AuthenticatedMockMvcConfiguration;
 import ru.donskikh.incidenthub.security.SecurityConfiguration;
+import ru.donskikh.incidenthub.identity.UserRole;
 import ru.donskikh.incidenthub.incident.IncidentAssignmentNotAllowedException;
 import ru.donskikh.incidenthub.incident.IncidentClosureNotAllowedException;
 import ru.donskikh.incidenthub.incident.IncidentNotFoundException;
@@ -71,6 +73,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static ru.donskikh.incidenthub.security.AuthenticatedMockMvcConfiguration.authenticatedAs;
 
 @WebMvcTest(IncidentController.class)
 @Import({
@@ -157,6 +160,7 @@ class IncidentControllerTest {
                 .thenReturn(new CreateIncidentResult(42L, IncidentStatus.OPEN));
 
         mockMvc.perform(post("/api/v1/incidents")
+                        .with(authenticatedAs(UserRole.REPORTER))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -188,6 +192,7 @@ class IncidentControllerTest {
                 .thenReturn(new ListIncidentsResult(List.of(item), 1, 5, 8, 2, false, true));
 
         mockMvc.perform(get("/api/v1/incidents")
+                        .with(authenticatedAs(UserRole.REPORTER))
                         .param("page", "1")
                         .param("size", "5")
                         .param("status", "IN_PROGRESS")
@@ -264,6 +269,7 @@ class IncidentControllerTest {
         when(getIncidentService.get(42L)).thenReturn(incident(IncidentStatus.ASSIGNED, 21L));
 
         mockMvc.perform(post("/api/v1/incidents/42/assign")
+                        .with(authenticatedAs(UserRole.ENGINEER))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"assigneeId\":21}"))
                 .andExpect(status().isOk())
@@ -284,12 +290,23 @@ class IncidentControllerTest {
         stubSuccessfulLifecycleAction(action, expectedStatus);
         when(getIncidentService.get(42L)).thenReturn(incident(expectedStatus, 21L));
 
-        mockMvc.perform(post(path))
+        mockMvc.perform(post(path).with(authenticatedAs(UserRole.ENGINEER)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(42))
                 .andExpect(jsonPath("$.status").value(expectedStatus.name()));
 
         verifyLifecycleActionUsesAuthenticatedUser(action);
+    }
+
+    @ParameterizedTest
+    @MethodSource("lifecycleRequestsForReporter")
+    void rejectsEveryLifecycleActionForReporter(MockHttpServletRequestBuilder request) throws Exception {
+        mockMvc.perform(request.with(authenticatedAs(UserRole.REPORTER)))
+                .andExpect(status().isForbidden())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.type").value(AuthorizationProblemDetails.TYPE.toString()))
+                .andExpect(jsonPath("$.title").value(AuthorizationProblemDetails.TITLE))
+                .andExpect(jsonPath("$.detail").value(AuthorizationProblemDetails.DETAIL));
     }
 
     @ParameterizedTest
@@ -557,6 +574,19 @@ class IncidentControllerTest {
                 Arguments.of(post("/api/v1/incidents/42/close"), Endpoint.CLOSE),
                 Arguments.of(post("/api/v1/incidents/42/reopen"), Endpoint.REOPEN),
                 Arguments.of(post("/api/v1/incidents/42/cancel"), Endpoint.CANCEL)
+        );
+    }
+
+    private static Stream<MockHttpServletRequestBuilder> lifecycleRequestsForReporter() {
+        return Stream.of(
+                post("/api/v1/incidents/42/assign")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"assigneeId\":21}"),
+                post("/api/v1/incidents/42/start"),
+                post("/api/v1/incidents/42/resolve"),
+                post("/api/v1/incidents/42/close"),
+                post("/api/v1/incidents/42/reopen"),
+                post("/api/v1/incidents/42/cancel")
         );
     }
 

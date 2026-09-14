@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.donskikh.incidenthub.identity.User;
 import ru.donskikh.incidenthub.identity.UserEmailAlreadyExistsException;
 import ru.donskikh.incidenthub.identity.UserRepository;
+import ru.donskikh.incidenthub.identity.UserRole;
 
 import java.util.Objects;
 
@@ -31,7 +32,8 @@ public class RegisterUserService {
         User user = new User(
                 command.email(),
                 command.displayName(),
-                passwordEncoder.encode(command.password())
+                passwordEncoder.encode(command.password()),
+                UserRole.REPORTER
         );
         if (userRepository.existsByNormalizedEmail(user.getEmail())) {
             throw new UserEmailAlreadyExistsException(user.getEmail());

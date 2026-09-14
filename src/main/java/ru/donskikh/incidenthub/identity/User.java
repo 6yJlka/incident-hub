@@ -55,9 +55,10 @@ public class User {
         this.role = UserRole.REPORTER;
     }
 
-    public User(String email, String displayName, String passwordHash) {
+    public User(String email, String displayName, String passwordHash, UserRole role) {
         this(email, displayName);
         this.passwordHash = requireText(passwordHash, "passwordHash");
+        this.role = java.util.Objects.requireNonNull(role, "role must not be null");
     }
 
     @PrePersist

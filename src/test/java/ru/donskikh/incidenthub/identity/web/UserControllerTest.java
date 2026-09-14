@@ -8,7 +8,9 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import ru.donskikh.incidenthub.common.web.GlobalExceptionHandler;
+import ru.donskikh.incidenthub.common.web.AuthorizationProblemDetails;
 import ru.donskikh.incidenthub.identity.UserEmailAlreadyExistsException;
+import ru.donskikh.incidenthub.identity.UserRole;
 import ru.donskikh.incidenthub.identity.application.CreateUserCommand;
 import ru.donskikh.incidenthub.identity.application.CreateUserResult;
 import ru.donskikh.incidenthub.identity.application.CreateUserService;
@@ -32,6 +34,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static ru.donskikh.incidenthub.security.AuthenticatedMockMvcConfiguration.authenticatedAs;
 
 @WebMvcTest(UserController.class)
 @Import({
@@ -45,7 +48,9 @@ class UserControllerTest {
     private static final String VALID_REQUEST = """
             {
               "email": "user@example.com",
-              "displayName": "Example User"
+              "displayName": "Example User",
+              "password": "secure-password",
+              "role": "ENGINEER"
             }
             """;
 
@@ -61,23 +66,47 @@ class UserControllerTest {
     @Test
     void createsUserAndAcceptsTrimmedEmail() throws Exception {
         when(createUserService.create(any(CreateUserCommand.class)))
-                .thenReturn(new CreateUserResult(9L, "user@example.com", true));
+                .thenReturn(new CreateUserResult(
+                        9L, "user@example.com", "Example User", UserRole.ENGINEER, true
+                ));
 
         mockMvc.perform(post("/api/v1/users")
+                        .with(authenticatedAs(UserRole.ADMIN))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
                                   "email": "  User@Example.COM  ",
-                                  "displayName": "Example User"
+                                  "displayName": "Example User",
+                                  "password": "secure-password",
+                                  "role": "ENGINEER"
                                 }
                                 """))
                 .andExpect(status().isCreated())
                 .andExpect(header().string("Location", "http://localhost/api/v1/users/9"))
                 .andExpect(jsonPath("$.userId").value(9))
                 .andExpect(jsonPath("$.email").value("user@example.com"))
+                .andExpect(jsonPath("$.displayName").value("Example User"))
+                .andExpect(jsonPath("$.role").value("ENGINEER"))
+                .andExpect(jsonPath("$.password").doesNotExist())
+                .andExpect(jsonPath("$.passwordHash").doesNotExist())
                 .andExpect(jsonPath("$.active").value(true));
 
-        verify(createUserService).create(new CreateUserCommand("User@Example.COM", "Example User"));
+        verify(createUserService).create(new CreateUserCommand(
+                "User@Example.COM", "Example User", "secure-password", UserRole.ENGINEER
+        ));
+    }
+
+    @Test
+    void rejectsUserCreationForEngineerWithNeutralProblemDetail() throws Exception {
+        mockMvc.perform(post("/api/v1/users")
+                        .with(authenticatedAs(UserRole.ENGINEER))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(VALID_REQUEST))
+                .andExpect(status().isForbidden())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.type").value(AuthorizationProblemDetails.TYPE.toString()))
+                .andExpect(jsonPath("$.title").value(AuthorizationProblemDetails.TITLE))
+                .andExpect(jsonPath("$.detail").value(AuthorizationProblemDetails.DETAIL));
     }
 
     @Test
@@ -86,18 +115,21 @@ class UserControllerTest {
         Instant updatedAt = Instant.parse("2026-09-02T11:00:00Z");
         when(listUsersService.execute(any(ListUsersQuery.class))).thenReturn(new ListUsersResult(
                 List.of(new ListUserItem(
-                        9L, "user@example.com", "Example User", true, createdAt, updatedAt
+                        9L, "user@example.com", "Example User", UserRole.ENGINEER,
+                        true, createdAt, updatedAt
                 )),
                 1, 5, 8, 2, false, true
         ));
 
         mockMvc.perform(get("/api/v1/users")
+                        .with(authenticatedAs(UserRole.REPORTER))
                         .param("page", "1")
                         .param("size", "5")
                         .param("active", "true"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items[0].id").value(9))
                 .andExpect(jsonPath("$.items[0].email").value("user@example.com"))
+                .andExpect(jsonPath("$.items[0].role").value("ENGINEER"))
                 .andExpect(jsonPath("$.items[0].createdAt").value(createdAt.toString()))
                 .andExpect(jsonPath("$.page").value(1))
                 .andExpect(jsonPath("$.size").value(5))
@@ -117,7 +149,9 @@ class UserControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
                 .andExpect(jsonPath("$.errors[*].field", hasItem("email")))
-                .andExpect(jsonPath("$.errors[*].field", hasItem("displayName")));
+                .andExpect(jsonPath("$.errors[*].field", hasItem("displayName")))
+                .andExpect(jsonPath("$.errors[*].field", hasItem("password")))
+                .andExpect(jsonPath("$.errors[*].field", hasItem("role")));
     }
 
     @Test
@@ -127,7 +161,9 @@ class UserControllerTest {
                         .content("""
                                 {
                                   "email": "  not-an-email  ",
-                                  "displayName": "Example User"
+                                  "displayName": "Example User",
+                                  "password": "secure-password",
+                                  "role": "ENGINEER"
                                 }
                                 """))
                 .andExpect(status().isBadRequest())

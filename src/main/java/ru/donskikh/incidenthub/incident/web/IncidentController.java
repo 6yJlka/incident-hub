@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.ProblemDetail;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -185,6 +186,7 @@ public class IncidentController {
     }
 
     @PostMapping("/{id}/assign")
+    @PreAuthorize("hasAnyRole('ENGINEER', 'ADMIN')")
     @Operation(
             summary = "Assign an incident",
             description = "Assigns or reassigns an existing user. Allowed only while the incident is OPEN or ASSIGNED."
@@ -210,6 +212,7 @@ public class IncidentController {
     }
 
     @PostMapping("/{id}/start")
+    @PreAuthorize("hasAnyRole('ENGINEER', 'ADMIN')")
     @Operation(
             summary = "Start incident work",
             description = "Moves an ASSIGNED incident to IN_PROGRESS. No other source status is allowed."
@@ -234,6 +237,7 @@ public class IncidentController {
     }
 
     @PostMapping("/{id}/resolve")
+    @PreAuthorize("hasAnyRole('ENGINEER', 'ADMIN')")
     @Operation(
             summary = "Resolve an incident",
             description = "Moves an IN_PROGRESS incident to RESOLVED. No other source status is allowed."
@@ -258,6 +262,7 @@ public class IncidentController {
     }
 
     @PostMapping("/{id}/close")
+    @PreAuthorize("hasAnyRole('ENGINEER', 'ADMIN')")
     @Operation(
             summary = "Close an incident",
             description = "Moves a RESOLVED incident to CLOSED. No other source status is allowed."
@@ -282,6 +287,7 @@ public class IncidentController {
     }
 
     @PostMapping("/{id}/reopen")
+    @PreAuthorize("hasAnyRole('ENGINEER', 'ADMIN')")
     @Operation(
             summary = "Reopen an incident",
             description = "Moves a RESOLVED incident back to IN_PROGRESS when the problem persists."
@@ -306,6 +312,7 @@ public class IncidentController {
     }
 
     @PostMapping("/{id}/cancel")
+    @PreAuthorize("hasAnyRole('ENGINEER', 'ADMIN')")
     @Operation(
             summary = "Cancel an incident",
             description = "Moves an OPEN, ASSIGNED, or IN_PROGRESS incident to CANCELLED. Resolved and closed incidents cannot be cancelled."

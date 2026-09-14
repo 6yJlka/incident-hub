@@ -3,6 +3,7 @@ package ru.donskikh.incidenthub.auth.application;
 import org.hibernate.exception.ConstraintViolationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -48,7 +49,9 @@ class RegisterUserServiceTest {
         assertThat(result).isEqualTo(new RegisterUserResult(
                 9L, "user@example.com", "Example User", UserRole.REPORTER, true
         ));
-        verify(userRepository).saveAndFlush(any(User.class));
+        ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+        verify(userRepository).saveAndFlush(userCaptor.capture());
+        assertThat(userCaptor.getValue().getRole()).isEqualTo(UserRole.REPORTER);
         verify(passwordEncoder).encode("secure-password");
     }
 
