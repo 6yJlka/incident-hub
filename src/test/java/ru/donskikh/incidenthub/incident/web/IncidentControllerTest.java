@@ -17,6 +17,10 @@ import ru.donskikh.incidenthub.audit.application.GetIncidentHistoryService;
 import ru.donskikh.incidenthub.audit.application.IncidentHistoryItem;
 import ru.donskikh.incidenthub.catalog.BusinessServiceNotFoundException;
 import ru.donskikh.incidenthub.common.web.GlobalExceptionHandler;
+import ru.donskikh.incidenthub.common.web.AuthorizationProblemDetails;
+import ru.donskikh.incidenthub.security.AuthenticatedMockMvcConfiguration;
+import ru.donskikh.incidenthub.security.SecurityConfiguration;
+import ru.donskikh.incidenthub.identity.UserRole;
 import ru.donskikh.incidenthub.incident.IncidentAssignmentNotAllowedException;
 import ru.donskikh.incidenthub.incident.IncidentClosureNotAllowedException;
 import ru.donskikh.incidenthub.incident.IncidentNotFoundException;
@@ -69,9 +73,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static ru.donskikh.incidenthub.security.AuthenticatedMockMvcConfiguration.authenticatedAs;
 
 @WebMvcTest(IncidentController.class)
-@Import({IncidentWebMapper.class, GlobalExceptionHandler.class})
+@Import({
+        IncidentWebMapper.class,
+        GlobalExceptionHandler.class,
+        SecurityConfiguration.class,
+        AuthenticatedMockMvcConfiguration.class
+})
 class IncidentControllerTest {
 
     private static final String VALID_CREATE_REQUEST = """
@@ -80,8 +90,7 @@ class IncidentControllerTest {
               "description": "Платежи завершаются ошибкой",
               "affectedServiceId": 10,
               "priority": "HIGH",
-              "severity": "SEV2",
-              "reporterId": 20
+              "severity": "SEV2"
             }
             """;
 
@@ -140,7 +149,38 @@ class IncidentControllerTest {
                 10L,
                 IncidentPriority.HIGH,
                 IncidentSeverity.SEV2,
-                20L,
+                42L,
+                null
+        ));
+    }
+
+    @Test
+    void ignoresReporterIdFromRequestAndUsesAuthenticatedUser() throws Exception {
+        when(createIncidentService.create(any(CreateIncidentCommand.class)))
+                .thenReturn(new CreateIncidentResult(42L, IncidentStatus.OPEN));
+
+        mockMvc.perform(post("/api/v1/incidents")
+                        .with(authenticatedAs(UserRole.REPORTER))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "title": "Cannot pay",
+                                  "description": "Payments fail",
+                                  "affectedServiceId": 10,
+                                  "priority": "HIGH",
+                                  "severity": "SEV2",
+                                  "reporterId": 999
+                                }
+                                """))
+                .andExpect(status().isCreated());
+
+        verify(createIncidentService).create(new CreateIncidentCommand(
+                "Cannot pay",
+                "Payments fail",
+                10L,
+                IncidentPriority.HIGH,
+                IncidentSeverity.SEV2,
+                42L,
                 null
         ));
     }
@@ -152,6 +192,7 @@ class IncidentControllerTest {
                 .thenReturn(new ListIncidentsResult(List.of(item), 1, 5, 8, 2, false, true));
 
         mockMvc.perform(get("/api/v1/incidents")
+                        .with(authenticatedAs(UserRole.REPORTER))
                         .param("page", "1")
                         .param("size", "5")
                         .param("status", "IN_PROGRESS")
@@ -204,6 +245,8 @@ class IncidentControllerTest {
                         IncidentAuditEventType.ASSIGNED,
                         IncidentStatus.OPEN,
                         IncidentStatus.ASSIGNED,
+                        42L,
+                        "MVC Test User",
                         UPDATED_AT
                 ))
         ));
@@ -214,7 +257,9 @@ class IncidentControllerTest {
                 .andExpect(jsonPath("$.items[0].id").value(100))
                 .andExpect(jsonPath("$.items[0].eventType").value("ASSIGNED"))
                 .andExpect(jsonPath("$.items[0].fromStatus").value("OPEN"))
-                .andExpect(jsonPath("$.items[0].toStatus").value("ASSIGNED"));
+                .andExpect(jsonPath("$.items[0].toStatus").value("ASSIGNED"))
+                .andExpect(jsonPath("$.items[0].actorId").value(42))
+                .andExpect(jsonPath("$.items[0].actorDisplayName").value("MVC Test User"));
     }
 
     @Test
@@ -224,6 +269,7 @@ class IncidentControllerTest {
         when(getIncidentService.get(42L)).thenReturn(incident(IncidentStatus.ASSIGNED, 21L));
 
         mockMvc.perform(post("/api/v1/incidents/42/assign")
+                        .with(authenticatedAs(UserRole.ENGINEER))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"assigneeId\":21}"))
                 .andExpect(status().isOk())
@@ -231,7 +277,7 @@ class IncidentControllerTest {
                 .andExpect(jsonPath("$.assigneeId").value(21))
                 .andExpect(jsonPath("$.status").value("ASSIGNED"));
 
-        verify(assignIncidentService).assign(new AssignIncidentCommand(42L, 21L));
+        verify(assignIncidentService).assign(new AssignIncidentCommand(42L, 21L, 42L));
     }
 
     @ParameterizedTest
@@ -244,10 +290,23 @@ class IncidentControllerTest {
         stubSuccessfulLifecycleAction(action, expectedStatus);
         when(getIncidentService.get(42L)).thenReturn(incident(expectedStatus, 21L));
 
-        mockMvc.perform(post(path))
+        mockMvc.perform(post(path).with(authenticatedAs(UserRole.ENGINEER)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(42))
                 .andExpect(jsonPath("$.status").value(expectedStatus.name()));
+
+        verifyLifecycleActionUsesAuthenticatedUser(action);
+    }
+
+    @ParameterizedTest
+    @MethodSource("lifecycleRequestsForReporter")
+    void rejectsEveryLifecycleActionForReporter(MockHttpServletRequestBuilder request) throws Exception {
+        mockMvc.perform(request.with(authenticatedAs(UserRole.REPORTER)))
+                .andExpect(status().isForbidden())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.type").value(AuthorizationProblemDetails.TYPE.toString()))
+                .andExpect(jsonPath("$.title").value(AuthorizationProblemDetails.TITLE))
+                .andExpect(jsonPath("$.detail").value(AuthorizationProblemDetails.DETAIL));
     }
 
     @ParameterizedTest
@@ -413,6 +472,16 @@ class IncidentControllerTest {
         }
     }
 
+    private void verifyLifecycleActionUsesAuthenticatedUser(LifecycleAction action) {
+        switch (action) {
+            case START -> verify(startIncidentProgressService).start(new StartIncidentProgressCommand(42L, 42L));
+            case RESOLVE -> verify(resolveIncidentService).resolve(new ResolveIncidentCommand(42L, 42L));
+            case CLOSE -> verify(closeIncidentService).close(new CloseIncidentCommand(42L, 42L));
+            case REOPEN -> verify(reopenIncidentService).reopen(new ReopenIncidentCommand(42L, 42L));
+            case CANCEL -> verify(cancelIncidentService).cancel(new CancelIncidentCommand(42L, 42L));
+        }
+    }
+
     private void stubNotFound(Endpoint endpoint) {
         IncidentNotFoundException exception = new IncidentNotFoundException(42L);
         switch (endpoint) {
@@ -508,25 +577,35 @@ class IncidentControllerTest {
         );
     }
 
+    private static Stream<MockHttpServletRequestBuilder> lifecycleRequestsForReporter() {
+        return Stream.of(
+                post("/api/v1/incidents/42/assign")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"assigneeId\":21}"),
+                post("/api/v1/incidents/42/start"),
+                post("/api/v1/incidents/42/resolve"),
+                post("/api/v1/incidents/42/close"),
+                post("/api/v1/incidents/42/reopen"),
+                post("/api/v1/incidents/42/cancel")
+        );
+    }
+
     private static Stream<Arguments> createRequestsWithMissingRequiredField() {
         return Stream.of(
                 Arguments.of("title", """
-                        {"description":"d","affectedServiceId":10,"priority":"HIGH","severity":"SEV2","reporterId":20}
+                        {"description":"d","affectedServiceId":10,"priority":"HIGH","severity":"SEV2"}
                         """),
                 Arguments.of("description", """
-                        {"title":"t","affectedServiceId":10,"priority":"HIGH","severity":"SEV2","reporterId":20}
+                        {"title":"t","affectedServiceId":10,"priority":"HIGH","severity":"SEV2"}
                         """),
                 Arguments.of("affectedServiceId", """
-                        {"title":"t","description":"d","priority":"HIGH","severity":"SEV2","reporterId":20}
+                        {"title":"t","description":"d","priority":"HIGH","severity":"SEV2"}
                         """),
                 Arguments.of("priority", """
-                        {"title":"t","description":"d","affectedServiceId":10,"severity":"SEV2","reporterId":20}
+                        {"title":"t","description":"d","affectedServiceId":10,"severity":"SEV2"}
                         """),
                 Arguments.of("severity", """
-                        {"title":"t","description":"d","affectedServiceId":10,"priority":"HIGH","reporterId":20}
-                        """),
-                Arguments.of("reporterId", """
-                        {"title":"t","description":"d","affectedServiceId":10,"priority":"HIGH","severity":"SEV2"}
+                        {"title":"t","description":"d","affectedServiceId":10,"priority":"HIGH"}
                         """)
         );
     }

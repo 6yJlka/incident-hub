@@ -36,7 +36,8 @@ public class ResolveIncidentService {
                 incident.getId(),
                 IncidentAuditEventType.RESOLVED,
                 fromStatus,
-                incident.getStatus()
+                incident.getStatus(),
+                command.actorId()
         );
 
         return new ResolveIncidentResult(incident.getId(), incident.getStatus());

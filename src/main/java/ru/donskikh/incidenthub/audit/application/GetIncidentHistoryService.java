@@ -6,6 +6,7 @@ import ru.donskikh.incidenthub.audit.IncidentAuditEvent;
 import ru.donskikh.incidenthub.audit.IncidentAuditEventRepository;
 import ru.donskikh.incidenthub.incident.IncidentNotFoundException;
 import ru.donskikh.incidenthub.incident.IncidentRepository;
+import ru.donskikh.incidenthub.identity.User;
 
 @Service
 public class GetIncidentHistoryService {
@@ -39,11 +40,14 @@ public class GetIncidentHistoryService {
     }
 
     private IncidentHistoryItem toItem(IncidentAuditEvent event) {
+        User actor = event.getActor();
         return new IncidentHistoryItem(
                 event.getId(),
                 event.getEventType(),
                 event.getFromStatus(),
                 event.getToStatus(),
+                actor == null ? null : actor.getId(),
+                actor == null ? null : actor.getDisplayName(),
                 event.getCreatedAt()
         );
     }

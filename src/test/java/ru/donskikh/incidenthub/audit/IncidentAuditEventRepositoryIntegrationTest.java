@@ -9,6 +9,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
 import ru.donskikh.incidenthub.PostgreSQLIntegrationTest;
+import ru.donskikh.incidenthub.identity.User;
 import ru.donskikh.incidenthub.incident.IncidentStatus;
 
 import java.sql.Timestamp;
@@ -46,7 +47,7 @@ class IncidentAuditEventRepositoryIntegrationTest extends PostgreSQLIntegrationT
         jdbcTemplate.update("delete from users");
 
         jdbcTemplate.update(
-                "insert into users (id, email, display_name) values (?, ?, ?)",
+                "insert into users (id, email, display_name, role) values (?, ?, ?, 'REPORTER')",
                 REPORTER_ID, "audit-reporter@example.com", "Audit Reporter"
         );
         jdbcTemplate.update(
@@ -78,7 +79,8 @@ class IncidentAuditEventRepositoryIntegrationTest extends PostgreSQLIntegrationT
                 INCIDENT_ID,
                 IncidentAuditEventType.CREATED,
                 null,
-                IncidentStatus.OPEN
+                IncidentStatus.OPEN,
+                entityManager.getReference(User.class, REPORTER_ID)
         ));
         Long eventId = saved.getId();
         entityManager.clear();
@@ -88,6 +90,8 @@ class IncidentAuditEventRepositoryIntegrationTest extends PostgreSQLIntegrationT
         assertThat(loaded.getEventType()).isEqualTo(IncidentAuditEventType.CREATED);
         assertThat(loaded.getFromStatus()).isNull();
         assertThat(loaded.getToStatus()).isEqualTo(IncidentStatus.OPEN);
+        assertThat(loaded.getActor().getId()).isEqualTo(REPORTER_ID);
+        assertThat(loaded.getActor().getDisplayName()).isEqualTo("Audit Reporter");
         assertThat(loaded.getCreatedAt()).isNotNull();
         assertThat(jdbcTemplate.queryForObject(
                 "select event_type from incident_audit_events where id = ?",
@@ -111,6 +115,8 @@ class IncidentAuditEventRepositoryIntegrationTest extends PostgreSQLIntegrationT
         List<IncidentAuditEvent> events = repository.findByIncidentIdOrderByCreatedAtAscIdAsc(INCIDENT_ID);
 
         assertThat(events).extracting(IncidentAuditEvent::getId).containsExactly(firstId, secondId);
+        assertThat(events).extracting(event -> event.getActor().getId())
+                .containsOnly(REPORTER_ID);
     }
 
     @Test
@@ -119,18 +125,19 @@ class IncidentAuditEventRepositoryIntegrationTest extends PostgreSQLIntegrationT
                 999_999L,
                 IncidentAuditEventType.CANCELLED,
                 IncidentStatus.OPEN,
-                IncidentStatus.CANCELLED
+                IncidentStatus.CANCELLED,
+                entityManager.getReference(User.class, REPORTER_ID)
         ))).isInstanceOf(DataIntegrityViolationException.class);
     }
 
     @Test
-    void hasAppliedMigrationsFromV1ThroughV6() {
+    void hasAppliedAllDefaultMigrations() {
         List<String> versions = jdbcTemplate.queryForList(
                 "select version from flyway_schema_history where success order by installed_rank",
                 String.class
         );
 
-        assertThat(versions).containsSequence("1", "2", "3", "4", "5", "6");
+        assertThat(versions).containsExactly("1", "2", "3", "4", "5", "6", "8", "10");
     }
 
     private long insertAuditEvent(
@@ -142,8 +149,8 @@ class IncidentAuditEventRepositoryIntegrationTest extends PostgreSQLIntegrationT
         return jdbcTemplate.queryForObject(
                 """
                         insert into incident_audit_events (
-                            incident_id, event_type, from_status, to_status, created_at
-                        ) values (?, ?, ?, ?, ?)
+                            incident_id, event_type, from_status, to_status, actor_id, created_at
+                        ) values (?, ?, ?, ?, ?, ?)
                         returning id
                         """,
                 Long.class,
@@ -151,6 +158,7 @@ class IncidentAuditEventRepositoryIntegrationTest extends PostgreSQLIntegrationT
                 eventType,
                 fromStatus,
                 toStatus,
+                REPORTER_ID,
                 Timestamp.from(createdAt)
         );
     }

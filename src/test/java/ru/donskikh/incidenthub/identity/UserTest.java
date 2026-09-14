@@ -14,6 +14,21 @@ class UserTest {
         assertThat(user.isActive()).isTrue();
         assertThat(user.getEmail()).isEqualTo("user@example.com");
         assertThat(user.getDisplayName()).isEqualTo("User Name");
+        assertThat(user.getRole()).isEqualTo(UserRole.REPORTER);
+        assertThat(user.getPasswordHash()).isNull();
+    }
+
+    @Test
+    void createsUserWithPasswordHashForRegistration() {
+        User user = new User(
+                "user@example.com",
+                "User Name",
+                "$2a$10$encoded-password",
+                UserRole.REPORTER
+        );
+
+        assertThat(user.getPasswordHash()).isEqualTo("$2a$10$encoded-password");
+        assertThat(user.getRole()).isEqualTo(UserRole.REPORTER);
     }
 
     @Test

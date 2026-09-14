@@ -8,6 +8,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import ru.donskikh.incidenthub.common.web.GlobalExceptionHandler;
+import ru.donskikh.incidenthub.common.web.AuthorizationProblemDetails;
+import ru.donskikh.incidenthub.identity.UserRole;
 import ru.donskikh.incidenthub.team.TeamCodeAlreadyExistsException;
 import ru.donskikh.incidenthub.team.application.CreateTeamCommand;
 import ru.donskikh.incidenthub.team.application.CreateTeamResult;
@@ -16,6 +18,8 @@ import ru.donskikh.incidenthub.team.application.ListTeamItem;
 import ru.donskikh.incidenthub.team.application.ListTeamsQuery;
 import ru.donskikh.incidenthub.team.application.ListTeamsResult;
 import ru.donskikh.incidenthub.team.application.ListTeamsService;
+import ru.donskikh.incidenthub.security.AuthenticatedMockMvcConfiguration;
+import ru.donskikh.incidenthub.security.SecurityConfiguration;
 
 import java.time.Instant;
 import java.util.List;
@@ -30,9 +34,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static ru.donskikh.incidenthub.security.AuthenticatedMockMvcConfiguration.authenticatedAs;
 
 @WebMvcTest(TeamController.class)
-@Import({TeamWebMapper.class, GlobalExceptionHandler.class})
+@Import({
+        TeamWebMapper.class,
+        GlobalExceptionHandler.class,
+        SecurityConfiguration.class,
+        AuthenticatedMockMvcConfiguration.class
+})
 class TeamControllerTest {
 
     private static final String VALID_REQUEST = """
@@ -57,6 +67,7 @@ class TeamControllerTest {
                 .thenReturn(new CreateTeamResult(7L, "PLATFORM", true));
 
         mockMvc.perform(post("/api/v1/teams")
+                        .with(authenticatedAs(UserRole.ADMIN))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(VALID_REQUEST))
                 .andExpect(status().isCreated())
@@ -69,6 +80,18 @@ class TeamControllerTest {
     }
 
     @Test
+    void rejectsTeamCreationForEngineer() throws Exception {
+        mockMvc.perform(post("/api/v1/teams")
+                        .with(authenticatedAs(UserRole.ENGINEER))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(VALID_REQUEST))
+                .andExpect(status().isForbidden())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.type").value(AuthorizationProblemDetails.TYPE.toString()))
+                .andExpect(jsonPath("$.detail").value(AuthorizationProblemDetails.DETAIL));
+    }
+
+    @Test
     void listsTeamsWithFilterAndPagination() throws Exception {
         Instant createdAt = Instant.parse("2026-09-01T10:00:00Z");
         Instant updatedAt = Instant.parse("2026-09-02T11:00:00Z");
@@ -78,6 +101,7 @@ class TeamControllerTest {
         ));
 
         mockMvc.perform(get("/api/v1/teams")
+                        .with(authenticatedAs(UserRole.REPORTER))
                         .param("page", "1")
                         .param("size", "5")
                         .param("active", "true"))

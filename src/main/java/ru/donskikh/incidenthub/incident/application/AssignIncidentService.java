@@ -48,7 +48,8 @@ public class AssignIncidentService {
                 incident.getId(),
                 IncidentAuditEventType.ASSIGNED,
                 fromStatus,
-                incident.getStatus()
+                incident.getStatus(),
+                command.actorId()
         );
 
         return new AssignIncidentResult(

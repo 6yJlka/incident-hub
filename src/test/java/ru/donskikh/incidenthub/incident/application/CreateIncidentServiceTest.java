@@ -82,7 +82,7 @@ class CreateIncidentServiceTest {
         assertThat(incident.getAssignee()).isNull();
         assertThat(result.incidentId()).isEqualTo(42L);
         assertThat(result.status()).isEqualTo(IncidentStatus.OPEN);
-        verify(auditService).record(42L, IncidentAuditEventType.CREATED, null, IncidentStatus.OPEN);
+        verify(auditService).record(42L, IncidentAuditEventType.CREATED, null, IncidentStatus.OPEN, 7L);
         verifyNoInteractions(teamRepository);
     }
 

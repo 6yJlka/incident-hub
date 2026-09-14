@@ -11,7 +11,7 @@ import ru.donskikh.incidenthub.identity.application.ListUsersResult;
 public class UserWebMapper {
 
     public CreateUserCommand toCommand(CreateUserRequest request) {
-        return new CreateUserCommand(request.email(), request.displayName());
+        return new CreateUserCommand(request.email(), request.displayName(), request.password(), request.role());
     }
 
     public ListUsersQuery toQuery(int page, int size, Boolean active) {
@@ -19,7 +19,13 @@ public class UserWebMapper {
     }
 
     public CreateUserResponse toResponse(CreateUserResult result) {
-        return new CreateUserResponse(result.userId(), result.email(), result.active());
+        return new CreateUserResponse(
+                result.userId(),
+                result.email(),
+                result.displayName(),
+                result.role(),
+                result.active()
+        );
     }
 
     public ListUsersResponse toResponse(ListUsersResult result) {
@@ -39,6 +45,7 @@ public class UserWebMapper {
                 item.id(),
                 item.email(),
                 item.displayName(),
+                item.role(),
                 item.active(),
                 item.createdAt(),
                 item.updatedAt()

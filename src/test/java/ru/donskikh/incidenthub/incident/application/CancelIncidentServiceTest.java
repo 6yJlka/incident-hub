@@ -40,7 +40,7 @@ class CancelIncidentServiceTest {
         Incident incident = cancelledIncident(42L, IncidentStatus.OPEN);
         when(incidentRepository.findById(42L)).thenReturn(Optional.of(incident));
 
-        CancelIncidentResult result = service.cancel(new CancelIncidentCommand(42L));
+        CancelIncidentResult result = service.cancel(new CancelIncidentCommand(42L, 13L));
 
         assertSuccessfulCancellation(incident, IncidentStatus.OPEN, result);
     }
@@ -50,7 +50,7 @@ class CancelIncidentServiceTest {
         Incident incident = cancelledIncident(42L, IncidentStatus.ASSIGNED);
         when(incidentRepository.findById(42L)).thenReturn(Optional.of(incident));
 
-        CancelIncidentResult result = service.cancel(new CancelIncidentCommand(42L));
+        CancelIncidentResult result = service.cancel(new CancelIncidentCommand(42L, 13L));
 
         assertSuccessfulCancellation(incident, IncidentStatus.ASSIGNED, result);
     }
@@ -60,7 +60,7 @@ class CancelIncidentServiceTest {
         Incident incident = cancelledIncident(42L, IncidentStatus.IN_PROGRESS);
         when(incidentRepository.findById(42L)).thenReturn(Optional.of(incident));
 
-        CancelIncidentResult result = service.cancel(new CancelIncidentCommand(42L));
+        CancelIncidentResult result = service.cancel(new CancelIncidentCommand(42L, 13L));
 
         assertSuccessfulCancellation(incident, IncidentStatus.IN_PROGRESS, result);
     }
@@ -69,7 +69,7 @@ class CancelIncidentServiceTest {
     void throwsWhenIncidentDoesNotExist() {
         when(incidentRepository.findById(99L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.cancel(new CancelIncidentCommand(99L)))
+        assertThatThrownBy(() -> service.cancel(new CancelIncidentCommand(99L, 13L)))
                 .isInstanceOf(IncidentNotFoundException.class)
                 .hasMessage("Incident not found: 99");
 
@@ -83,7 +83,7 @@ class CancelIncidentServiceTest {
         Incident incident = forbiddenIncident(exception);
         when(incidentRepository.findById(42L)).thenReturn(Optional.of(incident));
 
-        assertThatThrownBy(() -> service.cancel(new CancelIncidentCommand(42L)))
+        assertThatThrownBy(() -> service.cancel(new CancelIncidentCommand(42L, 13L)))
                 .isSameAs(exception);
 
         verify(incidentRepository, never()).save(incident);
@@ -97,7 +97,7 @@ class CancelIncidentServiceTest {
         Incident incident = forbiddenIncident(exception);
         when(incidentRepository.findById(42L)).thenReturn(Optional.of(incident));
 
-        assertThatThrownBy(() -> service.cancel(new CancelIncidentCommand(42L)))
+        assertThatThrownBy(() -> service.cancel(new CancelIncidentCommand(42L, 13L)))
                 .isSameAs(exception);
 
         verify(incidentRepository, never()).save(incident);
@@ -115,10 +115,10 @@ class CancelIncidentServiceTest {
 
     @Test
     void rejectsNonPositiveIncidentId() {
-        assertThatThrownBy(() -> new CancelIncidentCommand(0L))
+        assertThatThrownBy(() -> new CancelIncidentCommand(0L, 13L))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("incidentId must be positive");
-        assertThatThrownBy(() -> new CancelIncidentCommand(-1L))
+        assertThatThrownBy(() -> new CancelIncidentCommand(-1L, 13L))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("incidentId must be positive");
 
@@ -146,7 +146,7 @@ class CancelIncidentServiceTest {
         verify(incident).cancel();
         verify(incidentRepository, never()).save(incident);
         verify(auditService).record(
-                42L, IncidentAuditEventType.CANCELLED, fromStatus, IncidentStatus.CANCELLED
+                42L, IncidentAuditEventType.CANCELLED, fromStatus, IncidentStatus.CANCELLED, 13L
         );
         assertThat(result.incidentId()).isEqualTo(42L);
         assertThat(result.status()).isEqualTo(IncidentStatus.CANCELLED);

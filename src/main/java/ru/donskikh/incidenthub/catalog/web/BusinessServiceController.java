@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -64,6 +65,7 @@ public class BusinessServiceController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(
             summary = "Create a business service",
             description = "Creates an active catalog service owned by an existing team. The normalized code must be unique."
@@ -158,6 +160,7 @@ public class BusinessServiceController {
     }
 
     @PostMapping("/{id}/dependencies")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(
             summary = "Add a service dependency",
             description = "Declares that the service in the path depends on another existing service. Self-dependencies and duplicate pairs are rejected."
@@ -183,6 +186,7 @@ public class BusinessServiceController {
     }
 
     @DeleteMapping("/{id}/dependencies/{dependencyId}")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(
             summary = "Remove a service dependency",
             description = "Removes the direct dependency from the service in the path to the specified required service."

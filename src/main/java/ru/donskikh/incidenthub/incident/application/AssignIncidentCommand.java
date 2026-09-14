@@ -2,7 +2,8 @@ package ru.donskikh.incidenthub.incident.application;
 
 public record AssignIncidentCommand(
         long incidentId,
-        long assigneeId
+        long assigneeId,
+        long actorId
 ) {
 
     public AssignIncidentCommand {
@@ -12,6 +13,10 @@ public record AssignIncidentCommand(
 
         if (assigneeId <= 0) {
             throw new IllegalArgumentException("assigneeId must be positive");
+        }
+
+        if (actorId <= 0) {
+            throw new IllegalArgumentException("actorId must be positive");
         }
     }
 }

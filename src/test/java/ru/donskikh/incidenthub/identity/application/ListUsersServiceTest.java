@@ -12,6 +12,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import ru.donskikh.incidenthub.identity.User;
 import ru.donskikh.incidenthub.identity.UserRepository;
+import ru.donskikh.incidenthub.identity.UserRole;
 
 import java.time.Instant;
 import java.util.List;
@@ -49,6 +50,7 @@ class ListUsersServiceTest {
                 9L,
                 "user@example.com",
                 "Example User",
+                UserRole.ENGINEER,
                 true,
                 Instant.parse("2026-09-01T10:00:00Z"),
                 Instant.parse("2026-09-02T11:00:00Z")
@@ -88,6 +90,7 @@ class ListUsersServiceTest {
         when(user.getId()).thenReturn(9L);
         when(user.getEmail()).thenReturn("user@example.com");
         when(user.getDisplayName()).thenReturn("Example User");
+        when(user.getRole()).thenReturn(UserRole.ENGINEER);
         when(user.isActive()).thenReturn(true);
         when(user.getCreatedAt()).thenReturn(Instant.parse("2026-09-01T10:00:00Z"));
         when(user.getUpdatedAt()).thenReturn(Instant.parse("2026-09-02T11:00:00Z"));

@@ -40,6 +40,10 @@ import ru.donskikh.incidenthub.catalog.application.RemoveServiceDependencyComman
 import ru.donskikh.incidenthub.catalog.application.RemoveServiceDependencyResult;
 import ru.donskikh.incidenthub.catalog.application.RemoveServiceDependencyService;
 import ru.donskikh.incidenthub.common.web.GlobalExceptionHandler;
+import ru.donskikh.incidenthub.common.web.AuthorizationProblemDetails;
+import ru.donskikh.incidenthub.identity.UserRole;
+import ru.donskikh.incidenthub.security.AuthenticatedMockMvcConfiguration;
+import ru.donskikh.incidenthub.security.SecurityConfiguration;
 import ru.donskikh.incidenthub.team.TeamNotFoundException;
 
 import java.time.Instant;
@@ -59,9 +63,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static ru.donskikh.incidenthub.security.AuthenticatedMockMvcConfiguration.authenticatedAs;
 
 @WebMvcTest(BusinessServiceController.class)
-@Import({BusinessServiceWebMapper.class, GlobalExceptionHandler.class})
+@Import({
+        BusinessServiceWebMapper.class,
+        GlobalExceptionHandler.class,
+        SecurityConfiguration.class,
+        AuthenticatedMockMvcConfiguration.class
+})
 class BusinessServiceControllerTest {
 
     private static final String VALID_CREATE_REQUEST = """
@@ -104,6 +114,7 @@ class BusinessServiceControllerTest {
                 .thenReturn(new CreateBusinessServiceResult(42L, "PAYMENTS", ServiceTier.TIER_1, true));
 
         mockMvc.perform(post("/api/v1/services")
+                        .with(authenticatedAs(UserRole.ADMIN))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(VALID_CREATE_REQUEST))
                 .andExpect(status().isCreated())
@@ -136,6 +147,7 @@ class BusinessServiceControllerTest {
                 ));
 
         mockMvc.perform(get("/api/v1/services")
+                        .with(authenticatedAs(UserRole.REPORTER))
                         .param("page", "1")
                         .param("size", "5")
                         .param("ownerTeamId", "30")
@@ -221,6 +233,7 @@ class BusinessServiceControllerTest {
                 ));
 
         mockMvc.perform(post("/api/v1/services/42/dependencies")
+                        .with(authenticatedAs(UserRole.ADMIN))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"dependencyServiceId\":41,\"type\":\"SYNC\"}"))
                 .andExpect(status().isCreated())
@@ -242,11 +255,22 @@ class BusinessServiceControllerTest {
         when(removeServiceDependencyService.remove(any(RemoveServiceDependencyCommand.class)))
                 .thenReturn(new RemoveServiceDependencyResult(42L, 41L));
 
-        mockMvc.perform(delete("/api/v1/services/42/dependencies/41"))
+        mockMvc.perform(delete("/api/v1/services/42/dependencies/41")
+                        .with(authenticatedAs(UserRole.ADMIN)))
                 .andExpect(status().isNoContent())
                 .andExpect(content().string(""));
 
         verify(removeServiceDependencyService).remove(new RemoveServiceDependencyCommand(42L, 41L));
+    }
+
+    @ParameterizedTest
+    @MethodSource("catalogMutationRequests")
+    void rejectsCatalogManagementForEngineer(MockHttpServletRequestBuilder request) throws Exception {
+        mockMvc.perform(request.with(authenticatedAs(UserRole.ENGINEER)))
+                .andExpect(status().isForbidden())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.type").value(AuthorizationProblemDetails.TYPE.toString()))
+                .andExpect(jsonPath("$.detail").value(AuthorizationProblemDetails.DETAIL));
     }
 
     @ParameterizedTest
@@ -462,6 +486,18 @@ class BusinessServiceControllerTest {
                 Arguments.of("tier", """
                         {"code":"PAYMENTS","name":"Payments","description":"d","ownerTeamId":30}
                         """)
+        );
+    }
+
+    private static Stream<MockHttpServletRequestBuilder> catalogMutationRequests() {
+        return Stream.of(
+                post("/api/v1/services")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(VALID_CREATE_REQUEST),
+                post("/api/v1/services/42/dependencies")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"dependencyServiceId\":41,\"type\":\"SYNC\"}"),
+                delete("/api/v1/services/42/dependencies/41")
         );
     }
 

@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.ProblemDetail;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -24,7 +25,7 @@ import java.net.URI;
 
 @RestController
 @RequestMapping("/api/v1/users")
-@Tag(name = "Users", description = "Create incident reporters and assignees and browse them")
+@Tag(name = "Users", description = "Administratively create login-enabled users and browse them")
 public class UserController {
 
     private final CreateUserService createUserService;
@@ -42,9 +43,10 @@ public class UserController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(
-            summary = "Create a user",
-            description = "Creates an active user. The normalized email must be unique. Passwords are outside this API."
+            summary = "Create a user as an administrator",
+            description = "Creates an active login-enabled user with the selected role. The normalized email must be unique."
     )
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "User created"),

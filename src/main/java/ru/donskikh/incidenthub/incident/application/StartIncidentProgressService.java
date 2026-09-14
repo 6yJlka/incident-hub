@@ -36,7 +36,8 @@ public class StartIncidentProgressService {
                 incident.getId(),
                 IncidentAuditEventType.STARTED,
                 fromStatus,
-                incident.getStatus()
+                incident.getStatus(),
+                command.actorId()
         );
 
         return new StartIncidentProgressResult(incident.getId(), incident.getStatus());

@@ -56,9 +56,13 @@ class OpenApiIntegrationTest extends PostgreSQLIntegrationTest {
                 .map(String.class::cast)
                 .collect(java.util.stream.Collectors.toSet());
 
-        assertThat(operationCount).isEqualTo(20);
-        assertThat(tags).containsExactlyInAnyOrder("Incidents", "Service catalog", "Teams", "Users");
+        assertThat(operationCount).isEqualTo(22);
+        assertThat(tags).containsExactlyInAnyOrder(
+                "Authentication", "Incidents", "Service catalog", "Teams", "Users"
+        );
         assertThat(paths.keySet()).contains(
+                "/api/v1/auth/register",
+                "/api/v1/auth/login",
                 "/api/v1/incidents",
                 "/api/v1/incidents/{id}/history",
                 "/api/v1/services",
@@ -66,6 +70,36 @@ class OpenApiIntegrationTest extends PostgreSQLIntegrationTest {
                 "/api/v1/teams",
                 "/api/v1/users"
         );
+        assertThat(JsonPath.<String>read(document, "$.components.securitySchemes.bearerAuth.type"))
+                .isEqualTo("http");
+        assertThat(JsonPath.<String>read(document, "$.components.securitySchemes.bearerAuth.scheme"))
+                .isEqualTo("bearer");
+        assertThat(JsonPath.<String>read(document, "$.components.securitySchemes.bearerAuth.bearerFormat"))
+                .isEqualTo("JWT");
+        assertThat(JsonPath.<List<Map<String, List<String>>>>read(document, "$.security"))
+                .containsExactly(Map.of("bearerAuth", List.of()));
+        assertThat(JsonPath.<List<?>>read(document, "$.paths['/api/v1/auth/login'].post.security"))
+                .isEmpty();
+        assertThat(JsonPath.<String>read(
+                document,
+                "$.paths['/api/v1/incidents'].get.responses['401'].content['application/problem+json'].schema['$ref']"
+        )).isEqualTo("#/components/schemas/ProblemDetail");
+        assertThat(JsonPath.<String>read(
+                document,
+                "$.paths['/api/v1/incidents/{id}/assign'].post.responses['403'].content['application/problem+json'].schema['$ref']"
+        )).isEqualTo("#/components/schemas/ProblemDetail");
+        assertThat(JsonPath.<String>read(
+                document,
+                "$.paths['/api/v1/services'].post.responses['403'].content['application/problem+json'].schema['$ref']"
+        )).isEqualTo("#/components/schemas/ProblemDetail");
+        assertThat(JsonPath.<Map<String, ?>>read(
+                document,
+                "$.paths['/api/v1/incidents'].get.responses"
+        )).doesNotContainKey("403");
+        assertThat(JsonPath.<Map<String, ?>>read(
+                document,
+                "$.paths['/api/v1/auth/register'].post.responses"
+        )).doesNotContainKeys("401", "403");
     }
 
     @Test

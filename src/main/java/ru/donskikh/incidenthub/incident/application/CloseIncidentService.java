@@ -36,7 +36,8 @@ public class CloseIncidentService {
                 incident.getId(),
                 IncidentAuditEventType.CLOSED,
                 fromStatus,
-                incident.getStatus()
+                incident.getStatus(),
+                command.actorId()
         );
 
         return new CloseIncidentResult(incident.getId(), incident.getStatus());
