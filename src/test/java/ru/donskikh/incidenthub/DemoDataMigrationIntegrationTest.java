@@ -5,8 +5,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.web.servlet.MockMvc;
 import ru.donskikh.incidenthub.catalog.application.AffectedServiceItem;
 import ru.donskikh.incidenthub.catalog.application.GetAffectedServicesQuery;
 import ru.donskikh.incidenthub.catalog.application.GetAffectedServicesResult;
@@ -15,6 +18,9 @@ import ru.donskikh.incidenthub.catalog.application.GetAffectedServicesService;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest(properties = {
         "spring.datasource.hikari.schema=incident_hub_demo_test",
@@ -22,6 +28,7 @@ import static org.assertj.core.api.Assertions.assertThat;
         "spring.flyway.default-schema=incident_hub_demo_test"
 })
 @ActiveProfiles("demo")
+@AutoConfigureMockMvc
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class DemoDataMigrationIntegrationTest extends PostgreSQLIntegrationTest {
 
@@ -31,15 +38,30 @@ class DemoDataMigrationIntegrationTest extends PostgreSQLIntegrationTest {
     @Autowired
     private GetAffectedServicesService affectedServicesService;
 
+    @Autowired
+    private MockMvc mockMvc;
+
     @Test
     void appliesV7AndLoadsAConsistentDemoDataset() {
-        assertThat(appliedVersions()).containsExactly("1", "2", "3", "4", "5", "6", "7");
+        assertThat(appliedVersions()).containsExactly("1", "2", "3", "4", "5", "6", "7", "8", "9");
         assertThat(count("teams")).isEqualTo(4);
         assertThat(count("users")).isEqualTo(6);
         assertThat(count("business_services")).isEqualTo(10);
         assertThat(count("service_dependencies")).isEqualTo(10);
         assertThat(count("incidents")).isEqualTo(12);
         assertThat(count("incident_audit_events")).isEqualTo(39);
+        assertThat(jdbcTemplate.queryForObject(
+                "select count(*) from users where password_hash is not null",
+                Long.class
+        )).isEqualTo(6);
+        assertThat(jdbcTemplate.queryForObject(
+                "select count(*) from users where role = 'ENGINEER'",
+                Long.class
+        )).isEqualTo(3);
+        assertThat(jdbcTemplate.queryForObject(
+                "select count(*) from users where role = 'ADMIN'",
+                Long.class
+        )).isEqualTo(1);
 
         assertThat(jdbcTemplate.queryForObject(
                 "select status from incidents where title = 'Billing event backlog reopened'",
@@ -56,6 +78,21 @@ class DemoDataMigrationIntegrationTest extends PostgreSQLIntegrationTest {
                         """,
                 String.class
         )).containsExactly("CREATED", "ASSIGNED", "STARTED", "RESOLVED", "REOPENED");
+    }
+
+    @Test
+    void logsInAsActiveDemoUser() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "email": "boris.petrov@incidenthub.demo",
+                                  "password": "demo1234"
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accessToken").isNotEmpty())
+                .andExpect(jsonPath("$.tokenType").value("Bearer"));
     }
 
     @Test

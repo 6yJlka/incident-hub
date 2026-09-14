@@ -17,6 +17,8 @@ import ru.donskikh.incidenthub.audit.application.GetIncidentHistoryService;
 import ru.donskikh.incidenthub.audit.application.IncidentHistoryItem;
 import ru.donskikh.incidenthub.catalog.BusinessServiceNotFoundException;
 import ru.donskikh.incidenthub.common.web.GlobalExceptionHandler;
+import ru.donskikh.incidenthub.security.AuthenticatedMockMvcConfiguration;
+import ru.donskikh.incidenthub.security.SecurityConfiguration;
 import ru.donskikh.incidenthub.incident.IncidentAssignmentNotAllowedException;
 import ru.donskikh.incidenthub.incident.IncidentClosureNotAllowedException;
 import ru.donskikh.incidenthub.incident.IncidentNotFoundException;
@@ -71,7 +73,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(IncidentController.class)
-@Import({IncidentWebMapper.class, GlobalExceptionHandler.class})
+@Import({
+        IncidentWebMapper.class,
+        GlobalExceptionHandler.class,
+        SecurityConfiguration.class,
+        AuthenticatedMockMvcConfiguration.class
+})
 class IncidentControllerTest {
 
     private static final String VALID_CREATE_REQUEST = """

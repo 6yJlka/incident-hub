@@ -46,7 +46,7 @@ class IncidentAuditEventRepositoryIntegrationTest extends PostgreSQLIntegrationT
         jdbcTemplate.update("delete from users");
 
         jdbcTemplate.update(
-                "insert into users (id, email, display_name) values (?, ?, ?)",
+                "insert into users (id, email, display_name, role) values (?, ?, ?, 'REPORTER')",
                 REPORTER_ID, "audit-reporter@example.com", "Audit Reporter"
         );
         jdbcTemplate.update(
@@ -124,13 +124,13 @@ class IncidentAuditEventRepositoryIntegrationTest extends PostgreSQLIntegrationT
     }
 
     @Test
-    void hasAppliedMigrationsFromV1ThroughV6() {
+    void hasAppliedAllDefaultMigrations() {
         List<String> versions = jdbcTemplate.queryForList(
                 "select version from flyway_schema_history where success order by installed_rank",
                 String.class
         );
 
-        assertThat(versions).containsSequence("1", "2", "3", "4", "5", "6");
+        assertThat(versions).containsExactly("1", "2", "3", "4", "5", "6", "8");
     }
 
     private long insertAuditEvent(

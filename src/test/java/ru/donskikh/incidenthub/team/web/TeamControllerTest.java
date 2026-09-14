@@ -16,6 +16,8 @@ import ru.donskikh.incidenthub.team.application.ListTeamItem;
 import ru.donskikh.incidenthub.team.application.ListTeamsQuery;
 import ru.donskikh.incidenthub.team.application.ListTeamsResult;
 import ru.donskikh.incidenthub.team.application.ListTeamsService;
+import ru.donskikh.incidenthub.security.AuthenticatedMockMvcConfiguration;
+import ru.donskikh.incidenthub.security.SecurityConfiguration;
 
 import java.time.Instant;
 import java.util.List;
@@ -32,7 +34,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(TeamController.class)
-@Import({TeamWebMapper.class, GlobalExceptionHandler.class})
+@Import({
+        TeamWebMapper.class,
+        GlobalExceptionHandler.class,
+        SecurityConfiguration.class,
+        AuthenticatedMockMvcConfiguration.class
+})
 class TeamControllerTest {
 
     private static final String VALID_REQUEST = """

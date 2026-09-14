@@ -36,11 +36,11 @@ class IncidentAuditTransactionIntegrationTest extends PostgreSQLIntegrationTest 
         jdbcTemplate.execute("alter table incident_audit_events drop constraint if exists " + FAILURE_CONSTRAINT);
         deleteTestData();
         jdbcTemplate.update(
-                "insert into users (id, email, display_name) values (?, ?, ?)",
+                "insert into users (id, email, display_name, role) values (?, ?, ?, 'REPORTER')",
                 REPORTER_ID, "transaction-reporter@example.com", "Transaction Reporter"
         );
         jdbcTemplate.update(
-                "insert into users (id, email, display_name) values (?, ?, ?)",
+                "insert into users (id, email, display_name, role) values (?, ?, ?, 'REPORTER')",
                 ASSIGNEE_ID, "transaction-assignee@example.com", "Transaction Assignee"
         );
         jdbcTemplate.update(

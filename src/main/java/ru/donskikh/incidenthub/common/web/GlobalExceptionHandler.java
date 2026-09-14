@@ -10,6 +10,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import ru.donskikh.incidenthub.auth.InvalidCredentialsException;
 import ru.donskikh.incidenthub.common.DomainConflictException;
 import ru.donskikh.incidenthub.common.DomainNotFoundException;
 
@@ -20,6 +21,14 @@ import java.util.List;
 public class GlobalExceptionHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
+    @ExceptionHandler(InvalidCredentialsException.class)
+    public ProblemDetail handleInvalidCredentials(
+            InvalidCredentialsException exception,
+            HttpServletRequest request
+    ) {
+        return AuthenticationProblemDetails.create(request.getRequestURI());
+    }
 
     @ExceptionHandler(DomainNotFoundException.class)
     public ProblemDetail handleNotFound(

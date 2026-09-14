@@ -2,6 +2,8 @@ package ru.donskikh.incidenthub.identity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -30,6 +32,13 @@ public class User {
     @Column(name = "active", nullable = false)
     private boolean active;
 
+    @Column(name = "password_hash", length = 100)
+    private String passwordHash;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role", nullable = false, length = 20)
+    private UserRole role;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -43,6 +52,12 @@ public class User {
         this.email = normalizeEmail(email);
         this.displayName = requireText(displayName, "displayName");
         this.active = true;
+        this.role = UserRole.REPORTER;
+    }
+
+    public User(String email, String displayName, String passwordHash) {
+        this(email, displayName);
+        this.passwordHash = requireText(passwordHash, "passwordHash");
     }
 
     @PrePersist
@@ -87,6 +102,14 @@ public class User {
 
     public boolean isActive() {
         return active;
+    }
+
+    public String getPasswordHash() {
+        return passwordHash;
+    }
+
+    public UserRole getRole() {
+        return role;
     }
 
     public Instant getCreatedAt() {

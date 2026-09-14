@@ -1,0 +1,59 @@
+package ru.donskikh.incidenthub.auth.application;
+
+import org.hibernate.exception.ConstraintViolationException;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import ru.donskikh.incidenthub.identity.User;
+import ru.donskikh.incidenthub.identity.UserEmailAlreadyExistsException;
+import ru.donskikh.incidenthub.identity.UserRepository;
+
+import java.util.Objects;
+
+@Service
+public class RegisterUserService {
+
+    private static final String EMAIL_UNIQUE_CONSTRAINT = "uk_users_email_lower";
+
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+
+    public RegisterUserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
+
+    @Transactional
+    public RegisterUserResult register(RegisterUserCommand command) {
+        Objects.requireNonNull(command, "command must not be null");
+
+        User user = new User(
+                command.email(),
+                command.displayName(),
+                passwordEncoder.encode(command.password())
+        );
+        if (userRepository.existsByNormalizedEmail(user.getEmail())) {
+            throw new UserEmailAlreadyExistsException(user.getEmail());
+        }
+
+        User savedUser;
+        try {
+            savedUser = userRepository.saveAndFlush(user);
+        } catch (DataIntegrityViolationException exception) {
+            if (exception.getCause() instanceof ConstraintViolationException constraintViolation
+                    && EMAIL_UNIQUE_CONSTRAINT.equals(constraintViolation.getConstraintName())) {
+                throw new UserEmailAlreadyExistsException(user.getEmail(), exception);
+            }
+            throw exception;
+        }
+
+        return new RegisterUserResult(
+                savedUser.getId(),
+                savedUser.getEmail(),
+                savedUser.getDisplayName(),
+                savedUser.getRole(),
+                savedUser.isActive()
+        );
+    }
+}

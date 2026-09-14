@@ -221,8 +221,8 @@ class IncidentRepositoryIntegrationTest extends PostgreSQLIntegrationTest {
         Instant now = Instant.parse("2026-08-01T10:00:00Z");
         jdbcTemplate.update(
                 """
-                        insert into users (id, email, display_name, active, created_at, updated_at)
-                        values (?, ?, ?, true, ?, ?)
+                        insert into users (id, email, display_name, active, role, created_at, updated_at)
+                        values (?, ?, ?, true, 'REPORTER', ?, ?)
                         """,
                 id, email, displayName, Timestamp.from(now), Timestamp.from(now)
         );

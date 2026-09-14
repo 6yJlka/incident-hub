@@ -16,6 +16,8 @@ import ru.donskikh.incidenthub.identity.application.ListUserItem;
 import ru.donskikh.incidenthub.identity.application.ListUsersQuery;
 import ru.donskikh.incidenthub.identity.application.ListUsersResult;
 import ru.donskikh.incidenthub.identity.application.ListUsersService;
+import ru.donskikh.incidenthub.security.AuthenticatedMockMvcConfiguration;
+import ru.donskikh.incidenthub.security.SecurityConfiguration;
 
 import java.time.Instant;
 import java.util.List;
@@ -32,7 +34,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(UserController.class)
-@Import({UserWebMapper.class, GlobalExceptionHandler.class})
+@Import({
+        UserWebMapper.class,
+        GlobalExceptionHandler.class,
+        SecurityConfiguration.class,
+        AuthenticatedMockMvcConfiguration.class
+})
 class UserControllerTest {
 
     private static final String VALID_REQUEST = """

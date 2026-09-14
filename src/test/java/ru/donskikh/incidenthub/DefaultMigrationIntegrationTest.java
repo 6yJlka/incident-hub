@@ -34,9 +34,29 @@ class DefaultMigrationIntegrationTest extends PostgreSQLIntegrationTest {
                 String.class
         );
 
-        assertThat(versions).containsExactly("1", "2", "3", "4", "5", "6");
+        assertThat(versions).containsExactly("1", "2", "3", "4", "5", "6", "8");
         assertThat(jdbcTemplate.queryForObject("select count(*) from teams", Long.class)).isZero();
         assertThat(jdbcTemplate.queryForObject("select count(*) from incidents", Long.class)).isZero();
+        assertThat(jdbcTemplate.queryForObject(
+                """
+                        select is_nullable
+                        from information_schema.columns
+                        where table_schema = 'incident_hub_default_test'
+                          and table_name = 'users'
+                          and column_name = 'password_hash'
+                        """,
+                String.class
+        )).isEqualTo("YES");
+        assertThat(jdbcTemplate.queryForObject(
+                """
+                        select is_nullable
+                        from information_schema.columns
+                        where table_schema = 'incident_hub_default_test'
+                          and table_name = 'users'
+                          and column_name = 'role'
+                        """,
+                String.class
+        )).isEqualTo("NO");
     }
 
     @AfterAll

@@ -40,6 +40,8 @@ import ru.donskikh.incidenthub.catalog.application.RemoveServiceDependencyComman
 import ru.donskikh.incidenthub.catalog.application.RemoveServiceDependencyResult;
 import ru.donskikh.incidenthub.catalog.application.RemoveServiceDependencyService;
 import ru.donskikh.incidenthub.common.web.GlobalExceptionHandler;
+import ru.donskikh.incidenthub.security.AuthenticatedMockMvcConfiguration;
+import ru.donskikh.incidenthub.security.SecurityConfiguration;
 import ru.donskikh.incidenthub.team.TeamNotFoundException;
 
 import java.time.Instant;
@@ -61,7 +63,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(BusinessServiceController.class)
-@Import({BusinessServiceWebMapper.class, GlobalExceptionHandler.class})
+@Import({
+        BusinessServiceWebMapper.class,
+        GlobalExceptionHandler.class,
+        SecurityConfiguration.class,
+        AuthenticatedMockMvcConfiguration.class
+})
 class BusinessServiceControllerTest {
 
     private static final String VALID_CREATE_REQUEST = """
