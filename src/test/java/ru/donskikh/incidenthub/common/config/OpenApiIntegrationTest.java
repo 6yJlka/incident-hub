@@ -100,6 +100,18 @@ class OpenApiIntegrationTest extends PostgreSQLIntegrationTest {
                 document,
                 "$.paths['/api/v1/auth/register'].post.responses"
         )).doesNotContainKeys("401", "403");
+        assertThat(JsonPath.<String>read(
+                document,
+                "$.components.schemas.IncidentResponse.properties.availableActions.description"
+        )).isEqualTo("Lifecycle actions available to the current user in the current status");
+        assertThat(JsonPath.<List<String>>read(
+                document,
+                "$.components.schemas.IncidentResponse.properties.availableActions.example"
+        )).containsExactly("ASSIGN", "CANCEL");
+        assertThat(JsonPath.<List<String>>read(
+                document,
+                "$.components.schemas.IncidentResponse.properties.availableActions.items.enum"
+        )).containsExactly("ASSIGN", "START", "RESOLVE", "CLOSE", "REOPEN", "CANCEL");
     }
 
     @Test

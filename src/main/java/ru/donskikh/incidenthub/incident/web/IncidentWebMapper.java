@@ -80,7 +80,8 @@ public class IncidentWebMapper {
                 result.assigneeId(),
                 result.assigneeDisplayName(),
                 result.createdAt(),
-                result.updatedAt()
+                result.updatedAt(),
+                result.availableActions()
         );
     }
 
