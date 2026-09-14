@@ -42,12 +42,12 @@ class CloseIncidentServiceTest {
         when(incident.getId()).thenReturn(42L);
         when(incident.getStatus()).thenReturn(IncidentStatus.RESOLVED, IncidentStatus.CLOSED);
 
-        CloseIncidentResult result = service.close(new CloseIncidentCommand(42L));
+        CloseIncidentResult result = service.close(new CloseIncidentCommand(42L, 13L));
 
         verify(incident).close();
         verify(incidentRepository, never()).save(incident);
         verify(auditService).record(
-                42L, IncidentAuditEventType.CLOSED, IncidentStatus.RESOLVED, IncidentStatus.CLOSED
+                42L, IncidentAuditEventType.CLOSED, IncidentStatus.RESOLVED, IncidentStatus.CLOSED, 13L
         );
         assertThat(result.incidentId()).isEqualTo(42L);
         assertThat(result.status()).isEqualTo(IncidentStatus.CLOSED);
@@ -57,7 +57,7 @@ class CloseIncidentServiceTest {
     void throwsWhenIncidentDoesNotExist() {
         when(incidentRepository.findById(99L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.close(new CloseIncidentCommand(99L)))
+        assertThatThrownBy(() -> service.close(new CloseIncidentCommand(99L, 13L)))
                 .isInstanceOf(IncidentNotFoundException.class)
                 .hasMessage("Incident not found: 99");
 
@@ -72,7 +72,7 @@ class CloseIncidentServiceTest {
         when(incidentRepository.findById(42L)).thenReturn(Optional.of(incident));
         doThrow(exception).when(incident).close();
 
-        assertThatThrownBy(() -> service.close(new CloseIncidentCommand(42L)))
+        assertThatThrownBy(() -> service.close(new CloseIncidentCommand(42L, 13L)))
                 .isSameAs(exception);
 
         verify(incidentRepository, never()).save(incident);
@@ -90,10 +90,10 @@ class CloseIncidentServiceTest {
 
     @Test
     void rejectsNonPositiveIncidentId() {
-        assertThatThrownBy(() -> new CloseIncidentCommand(0L))
+        assertThatThrownBy(() -> new CloseIncidentCommand(0L, 13L))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("incidentId must be positive");
-        assertThatThrownBy(() -> new CloseIncidentCommand(-1L))
+        assertThatThrownBy(() -> new CloseIncidentCommand(-1L, 13L))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("incidentId must be positive");
 

@@ -87,8 +87,7 @@ class IncidentControllerTest {
               "description": "Платежи завершаются ошибкой",
               "affectedServiceId": 10,
               "priority": "HIGH",
-              "severity": "SEV2",
-              "reporterId": 20
+              "severity": "SEV2"
             }
             """;
 
@@ -147,7 +146,37 @@ class IncidentControllerTest {
                 10L,
                 IncidentPriority.HIGH,
                 IncidentSeverity.SEV2,
-                20L,
+                42L,
+                null
+        ));
+    }
+
+    @Test
+    void ignoresReporterIdFromRequestAndUsesAuthenticatedUser() throws Exception {
+        when(createIncidentService.create(any(CreateIncidentCommand.class)))
+                .thenReturn(new CreateIncidentResult(42L, IncidentStatus.OPEN));
+
+        mockMvc.perform(post("/api/v1/incidents")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "title": "Cannot pay",
+                                  "description": "Payments fail",
+                                  "affectedServiceId": 10,
+                                  "priority": "HIGH",
+                                  "severity": "SEV2",
+                                  "reporterId": 999
+                                }
+                                """))
+                .andExpect(status().isCreated());
+
+        verify(createIncidentService).create(new CreateIncidentCommand(
+                "Cannot pay",
+                "Payments fail",
+                10L,
+                IncidentPriority.HIGH,
+                IncidentSeverity.SEV2,
+                42L,
                 null
         ));
     }
@@ -211,6 +240,8 @@ class IncidentControllerTest {
                         IncidentAuditEventType.ASSIGNED,
                         IncidentStatus.OPEN,
                         IncidentStatus.ASSIGNED,
+                        42L,
+                        "MVC Test User",
                         UPDATED_AT
                 ))
         ));
@@ -221,7 +252,9 @@ class IncidentControllerTest {
                 .andExpect(jsonPath("$.items[0].id").value(100))
                 .andExpect(jsonPath("$.items[0].eventType").value("ASSIGNED"))
                 .andExpect(jsonPath("$.items[0].fromStatus").value("OPEN"))
-                .andExpect(jsonPath("$.items[0].toStatus").value("ASSIGNED"));
+                .andExpect(jsonPath("$.items[0].toStatus").value("ASSIGNED"))
+                .andExpect(jsonPath("$.items[0].actorId").value(42))
+                .andExpect(jsonPath("$.items[0].actorDisplayName").value("MVC Test User"));
     }
 
     @Test
@@ -238,7 +271,7 @@ class IncidentControllerTest {
                 .andExpect(jsonPath("$.assigneeId").value(21))
                 .andExpect(jsonPath("$.status").value("ASSIGNED"));
 
-        verify(assignIncidentService).assign(new AssignIncidentCommand(42L, 21L));
+        verify(assignIncidentService).assign(new AssignIncidentCommand(42L, 21L, 42L));
     }
 
     @ParameterizedTest
@@ -255,6 +288,8 @@ class IncidentControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(42))
                 .andExpect(jsonPath("$.status").value(expectedStatus.name()));
+
+        verifyLifecycleActionUsesAuthenticatedUser(action);
     }
 
     @ParameterizedTest
@@ -420,6 +455,16 @@ class IncidentControllerTest {
         }
     }
 
+    private void verifyLifecycleActionUsesAuthenticatedUser(LifecycleAction action) {
+        switch (action) {
+            case START -> verify(startIncidentProgressService).start(new StartIncidentProgressCommand(42L, 42L));
+            case RESOLVE -> verify(resolveIncidentService).resolve(new ResolveIncidentCommand(42L, 42L));
+            case CLOSE -> verify(closeIncidentService).close(new CloseIncidentCommand(42L, 42L));
+            case REOPEN -> verify(reopenIncidentService).reopen(new ReopenIncidentCommand(42L, 42L));
+            case CANCEL -> verify(cancelIncidentService).cancel(new CancelIncidentCommand(42L, 42L));
+        }
+    }
+
     private void stubNotFound(Endpoint endpoint) {
         IncidentNotFoundException exception = new IncidentNotFoundException(42L);
         switch (endpoint) {
@@ -518,22 +563,19 @@ class IncidentControllerTest {
     private static Stream<Arguments> createRequestsWithMissingRequiredField() {
         return Stream.of(
                 Arguments.of("title", """
-                        {"description":"d","affectedServiceId":10,"priority":"HIGH","severity":"SEV2","reporterId":20}
+                        {"description":"d","affectedServiceId":10,"priority":"HIGH","severity":"SEV2"}
                         """),
                 Arguments.of("description", """
-                        {"title":"t","affectedServiceId":10,"priority":"HIGH","severity":"SEV2","reporterId":20}
+                        {"title":"t","affectedServiceId":10,"priority":"HIGH","severity":"SEV2"}
                         """),
                 Arguments.of("affectedServiceId", """
-                        {"title":"t","description":"d","priority":"HIGH","severity":"SEV2","reporterId":20}
+                        {"title":"t","description":"d","priority":"HIGH","severity":"SEV2"}
                         """),
                 Arguments.of("priority", """
-                        {"title":"t","description":"d","affectedServiceId":10,"severity":"SEV2","reporterId":20}
+                        {"title":"t","description":"d","affectedServiceId":10,"severity":"SEV2"}
                         """),
                 Arguments.of("severity", """
-                        {"title":"t","description":"d","affectedServiceId":10,"priority":"HIGH","reporterId":20}
-                        """),
-                Arguments.of("reporterId", """
-                        {"title":"t","description":"d","affectedServiceId":10,"priority":"HIGH","severity":"SEV2"}
+                        {"title":"t","description":"d","affectedServiceId":10,"priority":"HIGH"}
                         """)
         );
     }

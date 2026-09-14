@@ -10,6 +10,8 @@ public record IncidentHistoryItem(
         IncidentAuditEventType eventType,
         IncidentStatus fromStatus,
         IncidentStatus toStatus,
+        Long actorId,
+        String actorDisplayName,
         Instant createdAt
 ) {
 }

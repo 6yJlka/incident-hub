@@ -36,7 +36,8 @@ public class ReopenIncidentService {
                 incident.getId(),
                 IncidentAuditEventType.REOPENED,
                 fromStatus,
-                incident.getStatus()
+                incident.getStatus(),
+                command.actorId()
         );
 
         return new ReopenIncidentResult(incident.getId(), incident.getStatus());

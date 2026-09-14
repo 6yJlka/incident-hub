@@ -51,12 +51,12 @@ class AssignIncidentServiceTest {
         when(assignee.getId()).thenReturn(7L);
         when(incident.getStatus()).thenReturn(IncidentStatus.OPEN, IncidentStatus.ASSIGNED);
 
-        AssignIncidentResult result = service.assign(new AssignIncidentCommand(42L, 7L));
+        AssignIncidentResult result = service.assign(new AssignIncidentCommand(42L, 7L, 13L));
 
         verify(incident).assignTo(assignee);
         verify(incidentRepository, never()).save(incident);
         verify(auditService).record(
-                42L, IncidentAuditEventType.ASSIGNED, IncidentStatus.OPEN, IncidentStatus.ASSIGNED
+                42L, IncidentAuditEventType.ASSIGNED, IncidentStatus.OPEN, IncidentStatus.ASSIGNED, 13L
         );
         assertThat(result.incidentId()).isEqualTo(42L);
         assertThat(result.assigneeId()).isEqualTo(7L);
@@ -73,12 +73,12 @@ class AssignIncidentServiceTest {
         when(newAssignee.getId()).thenReturn(8L);
         when(incident.getStatus()).thenReturn(IncidentStatus.ASSIGNED);
 
-        AssignIncidentResult result = service.assign(new AssignIncidentCommand(42L, 8L));
+        AssignIncidentResult result = service.assign(new AssignIncidentCommand(42L, 8L, 13L));
 
         verify(incident).assignTo(newAssignee);
         verify(incidentRepository, never()).save(incident);
         verify(auditService).record(
-                42L, IncidentAuditEventType.ASSIGNED, IncidentStatus.ASSIGNED, IncidentStatus.ASSIGNED
+                42L, IncidentAuditEventType.ASSIGNED, IncidentStatus.ASSIGNED, IncidentStatus.ASSIGNED, 13L
         );
         assertThat(result.incidentId()).isEqualTo(42L);
         assertThat(result.assigneeId()).isEqualTo(8L);
@@ -89,7 +89,7 @@ class AssignIncidentServiceTest {
     void throwsWhenIncidentDoesNotExistWithoutLoadingAssignee() {
         when(incidentRepository.findById(99L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.assign(new AssignIncidentCommand(99L, 7L)))
+        assertThatThrownBy(() -> service.assign(new AssignIncidentCommand(99L, 7L, 13L)))
                 .isInstanceOf(IncidentNotFoundException.class)
                 .hasMessage("Incident not found: 99");
 
@@ -102,7 +102,7 @@ class AssignIncidentServiceTest {
         when(incidentRepository.findById(42L)).thenReturn(Optional.of(incident));
         when(userRepository.findById(99L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.assign(new AssignIncidentCommand(42L, 99L)))
+        assertThatThrownBy(() -> service.assign(new AssignIncidentCommand(42L, 99L, 13L)))
                 .isInstanceOf(UserNotFoundException.class)
                 .hasMessage("User not found: 99");
 
@@ -120,7 +120,7 @@ class AssignIncidentServiceTest {
         when(userRepository.findById(7L)).thenReturn(Optional.of(assignee));
         doThrow(exception).when(incident).assignTo(assignee);
 
-        assertThatThrownBy(() -> service.assign(new AssignIncidentCommand(42L, 7L)))
+        assertThatThrownBy(() -> service.assign(new AssignIncidentCommand(42L, 7L, 13L)))
                 .isSameAs(exception);
 
         verify(incidentRepository, never()).save(incident);

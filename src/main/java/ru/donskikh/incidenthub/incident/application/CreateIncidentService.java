@@ -46,8 +46,8 @@ public class CreateIncidentService {
     public CreateIncidentResult create(CreateIncidentCommand command) {
         Objects.requireNonNull(command, "command must not be null");
 
-        User reporter = userRepository.findById(command.reporterId())
-                .orElseThrow(() -> new UserNotFoundException(command.reporterId()));
+        User reporter = userRepository.findById(command.actorId())
+                .orElseThrow(() -> new UserNotFoundException(command.actorId()));
 
         BusinessService affectedService = businessServiceRepository.findById(command.affectedServiceId())
                 .orElseThrow(() -> new BusinessServiceNotFoundException(command.affectedServiceId()));
@@ -75,7 +75,8 @@ public class CreateIncidentService {
                 savedIncident.getId(),
                 IncidentAuditEventType.CREATED,
                 null,
-                savedIncident.getStatus()
+                savedIncident.getStatus(),
+                command.actorId()
         );
 
         return new CreateIncidentResult(savedIncident.getId(), savedIncident.getStatus());

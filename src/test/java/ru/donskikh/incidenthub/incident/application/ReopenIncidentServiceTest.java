@@ -42,12 +42,12 @@ class ReopenIncidentServiceTest {
         when(incident.getId()).thenReturn(42L);
         when(incident.getStatus()).thenReturn(IncidentStatus.RESOLVED, IncidentStatus.IN_PROGRESS);
 
-        ReopenIncidentResult result = service.reopen(new ReopenIncidentCommand(42L));
+        ReopenIncidentResult result = service.reopen(new ReopenIncidentCommand(42L, 13L));
 
         verify(incident).reopen();
         verify(incidentRepository, never()).save(incident);
         verify(auditService).record(
-                42L, IncidentAuditEventType.REOPENED, IncidentStatus.RESOLVED, IncidentStatus.IN_PROGRESS
+                42L, IncidentAuditEventType.REOPENED, IncidentStatus.RESOLVED, IncidentStatus.IN_PROGRESS, 13L
         );
         assertThat(result.incidentId()).isEqualTo(42L);
         assertThat(result.status()).isEqualTo(IncidentStatus.IN_PROGRESS);
@@ -57,7 +57,7 @@ class ReopenIncidentServiceTest {
     void throwsWhenIncidentDoesNotExist() {
         when(incidentRepository.findById(99L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.reopen(new ReopenIncidentCommand(99L)))
+        assertThatThrownBy(() -> service.reopen(new ReopenIncidentCommand(99L, 13L)))
                 .isInstanceOf(IncidentNotFoundException.class)
                 .hasMessage("Incident not found: 99");
 
@@ -72,7 +72,7 @@ class ReopenIncidentServiceTest {
         when(incidentRepository.findById(42L)).thenReturn(Optional.of(incident));
         doThrow(exception).when(incident).reopen();
 
-        assertThatThrownBy(() -> service.reopen(new ReopenIncidentCommand(42L)))
+        assertThatThrownBy(() -> service.reopen(new ReopenIncidentCommand(42L, 13L)))
                 .isSameAs(exception);
 
         verify(incidentRepository, never()).save(incident);
@@ -90,10 +90,10 @@ class ReopenIncidentServiceTest {
 
     @Test
     void rejectsNonPositiveIncidentId() {
-        assertThatThrownBy(() -> new ReopenIncidentCommand(0L))
+        assertThatThrownBy(() -> new ReopenIncidentCommand(0L, 13L))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("incidentId must be positive");
-        assertThatThrownBy(() -> new ReopenIncidentCommand(-1L))
+        assertThatThrownBy(() -> new ReopenIncidentCommand(-1L, 13L))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("incidentId must be positive");
 

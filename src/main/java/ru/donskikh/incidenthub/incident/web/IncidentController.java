@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.ProblemDetail;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -37,6 +38,7 @@ import ru.donskikh.incidenthub.incident.application.ResolveIncidentCommand;
 import ru.donskikh.incidenthub.incident.application.ResolveIncidentService;
 import ru.donskikh.incidenthub.incident.application.StartIncidentProgressCommand;
 import ru.donskikh.incidenthub.incident.application.StartIncidentProgressService;
+import ru.donskikh.incidenthub.security.AuthenticatedUser;
 
 import java.net.URI;
 
@@ -86,20 +88,21 @@ public class IncidentController {
     @PostMapping
     @Operation(
             summary = "Create an incident",
-            description = "Registers a manual incident in OPEN status for an existing service and reporter. The service owner is used as the responsible team when no team is supplied."
+            description = "Registers a manual incident in OPEN status for the authenticated user. The service owner is used as the responsible team when no team is supplied."
     )
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Incident created in OPEN status"),
             @ApiResponse(responseCode = "400", description = "Request validation failed",
                     content = @Content(schema = @Schema(implementation = ProblemDetail.class))),
-            @ApiResponse(responseCode = "404", description = "Reporter, affected service, or responsible team was not found",
+            @ApiResponse(responseCode = "404", description = "Authenticated user, affected service, or responsible team was not found",
                     content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     })
     public ResponseEntity<CreateIncidentResponse> create(
-            @Valid @RequestBody CreateIncidentRequest request
+            @Valid @RequestBody CreateIncidentRequest request,
+            @AuthenticationPrincipal AuthenticatedUser currentUser
     ) {
         CreateIncidentResponse response = mapper.toResponse(
-                createIncidentService.create(mapper.toCommand(request))
+                createIncidentService.create(mapper.toCommand(request, currentUser.userId()))
         );
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()
                 .path("/{id}")
@@ -197,9 +200,12 @@ public class IncidentController {
     })
     public IncidentResponse assign(
             @Parameter(description = "Incident identifier", example = "73") @PathVariable long id,
-            @Valid @RequestBody AssignIncidentRequest request
+            @Valid @RequestBody AssignIncidentRequest request,
+            @AuthenticationPrincipal AuthenticatedUser currentUser
     ) {
-        long incidentId = assignIncidentService.assign(mapper.toCommand(id, request)).incidentId();
+        long incidentId = assignIncidentService.assign(
+                mapper.toCommand(id, request, currentUser.userId())
+        ).incidentId();
         return currentIncident(incidentId);
     }
 
@@ -218,9 +224,12 @@ public class IncidentController {
                     content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     })
     public IncidentResponse start(
-            @Parameter(description = "Incident identifier", example = "73") @PathVariable long id
+            @Parameter(description = "Incident identifier", example = "73") @PathVariable long id,
+            @AuthenticationPrincipal AuthenticatedUser currentUser
     ) {
-        long incidentId = startIncidentProgressService.start(new StartIncidentProgressCommand(id)).incidentId();
+        long incidentId = startIncidentProgressService.start(
+                new StartIncidentProgressCommand(id, currentUser.userId())
+        ).incidentId();
         return currentIncident(incidentId);
     }
 
@@ -239,9 +248,12 @@ public class IncidentController {
                     content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     })
     public IncidentResponse resolve(
-            @Parameter(description = "Incident identifier", example = "73") @PathVariable long id
+            @Parameter(description = "Incident identifier", example = "73") @PathVariable long id,
+            @AuthenticationPrincipal AuthenticatedUser currentUser
     ) {
-        long incidentId = resolveIncidentService.resolve(new ResolveIncidentCommand(id)).incidentId();
+        long incidentId = resolveIncidentService.resolve(
+                new ResolveIncidentCommand(id, currentUser.userId())
+        ).incidentId();
         return currentIncident(incidentId);
     }
 
@@ -260,9 +272,12 @@ public class IncidentController {
                     content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     })
     public IncidentResponse close(
-            @Parameter(description = "Incident identifier", example = "73") @PathVariable long id
+            @Parameter(description = "Incident identifier", example = "73") @PathVariable long id,
+            @AuthenticationPrincipal AuthenticatedUser currentUser
     ) {
-        long incidentId = closeIncidentService.close(new CloseIncidentCommand(id)).incidentId();
+        long incidentId = closeIncidentService.close(
+                new CloseIncidentCommand(id, currentUser.userId())
+        ).incidentId();
         return currentIncident(incidentId);
     }
 
@@ -281,9 +296,12 @@ public class IncidentController {
                     content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     })
     public IncidentResponse reopen(
-            @Parameter(description = "Incident identifier", example = "73") @PathVariable long id
+            @Parameter(description = "Incident identifier", example = "73") @PathVariable long id,
+            @AuthenticationPrincipal AuthenticatedUser currentUser
     ) {
-        long incidentId = reopenIncidentService.reopen(new ReopenIncidentCommand(id)).incidentId();
+        long incidentId = reopenIncidentService.reopen(
+                new ReopenIncidentCommand(id, currentUser.userId())
+        ).incidentId();
         return currentIncident(incidentId);
     }
 
@@ -302,9 +320,12 @@ public class IncidentController {
                     content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     })
     public IncidentResponse cancel(
-            @Parameter(description = "Incident identifier", example = "73") @PathVariable long id
+            @Parameter(description = "Incident identifier", example = "73") @PathVariable long id,
+            @AuthenticationPrincipal AuthenticatedUser currentUser
     ) {
-        long incidentId = cancelIncidentService.cancel(new CancelIncidentCommand(id)).incidentId();
+        long incidentId = cancelIncidentService.cancel(
+                new CancelIncidentCommand(id, currentUser.userId())
+        ).incidentId();
         return currentIncident(incidentId);
     }
 

@@ -9,7 +9,7 @@ public record CreateIncidentCommand(
         long affectedServiceId,
         IncidentPriority priority,
         IncidentSeverity severity,
-        long reporterId,
+        long actorId,
         Long responsibleTeamId
 ) {
 
@@ -18,8 +18,8 @@ public record CreateIncidentCommand(
             throw new IllegalArgumentException("affectedServiceId must be positive");
         }
 
-        if (reporterId <= 0) {
-            throw new IllegalArgumentException("reporterId must be positive");
+        if (actorId <= 0) {
+            throw new IllegalArgumentException("actorId must be positive");
         }
 
         if (responsibleTeamId != null && responsibleTeamId <= 0) {

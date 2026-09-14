@@ -79,7 +79,7 @@ class IncidentAuditTransactionIntegrationTest extends PostgreSQLIntegrationTest 
 
     @Test
     void rollsBackLifecycleChangeWhenAuditInsertFails() {
-        assertThatThrownBy(() -> service.start(new StartIncidentProgressCommand(INCIDENT_ID)))
+        assertThatThrownBy(() -> service.start(new StartIncidentProgressCommand(INCIDENT_ID, ASSIGNEE_ID)))
                 .isInstanceOf(DataIntegrityViolationException.class);
 
         assertThat(jdbcTemplate.queryForObject(

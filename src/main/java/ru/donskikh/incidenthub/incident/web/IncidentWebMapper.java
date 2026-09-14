@@ -18,20 +18,20 @@ import ru.donskikh.incidenthub.incident.application.ListIncidentsResult;
 @Component
 public class IncidentWebMapper {
 
-    public CreateIncidentCommand toCommand(CreateIncidentRequest request) {
+    public CreateIncidentCommand toCommand(CreateIncidentRequest request, long actorId) {
         return new CreateIncidentCommand(
                 request.title(),
                 request.description(),
                 request.affectedServiceId(),
                 request.priority(),
                 request.severity(),
-                request.reporterId(),
+                actorId,
                 request.responsibleTeamId()
         );
     }
 
-    public AssignIncidentCommand toCommand(long incidentId, AssignIncidentRequest request) {
-        return new AssignIncidentCommand(incidentId, request.assigneeId());
+    public AssignIncidentCommand toCommand(long incidentId, AssignIncidentRequest request, long actorId) {
+        return new AssignIncidentCommand(incidentId, request.assigneeId(), actorId);
     }
 
     public ListIncidentsQuery toQuery(
@@ -132,6 +132,8 @@ public class IncidentWebMapper {
                 item.eventType(),
                 item.fromStatus(),
                 item.toStatus(),
+                item.actorId(),
+                item.actorDisplayName(),
                 item.createdAt()
         );
     }

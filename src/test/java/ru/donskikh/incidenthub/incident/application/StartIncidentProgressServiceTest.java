@@ -42,12 +42,12 @@ class StartIncidentProgressServiceTest {
         when(incident.getId()).thenReturn(42L);
         when(incident.getStatus()).thenReturn(IncidentStatus.ASSIGNED, IncidentStatus.IN_PROGRESS);
 
-        StartIncidentProgressResult result = service.start(new StartIncidentProgressCommand(42L));
+        StartIncidentProgressResult result = service.start(new StartIncidentProgressCommand(42L, 13L));
 
         verify(incident).startProgress();
         verify(incidentRepository, never()).save(incident);
         verify(auditService).record(
-                42L, IncidentAuditEventType.STARTED, IncidentStatus.ASSIGNED, IncidentStatus.IN_PROGRESS
+                42L, IncidentAuditEventType.STARTED, IncidentStatus.ASSIGNED, IncidentStatus.IN_PROGRESS, 13L
         );
         assertThat(result.incidentId()).isEqualTo(42L);
         assertThat(result.status()).isEqualTo(IncidentStatus.IN_PROGRESS);
@@ -57,7 +57,7 @@ class StartIncidentProgressServiceTest {
     void throwsWhenIncidentDoesNotExist() {
         when(incidentRepository.findById(99L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.start(new StartIncidentProgressCommand(99L)))
+        assertThatThrownBy(() -> service.start(new StartIncidentProgressCommand(99L, 13L)))
                 .isInstanceOf(IncidentNotFoundException.class)
                 .hasMessage("Incident not found: 99");
 
@@ -72,7 +72,7 @@ class StartIncidentProgressServiceTest {
         when(incidentRepository.findById(42L)).thenReturn(Optional.of(incident));
         doThrow(exception).when(incident).startProgress();
 
-        assertThatThrownBy(() -> service.start(new StartIncidentProgressCommand(42L)))
+        assertThatThrownBy(() -> service.start(new StartIncidentProgressCommand(42L, 13L)))
                 .isSameAs(exception);
 
         verify(incidentRepository, never()).save(incident);
@@ -90,10 +90,10 @@ class StartIncidentProgressServiceTest {
 
     @Test
     void rejectsNonPositiveIncidentId() {
-        assertThatThrownBy(() -> new StartIncidentProgressCommand(0L))
+        assertThatThrownBy(() -> new StartIncidentProgressCommand(0L, 13L))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("incidentId must be positive");
-        assertThatThrownBy(() -> new StartIncidentProgressCommand(-1L))
+        assertThatThrownBy(() -> new StartIncidentProgressCommand(-1L, 13L))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("incidentId must be positive");
 

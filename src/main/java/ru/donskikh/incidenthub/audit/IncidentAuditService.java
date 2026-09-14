@@ -4,14 +4,18 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import ru.donskikh.incidenthub.incident.IncidentStatus;
+import ru.donskikh.incidenthub.identity.User;
+import ru.donskikh.incidenthub.identity.UserRepository;
 
 @Service
 public class IncidentAuditService {
 
     private final IncidentAuditEventRepository repository;
+    private final UserRepository userRepository;
 
-    public IncidentAuditService(IncidentAuditEventRepository repository) {
+    public IncidentAuditService(IncidentAuditEventRepository repository, UserRepository userRepository) {
         this.repository = repository;
+        this.userRepository = userRepository;
     }
 
     @Transactional(propagation = Propagation.MANDATORY)
@@ -19,8 +23,13 @@ public class IncidentAuditService {
             long incidentId,
             IncidentAuditEventType eventType,
             IncidentStatus fromStatus,
-            IncidentStatus toStatus
+            IncidentStatus toStatus,
+            long actorId
     ) {
-        repository.save(new IncidentAuditEvent(incidentId, eventType, fromStatus, toStatus));
+        if (actorId <= 0) {
+            throw new IllegalArgumentException("actorId must be positive");
+        }
+        User actor = userRepository.getReferenceById(actorId);
+        repository.save(new IncidentAuditEvent(incidentId, eventType, fromStatus, toStatus, actor));
     }
 }

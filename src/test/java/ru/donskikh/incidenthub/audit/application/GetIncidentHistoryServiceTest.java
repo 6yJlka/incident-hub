@@ -12,6 +12,7 @@ import ru.donskikh.incidenthub.incident.Incident;
 import ru.donskikh.incidenthub.incident.IncidentNotFoundException;
 import ru.donskikh.incidenthub.incident.IncidentRepository;
 import ru.donskikh.incidenthub.incident.IncidentStatus;
+import ru.donskikh.incidenthub.identity.User;
 
 import java.time.Instant;
 import java.util.List;
@@ -76,19 +77,27 @@ class GetIncidentHistoryServiceTest {
     void mapsAuditEventsAndPreservesRepositoryOrder() {
         Instant createdAt = Instant.parse("2026-08-13T10:00:00Z");
         Instant resolvedAt = Instant.parse("2026-08-13T11:30:00Z");
+        User reporter = mock(User.class);
+        User engineer = mock(User.class);
+        when(reporter.getId()).thenReturn(7L);
+        when(reporter.getDisplayName()).thenReturn("Reporter");
+        when(engineer.getId()).thenReturn(8L);
+        when(engineer.getDisplayName()).thenReturn("Engineer");
         IncidentAuditEvent created = auditEvent(
                 101L,
                 IncidentAuditEventType.CREATED,
                 null,
                 IncidentStatus.OPEN,
-                createdAt
+                createdAt,
+                reporter
         );
         IncidentAuditEvent resolved = auditEvent(
                 102L,
                 IncidentAuditEventType.RESOLVED,
                 IncidentStatus.IN_PROGRESS,
                 IncidentStatus.RESOLVED,
-                resolvedAt
+                resolvedAt,
+                engineer
         );
         when(incidentRepository.findById(42L)).thenReturn(Optional.of(mock(Incident.class)));
         when(auditEventRepository.findByIncidentIdOrderByCreatedAtAscIdAsc(42L))
@@ -102,6 +111,8 @@ class GetIncidentHistoryServiceTest {
                         IncidentAuditEventType.CREATED,
                         null,
                         IncidentStatus.OPEN,
+                        7L,
+                        "Reporter",
                         createdAt
                 ),
                 new IncidentHistoryItem(
@@ -109,6 +120,8 @@ class GetIncidentHistoryServiceTest {
                         IncidentAuditEventType.RESOLVED,
                         IncidentStatus.IN_PROGRESS,
                         IncidentStatus.RESOLVED,
+                        8L,
+                        "Engineer",
                         resolvedAt
                 )
         );
@@ -119,13 +132,15 @@ class GetIncidentHistoryServiceTest {
             IncidentAuditEventType eventType,
             IncidentStatus fromStatus,
             IncidentStatus toStatus,
-            Instant createdAt
+            Instant createdAt,
+            User actor
     ) {
         IncidentAuditEvent event = mock(IncidentAuditEvent.class);
         when(event.getId()).thenReturn(id);
         when(event.getEventType()).thenReturn(eventType);
         when(event.getFromStatus()).thenReturn(fromStatus);
         when(event.getToStatus()).thenReturn(toStatus);
+        when(event.getActor()).thenReturn(actor);
         when(event.getCreatedAt()).thenReturn(createdAt);
         return event;
     }

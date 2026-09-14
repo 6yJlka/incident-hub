@@ -23,8 +23,6 @@ public record CreateIncidentRequest(
         @Schema(description = "Business impact level; SEV1 is highest and is independent of priority",
                 example = "SEV1", allowableValues = {"SEV1", "SEV2", "SEV3", "SEV4"})
         @NotNull IncidentSeverity severity,
-        @Schema(description = "User who reported the incident", example = "20")
-        @NotNull @Positive Long reporterId,
         @Schema(description = "Team responsible for resolution; defaults to the affected service owner when omitted",
                 example = "12", nullable = true)
         @Positive Long responsibleTeamId

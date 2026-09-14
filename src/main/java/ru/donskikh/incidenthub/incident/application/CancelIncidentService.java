@@ -36,7 +36,8 @@ public class CancelIncidentService {
                 incident.getId(),
                 IncidentAuditEventType.CANCELLED,
                 fromStatus,
-                incident.getStatus()
+                incident.getStatus(),
+                command.actorId()
         );
 
         return new CancelIncidentResult(incident.getId(), incident.getStatus());
