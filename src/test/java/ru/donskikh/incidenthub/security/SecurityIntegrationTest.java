@@ -4,8 +4,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.context.ApplicationContext;
 import org.springframework.http.MediaType;
 import org.springframework.http.HttpHeaders;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 import ru.donskikh.incidenthub.PostgreSQLIntegrationTest;
@@ -15,6 +18,7 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -48,6 +52,16 @@ class SecurityIntegrationTest extends PostgreSQLIntegrationTest {
 
     @Autowired
     private Clock clock;
+
+    @Autowired
+    private ApplicationContext applicationContext;
+
+    @Test
+    void usesJwtFilterChainWithoutBootDefaultUsers() {
+        assertThat(applicationContext.getBeansOfType(SecurityFilterChain.class))
+                .containsOnlyKeys("securityFilterChain");
+        assertThat(applicationContext.getBeansOfType(UserDetailsService.class)).isEmpty();
+    }
 
     @Test
     void rejectsProtectedRequestWithoutToken() throws Exception {

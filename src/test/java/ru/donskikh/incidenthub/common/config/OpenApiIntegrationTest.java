@@ -1,5 +1,7 @@
 package ru.donskikh.incidenthub.common.config;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,6 +11,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import ru.donskikh.incidenthub.PostgreSQLIntegrationTest;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -26,6 +30,7 @@ class OpenApiIntegrationTest extends PostgreSQLIntegrationTest {
     private static final Set<String> HTTP_METHODS = Set.of(
             "get", "post", "put", "patch", "delete", "head", "options", "trace"
     );
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     @Autowired
     private MockMvc mockMvc;
@@ -128,5 +133,21 @@ class OpenApiIntegrationTest extends PostgreSQLIntegrationTest {
         mockMvc.perform(get("/swagger-ui/index.html"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_HTML));
+    }
+
+    @Test
+    void matchesCommittedFrontendSnapshot() throws Exception {
+        String document = mockMvc.perform(get("/v3/api-docs")
+                        .header("Host", "localhost:8080"))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        String snapshot = Files.readString(Path.of("frontend/openapi/incident-hub.json"));
+
+        JsonNode actual = OBJECT_MAPPER.readTree(document);
+        JsonNode expected = OBJECT_MAPPER.readTree(snapshot);
+
+        assertThat(actual).as("OpenAPI snapshot must match the backend contract").isEqualTo(expected);
     }
 }
