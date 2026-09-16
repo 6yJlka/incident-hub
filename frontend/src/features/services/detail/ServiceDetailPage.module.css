@@ -1,0 +1,193 @@
+.page {
+  width: 100%;
+  max-width: var(--content-max-width);
+  margin: 0 auto;
+}
+
+.header {
+  padding: var(--space-4) var(--space-6) var(--space-3-5);
+  border-bottom: var(--border-width) solid var(--color-border);
+}
+
+.header > a {
+  display: inline-block;
+  margin-bottom: var(--space-3);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  text-decoration: none;
+}
+
+.header > a:hover {
+  color: var(--color-text);
+}
+
+.heading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3-5);
+  flex-wrap: wrap;
+}
+
+.heading h1 {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 1.1875rem;
+  letter-spacing: var(--letter-spacing-tight);
+}
+
+.heading > span:nth-of-type(2) {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-md);
+}
+
+.heading > strong {
+  padding: var(--space-0-5) var(--space-2);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-soft);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-micro);
+  letter-spacing: 0.06em;
+}
+
+.heading > small {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.description {
+  max-width: var(--description-max-width);
+  margin: var(--space-3) 0 0;
+  color: var(--color-text-muted);
+  line-height: var(--line-height-message);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+  gap: var(--space-4);
+  align-items: start;
+  padding: var(--space-5) var(--space-6) var(--space-10);
+}
+
+.panel {
+  min-width: 0;
+  padding: var(--space-3-5) var(--space-4) var(--space-4);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.panel h2 {
+  margin: 0 0 var(--space-1);
+  color: var(--color-text-subtle);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-micro);
+  font-weight: 400;
+  letter-spacing: var(--letter-spacing-label);
+  text-transform: uppercase;
+}
+
+.panel > p {
+  margin: 0 0 var(--space-3);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-caption);
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+}
+
+.serviceRow,
+.incidentRow {
+  display: flex;
+  min-width: 0;
+  min-height: 2rem;
+  align-items: center;
+  gap: var(--space-2);
+  border-bottom: var(--border-width) solid var(--color-border);
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.serviceRow:hover,
+.incidentRow:hover {
+  background: var(--color-hover);
+}
+
+.serviceRow strong {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-caption);
+}
+
+.serviceRow > span:not(.branch) {
+  overflow: hidden;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.serviceRow em {
+  margin-left: auto;
+  padding: var(--space-0-5) var(--space-1-25);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-micro);
+  font-style: normal;
+}
+
+.serviceRow em.async {
+  border-style: dashed;
+}
+
+.serviceRow em.data {
+  border-style: dotted;
+}
+
+.serviceRow small,
+.branch,
+.incidentId {
+  color: var(--color-text-subtle);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-micro);
+}
+
+.incidentRow {
+  padding: var(--space-2) 0;
+}
+
+.incidentRow strong {
+  overflow: hidden;
+  flex: 1;
+  color: var(--color-text-soft);
+  font-size: var(--font-size-sm);
+  font-weight: 400;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.empty {
+  padding: var(--space-2) 0;
+  color: var(--color-text-subtle);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-caption);
+  text-transform: uppercase;
+}
+
+.state {
+  display: flex;
+  min-height: var(--detail-state-min-height);
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+}
+
+.error {
+  flex-direction: column;
+  gap: var(--space-2);
+  color: var(--color-danger-soft);
+}

@@ -1,0 +1,3129 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "IncidentHub API",
+    "description": "REST API for managing service ownership, dependencies, and incident lifecycle",
+    "contact": {
+      "name": "IncidentHub repository",
+      "url": "https://github.com/6yJlka/incident-hub"
+    },
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080",
+      "description": "Generated server url"
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "Service catalog",
+      "description": "Manage business services and their dependency graph"
+    },
+    {
+      "name": "Authentication",
+      "description": "Register users and obtain access tokens"
+    },
+    {
+      "name": "Users",
+      "description": "Administratively create login-enabled users and browse them"
+    },
+    {
+      "name": "Teams",
+      "description": "Create service-owning teams and browse them"
+    },
+    {
+      "name": "Incidents",
+      "description": "Register incidents, inspect history, and perform explicit lifecycle transitions"
+    }
+  ],
+  "paths": {
+    "/api/v1/users": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "List users",
+        "description": "Returns users ordered by display name and identifier, optionally filtered by activity.",
+        "operationId": "list",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Zero-based page index",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            },
+            "example": 0
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "Page size from 1 to 100",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            },
+            "example": 20
+          },
+          {
+            "name": "active",
+            "in": "query",
+            "description": "Filter by active or inactive users",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            },
+            "example": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Page of users returned",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListUsersResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Pagination or filter parameter is invalid",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication credentials are missing or invalid",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Users"],
+        "summary": "Create a user as an administrator",
+        "description": "Creates an active login-enabled user with the selected role. The normalized email must be unique.",
+        "operationId": "create",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateUserRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "User created",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateUserResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Request validation failed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication credentials are missing or invalid",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The authenticated user does not have the required role",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Normalized email already exists",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/teams": {
+      "get": {
+        "tags": ["Teams"],
+        "summary": "List teams",
+        "description": "Returns teams ordered by name and identifier, optionally filtered by activity.",
+        "operationId": "list_1",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Zero-based page index",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            },
+            "example": 0
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "Page size from 1 to 100",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            },
+            "example": 20
+          },
+          {
+            "name": "active",
+            "in": "query",
+            "description": "Filter by active or inactive teams",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            },
+            "example": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Page of teams returned",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListTeamsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Pagination or filter parameter is invalid",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication credentials are missing or invalid",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Teams"],
+        "summary": "Create a team",
+        "description": "Creates an active team. The normalized code must be unique.",
+        "operationId": "create_1",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTeamRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Team created",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateTeamResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Request validation failed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication credentials are missing or invalid",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The authenticated user does not have the required role",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Normalized team code already exists",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/services": {
+      "get": {
+        "tags": ["Service catalog"],
+        "summary": "List business services",
+        "description": "Returns services ordered by name and identifier with optional owner, tier, and activity filters.",
+        "operationId": "list_2",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Zero-based page index",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            },
+            "example": 0
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "Page size from 1 to 100",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            },
+            "example": 20
+          },
+          {
+            "name": "ownerTeamId",
+            "in": "query",
+            "description": "Filter by owner team identifier",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 12
+          },
+          {
+            "name": "tier",
+            "in": "query",
+            "description": "Filter by business criticality tier",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["TIER_1", "TIER_2", "TIER_3"]
+            },
+            "example": "TIER_1"
+          },
+          {
+            "name": "active",
+            "in": "query",
+            "description": "Filter by active or inactive services",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            },
+            "example": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Page of services returned",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListBusinessServicesResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Pagination or filter parameter is invalid",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication credentials are missing or invalid",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Service catalog"],
+        "summary": "Create a business service",
+        "description": "Creates an active catalog service owned by an existing team. The normalized code must be unique.",
+        "operationId": "create_2",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBusinessServiceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Business service created",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateBusinessServiceResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Request validation failed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication credentials are missing or invalid",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The authenticated user does not have the required role",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Owner team was not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Normalized service code already exists",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/services/{id}/dependencies": {
+      "post": {
+        "tags": ["Service catalog"],
+        "summary": "Add a service dependency",
+        "description": "Declares that the service in the path depends on another existing service. Self-dependencies and duplicate pairs are rejected.",
+        "operationId": "addDependency",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Identifier of the service that depends on another service",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 42
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddServiceDependencyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Dependency relationship created",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AddServiceDependencyResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Service identifier, dependency identifier, or type is invalid",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication credentials are missing or invalid",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The authenticated user does not have the required role",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Dependent or required service was not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Dependency already exists or points to the same service",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/incidents": {
+      "get": {
+        "tags": ["Incidents"],
+        "summary": "List incidents",
+        "description": "Returns incidents ordered by creation time with optional lifecycle, urgency, impact, source, service, and team filters.",
+        "operationId": "list_3",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Zero-based page index",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            },
+            "example": 0
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "Page size from 1 to 100",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            },
+            "example": 20
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filter by current lifecycle status",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "OPEN",
+                "ASSIGNED",
+                "IN_PROGRESS",
+                "RESOLVED",
+                "CLOSED",
+                "CANCELLED"
+              ]
+            },
+            "example": "IN_PROGRESS"
+          },
+          {
+            "name": "priority",
+            "in": "query",
+            "description": "Filter by work ordering urgency",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"]
+            },
+            "example": "HIGH"
+          },
+          {
+            "name": "severity",
+            "in": "query",
+            "description": "Filter by business impact level, independent of priority",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["SEV1", "SEV2", "SEV3", "SEV4"]
+            },
+            "example": "SEV2"
+          },
+          {
+            "name": "source",
+            "in": "query",
+            "description": "Filter by registration source",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["MANUAL", "AUTOMATIC"]
+            },
+            "example": "MANUAL"
+          },
+          {
+            "name": "affectedServiceId",
+            "in": "query",
+            "description": "Filter by affected service identifier",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 42
+          },
+          {
+            "name": "responsibleTeamId",
+            "in": "query",
+            "description": "Filter by responsible team identifier",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 12
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Page of incidents returned",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListIncidentsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Pagination or filter parameter is invalid",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication credentials are missing or invalid",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Incidents"],
+        "summary": "Create an incident",
+        "description": "Registers a manual incident in OPEN status for the authenticated user. The service owner is used as the responsible team when no team is supplied.",
+        "operationId": "create_3",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateIncidentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Incident created in OPEN status",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateIncidentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Request validation failed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication credentials are missing or invalid",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Authenticated user, affected service, or responsible team was not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/incidents/{id}/start": {
+      "post": {
+        "tags": ["Incidents"],
+        "summary": "Start incident work",
+        "description": "Moves an ASSIGNED incident to IN_PROGRESS. No other source status is allowed.",
+        "operationId": "start",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Incident identifier",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 73
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Incident moved to IN_PROGRESS",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/IncidentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Incident identifier is invalid",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication credentials are missing or invalid",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The authenticated user does not have the required role",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Incident was not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Incident is not ASSIGNED",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/incidents/{id}/resolve": {
+      "post": {
+        "tags": ["Incidents"],
+        "summary": "Resolve an incident",
+        "description": "Moves an IN_PROGRESS incident to RESOLVED. No other source status is allowed.",
+        "operationId": "resolve",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Incident identifier",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 73
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Incident moved to RESOLVED",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/IncidentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Incident identifier is invalid",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication credentials are missing or invalid",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The authenticated user does not have the required role",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Incident was not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Incident is not IN_PROGRESS",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/incidents/{id}/reopen": {
+      "post": {
+        "tags": ["Incidents"],
+        "summary": "Reopen an incident",
+        "description": "Moves a RESOLVED incident back to IN_PROGRESS when the problem persists.",
+        "operationId": "reopen",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Incident identifier",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 73
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Incident returned to IN_PROGRESS",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/IncidentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Incident identifier is invalid",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication credentials are missing or invalid",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The authenticated user does not have the required role",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Incident was not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Incident is not RESOLVED",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/incidents/{id}/close": {
+      "post": {
+        "tags": ["Incidents"],
+        "summary": "Close an incident",
+        "description": "Moves a RESOLVED incident to CLOSED. No other source status is allowed.",
+        "operationId": "close",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Incident identifier",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 73
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Incident moved to CLOSED",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/IncidentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Incident identifier is invalid",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication credentials are missing or invalid",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The authenticated user does not have the required role",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Incident was not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Incident is not RESOLVED",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/incidents/{id}/cancel": {
+      "post": {
+        "tags": ["Incidents"],
+        "summary": "Cancel an incident",
+        "description": "Moves an OPEN, ASSIGNED, or IN_PROGRESS incident to CANCELLED. Resolved and closed incidents cannot be cancelled.",
+        "operationId": "cancel",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Incident identifier",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 73
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Incident moved to CANCELLED",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/IncidentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Incident identifier is invalid",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication credentials are missing or invalid",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The authenticated user does not have the required role",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Incident was not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Current incident status does not allow cancellation",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/incidents/{id}/assign": {
+      "post": {
+        "tags": ["Incidents"],
+        "summary": "Assign an incident",
+        "description": "Assigns or reassigns an existing user. Allowed only while the incident is OPEN or ASSIGNED.",
+        "operationId": "assign",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Incident identifier",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 73
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignIncidentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Incident assigned and current details returned",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/IncidentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Incident or assignee identifier is invalid",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication credentials are missing or invalid",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The authenticated user does not have the required role",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Incident or assignee was not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Current incident status does not allow assignment",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/register": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Register a user",
+        "description": "Creates an active user with the REPORTER role",
+        "operationId": "register",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "User registered",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Request validation failed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Normalized email already exists",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Log in",
+        "description": "Returns a signed JWT access token",
+        "operationId": "login",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Authentication successful",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Request validation failed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid email or password",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/v1/users/me": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Get the current user",
+        "description": "Returns the user identified by the authenticated principal",
+        "operationId": "current",
+        "responses": {
+          "200": {
+            "description": "Current user returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CurrentUserResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication credentials are missing or invalid",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Authenticated user no longer exists",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/services/{id}": {
+      "get": {
+        "tags": ["Service catalog"],
+        "summary": "Get a business service",
+        "description": "Returns service details together with its direct dependencies.",
+        "operationId": "get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Business service identifier",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 42
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Business service returned",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessServiceResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Service identifier is invalid",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication credentials are missing or invalid",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Business service was not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/services/{id}/affected": {
+      "get": {
+        "tags": ["Service catalog"],
+        "summary": "Find affected services",
+        "description": "Traverses reverse dependencies and returns each affected service once at its minimum depth.",
+        "operationId": "affected",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Failed root service identifier",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 41
+          },
+          {
+            "name": "maxDepth",
+            "in": "query",
+            "description": "Maximum number of dependency levels to traverse, from 1 to 10",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 10
+            },
+            "example": 3
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Affected services returned",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetAffectedServicesResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Service identifier or maximum depth is invalid",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication credentials are missing or invalid",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Root business service was not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/incidents/{id}": {
+      "get": {
+        "tags": ["Incidents"],
+        "summary": "Get an incident",
+        "description": "Returns the current incident details and assignments.",
+        "operationId": "get_1",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Incident identifier",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 73
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Incident returned",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/IncidentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Incident identifier is invalid",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication credentials are missing or invalid",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Incident was not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/incidents/{id}/history": {
+      "get": {
+        "tags": ["Incidents"],
+        "summary": "Get incident history",
+        "description": "Returns lifecycle audit events in chronological order.",
+        "operationId": "history",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Incident identifier",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 73
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Incident history returned",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/IncidentHistoryResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Incident identifier is invalid",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication credentials are missing or invalid",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Incident was not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/services/{id}/dependencies/{dependencyId}": {
+      "delete": {
+        "tags": ["Service catalog"],
+        "summary": "Remove a service dependency",
+        "description": "Removes the direct dependency from the service in the path to the specified required service.",
+        "operationId": "removeDependency",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Identifier of the dependent service",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 42
+          },
+          {
+            "name": "dependencyId",
+            "in": "path",
+            "description": "Identifier of the required service",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 41
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Dependency relationship removed"
+          },
+          "400": {
+            "description": "Service or dependency identifier is invalid",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication credentials are missing or invalid",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The authenticated user does not have the required role",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Service or dependency relationship was not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CreateUserRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "Unique email; surrounding spaces are removed and case is normalized",
+            "example": "engineer@example.com",
+            "maxLength": 255,
+            "minLength": 0
+          },
+          "displayName": {
+            "type": "string",
+            "description": "Name shown in incident views",
+            "example": "Elena Sokolova",
+            "maxLength": 150,
+            "minLength": 0
+          },
+          "password": {
+            "type": "string",
+            "description": "Initial password",
+            "example": "secure-password-123",
+            "maxLength": 72,
+            "minLength": 8
+          },
+          "role": {
+            "type": "string",
+            "description": "Role assigned by an administrator",
+            "enum": ["REPORTER", "ENGINEER", "ADMIN"],
+            "example": "ENGINEER"
+          }
+        },
+        "required": ["displayName", "email", "password", "role"]
+      },
+      "ProblemDetail": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "format": "uri"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "instance": {
+            "type": "string",
+            "format": "uri"
+          },
+          "properties": {
+            "type": "object",
+            "additionalProperties": {}
+          }
+        }
+      },
+      "CreateUserResponse": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Generated user identifier",
+            "example": 21
+          },
+          "email": {
+            "type": "string",
+            "description": "Normalized email",
+            "example": "engineer@example.com"
+          },
+          "displayName": {
+            "type": "string",
+            "description": "Name shown in incident views",
+            "example": "Elena Sokolova"
+          },
+          "role": {
+            "type": "string",
+            "description": "Assigned role",
+            "enum": ["REPORTER", "ENGINEER", "ADMIN"],
+            "example": "ENGINEER"
+          },
+          "active": {
+            "type": "boolean",
+            "description": "Whether the user is active",
+            "example": true
+          }
+        }
+      },
+      "CreateTeamRequest": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Unique team code; stored trimmed and uppercase",
+            "example": "PLATFORM",
+            "maxLength": 50,
+            "minLength": 0
+          },
+          "name": {
+            "type": "string",
+            "description": "Human-readable team name",
+            "example": "Platform Engineering",
+            "maxLength": 150,
+            "minLength": 0
+          }
+        },
+        "required": ["code", "name"]
+      },
+      "CreateTeamResponse": {
+        "type": "object",
+        "properties": {
+          "teamId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Generated team identifier",
+            "example": 12
+          },
+          "code": {
+            "type": "string",
+            "description": "Normalized team code",
+            "example": "PLATFORM"
+          },
+          "active": {
+            "type": "boolean",
+            "description": "Whether the team is active",
+            "example": true
+          }
+        }
+      },
+      "CreateBusinessServiceRequest": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Unique service code; stored trimmed and uppercase",
+            "example": "PAYMENT_API",
+            "maxLength": 50,
+            "minLength": 0
+          },
+          "name": {
+            "type": "string",
+            "description": "Human-readable service name",
+            "example": "Payment API",
+            "maxLength": 150,
+            "minLength": 0
+          },
+          "description": {
+            "type": "string",
+            "description": "Service purpose and responsibility",
+            "example": "Processes card authorization requests",
+            "minLength": 1
+          },
+          "ownerTeamId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Identifier of the team that owns the service",
+            "example": 12
+          },
+          "tier": {
+            "type": "string",
+            "description": "Business criticality tier; TIER_1 is the most critical",
+            "enum": ["TIER_1", "TIER_2", "TIER_3"],
+            "example": "TIER_1"
+          }
+        },
+        "required": ["code", "description", "name", "ownerTeamId", "tier"]
+      },
+      "CreateBusinessServiceResponse": {
+        "type": "object",
+        "properties": {
+          "businessServiceId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Generated service identifier",
+            "example": 42
+          },
+          "code": {
+            "type": "string",
+            "description": "Normalized service code",
+            "example": "PAYMENT_API"
+          },
+          "tier": {
+            "type": "string",
+            "description": "Business criticality tier",
+            "enum": ["TIER_1", "TIER_2", "TIER_3"],
+            "example": "TIER_1"
+          },
+          "active": {
+            "type": "boolean",
+            "description": "Whether the service is active",
+            "example": true
+          }
+        }
+      },
+      "AddServiceDependencyRequest": {
+        "type": "object",
+        "properties": {
+          "dependencyServiceId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Identifier of the service required by the service in the path",
+            "example": 41
+          },
+          "type": {
+            "type": "string",
+            "description": "Interaction type: synchronous call, asynchronous messaging, or data dependency",
+            "enum": ["SYNC", "ASYNC", "DATA"],
+            "example": "SYNC"
+          }
+        },
+        "required": ["dependencyServiceId", "type"]
+      },
+      "AddServiceDependencyResponse": {
+        "type": "object",
+        "properties": {
+          "relationshipId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Generated dependency relationship identifier",
+            "example": 100
+          },
+          "dependentServiceId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Service that depends on another service",
+            "example": 42
+          },
+          "dependencyServiceId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Service required by the dependent service",
+            "example": 41
+          },
+          "type": {
+            "type": "string",
+            "description": "Dependency interaction type",
+            "enum": ["SYNC", "ASYNC", "DATA"],
+            "example": "SYNC"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Relationship creation timestamp",
+            "example": "2026-09-01T10:00:00Z"
+          }
+        }
+      },
+      "CreateIncidentRequest": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Concise incident title",
+            "example": "Card payment authorization failures",
+            "maxLength": 255,
+            "minLength": 0
+          },
+          "description": {
+            "type": "string",
+            "description": "Observed symptoms and operational context",
+            "example": "Authorization requests fail for one acquiring bank",
+            "minLength": 1
+          },
+          "affectedServiceId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Identifier of the service experiencing the failure",
+            "example": 42
+          },
+          "priority": {
+            "type": "string",
+            "description": "Work ordering urgency, independent of business impact",
+            "enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"],
+            "example": "CRITICAL"
+          },
+          "severity": {
+            "type": "string",
+            "description": "Business impact level; SEV1 is highest and is independent of priority",
+            "enum": ["SEV1", "SEV2", "SEV3", "SEV4"],
+            "example": "SEV1"
+          },
+          "responsibleTeamId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Team responsible for resolution; defaults to the affected service owner when omitted",
+            "example": 12
+          }
+        },
+        "required": [
+          "affectedServiceId",
+          "description",
+          "priority",
+          "severity",
+          "title"
+        ]
+      },
+      "CreateIncidentResponse": {
+        "type": "object",
+        "properties": {
+          "incidentId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Generated incident identifier",
+            "example": 73
+          },
+          "status": {
+            "type": "string",
+            "description": "Initial incident status",
+            "enum": [
+              "OPEN",
+              "ASSIGNED",
+              "IN_PROGRESS",
+              "RESOLVED",
+              "CLOSED",
+              "CANCELLED"
+            ],
+            "example": "OPEN"
+          }
+        }
+      },
+      "IncidentResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Incident identifier",
+            "example": 73
+          },
+          "title": {
+            "type": "string",
+            "description": "Incident title",
+            "example": "Card payment authorization failures"
+          },
+          "description": {
+            "type": "string",
+            "description": "Observed symptoms and operational context",
+            "example": "Authorization requests fail for one acquiring bank"
+          },
+          "affectedServiceId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Affected service identifier",
+            "example": 42
+          },
+          "affectedServiceCode": {
+            "type": "string",
+            "description": "Affected service code",
+            "example": "PAYMENT_API"
+          },
+          "affectedServiceName": {
+            "type": "string",
+            "description": "Affected service name",
+            "example": "Payment API"
+          },
+          "source": {
+            "type": "string",
+            "description": "How the incident was registered",
+            "enum": ["MANUAL", "AUTOMATIC"],
+            "example": "MANUAL"
+          },
+          "priority": {
+            "type": "string",
+            "description": "Work ordering urgency",
+            "enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"],
+            "example": "CRITICAL"
+          },
+          "severity": {
+            "type": "string",
+            "description": "Business impact level, independent of priority",
+            "enum": ["SEV1", "SEV2", "SEV3", "SEV4"],
+            "example": "SEV1"
+          },
+          "status": {
+            "type": "string",
+            "description": "Current lifecycle status",
+            "enum": [
+              "OPEN",
+              "ASSIGNED",
+              "IN_PROGRESS",
+              "RESOLVED",
+              "CLOSED",
+              "CANCELLED"
+            ],
+            "example": "IN_PROGRESS"
+          },
+          "reporterId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Reporter identifier",
+            "example": 20
+          },
+          "reporterDisplayName": {
+            "type": "string",
+            "description": "Reporter display name",
+            "example": "Anna Ivanova"
+          },
+          "responsibleTeamId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Responsible team identifier",
+            "example": 12
+          },
+          "responsibleTeamName": {
+            "type": "string",
+            "description": "Responsible team name",
+            "example": "Payments Platform"
+          },
+          "responsibleTeamCode": {
+            "type": "string",
+            "description": "Responsible team code",
+            "example": "PAYMENTS"
+          },
+          "assigneeId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Assigned user identifier",
+            "example": 21
+          },
+          "assigneeDisplayName": {
+            "type": "string",
+            "description": "Assigned user display name",
+            "example": "Maksim Kuznetsov"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp",
+            "example": "2026-09-01T10:00:00Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last update timestamp",
+            "example": "2026-09-01T10:15:00Z"
+          },
+          "availableActions": {
+            "type": "array",
+            "description": "Lifecycle actions available to the current user in the current status",
+            "example": ["ASSIGN", "CANCEL"],
+            "items": {
+              "type": "string",
+              "enum": [
+                "ASSIGN",
+                "START",
+                "RESOLVE",
+                "CLOSE",
+                "REOPEN",
+                "CANCEL"
+              ]
+            }
+          }
+        }
+      },
+      "AssignIncidentRequest": {
+        "type": "object",
+        "properties": {
+          "assigneeId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Active user who will handle the incident",
+            "example": 21
+          }
+        },
+        "required": ["assigneeId"]
+      },
+      "RegisterRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "reporter@example.com",
+            "maxLength": 255,
+            "minLength": 0
+          },
+          "displayName": {
+            "type": "string",
+            "example": "Example Reporter",
+            "maxLength": 150,
+            "minLength": 0
+          },
+          "password": {
+            "type": "string",
+            "example": "secure-password-123",
+            "maxLength": 72,
+            "minLength": 8
+          }
+        },
+        "required": ["displayName", "email", "password"]
+      },
+      "RegisterResponse": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "integer",
+            "format": "int64",
+            "example": 21
+          },
+          "email": {
+            "type": "string",
+            "example": "reporter@example.com"
+          },
+          "displayName": {
+            "type": "string",
+            "example": "Example Reporter"
+          },
+          "role": {
+            "type": "string",
+            "enum": ["REPORTER", "ENGINEER", "ADMIN"],
+            "example": "REPORTER"
+          },
+          "active": {
+            "type": "boolean",
+            "example": true
+          }
+        }
+      },
+      "LoginRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "reporter@example.com",
+            "maxLength": 255,
+            "minLength": 0
+          },
+          "password": {
+            "type": "string",
+            "example": "secure-password-123",
+            "maxLength": 72,
+            "minLength": 0
+          }
+        },
+        "required": ["email", "password"]
+      },
+      "LoginResponse": {
+        "type": "object",
+        "properties": {
+          "accessToken": {
+            "type": "string",
+            "description": "Signed JWT access token"
+          },
+          "tokenType": {
+            "type": "string",
+            "example": "Bearer"
+          },
+          "expiresInSeconds": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Token lifetime in seconds",
+            "example": 3600
+          }
+        }
+      },
+      "ListUsersResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "description": "Users on the requested page",
+            "example": [],
+            "items": {
+              "$ref": "#/components/schemas/UserListItemResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Zero-based page index",
+            "example": 0
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Actual page size",
+            "example": 20
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Total number of matching users",
+            "example": 6
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Total number of pages",
+            "example": 1
+          },
+          "hasNext": {
+            "type": "boolean",
+            "description": "Whether another page follows",
+            "example": false
+          },
+          "hasPrevious": {
+            "type": "boolean",
+            "description": "Whether a previous page exists",
+            "example": false
+          }
+        }
+      },
+      "UserListItemResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "description": "User identifier",
+            "example": 21
+          },
+          "email": {
+            "type": "string",
+            "description": "Normalized user email",
+            "example": "engineer@example.com"
+          },
+          "displayName": {
+            "type": "string",
+            "description": "Display name",
+            "example": "Elena Sokolova"
+          },
+          "role": {
+            "type": "string",
+            "description": "Assigned role",
+            "enum": ["REPORTER", "ENGINEER", "ADMIN"],
+            "example": "ENGINEER"
+          },
+          "active": {
+            "type": "boolean",
+            "description": "Whether the user is active",
+            "example": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp",
+            "example": "2026-09-01T10:00:00Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last update timestamp",
+            "example": "2026-09-02T11:00:00Z"
+          }
+        }
+      },
+      "CurrentUserResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Current user identifier",
+            "example": 21
+          },
+          "email": {
+            "type": "string",
+            "description": "Normalized email",
+            "example": "engineer@example.com"
+          },
+          "displayName": {
+            "type": "string",
+            "description": "Name shown in the interface",
+            "example": "Elena Sokolova"
+          },
+          "role": {
+            "type": "string",
+            "description": "Assigned role",
+            "enum": ["REPORTER", "ENGINEER", "ADMIN"],
+            "example": "ENGINEER"
+          },
+          "active": {
+            "type": "boolean",
+            "description": "Whether the current user is active",
+            "example": true
+          }
+        }
+      },
+      "ListTeamsResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "description": "Teams on the requested page",
+            "example": [],
+            "items": {
+              "$ref": "#/components/schemas/TeamListItemResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Zero-based page index",
+            "example": 0
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Actual page size",
+            "example": 20
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Total number of matching teams",
+            "example": 4
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Total number of pages",
+            "example": 1
+          },
+          "hasNext": {
+            "type": "boolean",
+            "description": "Whether another page follows",
+            "example": false
+          },
+          "hasPrevious": {
+            "type": "boolean",
+            "description": "Whether a previous page exists",
+            "example": false
+          }
+        }
+      },
+      "TeamListItemResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Team identifier",
+            "example": 12
+          },
+          "code": {
+            "type": "string",
+            "description": "Normalized team code",
+            "example": "PLATFORM"
+          },
+          "name": {
+            "type": "string",
+            "description": "Human-readable team name",
+            "example": "Platform Engineering"
+          },
+          "active": {
+            "type": "boolean",
+            "description": "Whether the team is active",
+            "example": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp",
+            "example": "2026-09-01T10:00:00Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last update timestamp",
+            "example": "2026-09-02T11:00:00Z"
+          }
+        }
+      },
+      "BusinessServiceListItemResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Service identifier",
+            "example": 42
+          },
+          "code": {
+            "type": "string",
+            "description": "Normalized service code",
+            "example": "PAYMENT_API"
+          },
+          "name": {
+            "type": "string",
+            "description": "Service name",
+            "example": "Payment API"
+          },
+          "ownerTeamId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Owner team identifier",
+            "example": 12
+          },
+          "ownerTeamName": {
+            "type": "string",
+            "description": "Owner team name",
+            "example": "Payments Platform"
+          },
+          "ownerTeamCode": {
+            "type": "string",
+            "description": "Owner team code",
+            "example": "PAYMENTS"
+          },
+          "tier": {
+            "type": "string",
+            "description": "Business criticality tier",
+            "enum": ["TIER_1", "TIER_2", "TIER_3"],
+            "example": "TIER_1"
+          },
+          "active": {
+            "type": "boolean",
+            "description": "Whether the service is active",
+            "example": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp",
+            "example": "2026-09-01T10:00:00Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last update timestamp",
+            "example": "2026-09-02T11:00:00Z"
+          }
+        }
+      },
+      "ListBusinessServicesResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "description": "Services on the requested page",
+            "example": [],
+            "items": {
+              "$ref": "#/components/schemas/BusinessServiceListItemResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Zero-based page index",
+            "example": 0
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Actual page size",
+            "example": 20
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Total number of matching services",
+            "example": 10
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Total number of pages",
+            "example": 1
+          },
+          "hasNext": {
+            "type": "boolean",
+            "description": "Whether another page follows",
+            "example": false
+          },
+          "hasPrevious": {
+            "type": "boolean",
+            "description": "Whether a previous page exists",
+            "example": false
+          }
+        }
+      },
+      "BusinessServiceResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Service identifier",
+            "example": 42
+          },
+          "code": {
+            "type": "string",
+            "description": "Normalized service code",
+            "example": "PAYMENT_API"
+          },
+          "name": {
+            "type": "string",
+            "description": "Service name",
+            "example": "Payment API"
+          },
+          "description": {
+            "type": "string",
+            "description": "Service purpose and responsibility",
+            "example": "Processes card authorization requests"
+          },
+          "ownerTeamId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Owner team identifier",
+            "example": 12
+          },
+          "ownerTeamName": {
+            "type": "string",
+            "description": "Owner team name",
+            "example": "Payments Platform"
+          },
+          "ownerTeamCode": {
+            "type": "string",
+            "description": "Owner team code",
+            "example": "PAYMENTS"
+          },
+          "tier": {
+            "type": "string",
+            "description": "Business criticality tier",
+            "enum": ["TIER_1", "TIER_2", "TIER_3"],
+            "example": "TIER_1"
+          },
+          "active": {
+            "type": "boolean",
+            "description": "Whether the service is active",
+            "example": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp",
+            "example": "2026-09-01T10:00:00Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last update timestamp",
+            "example": "2026-09-02T11:00:00Z"
+          },
+          "dependencies": {
+            "type": "array",
+            "description": "Services directly required by this service",
+            "example": [],
+            "items": {
+              "$ref": "#/components/schemas/DirectServiceDependencyResponse"
+            }
+          }
+        }
+      },
+      "DirectServiceDependencyResponse": {
+        "type": "object",
+        "properties": {
+          "relationshipId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Dependency relationship identifier",
+            "example": 100
+          },
+          "serviceId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Required service identifier",
+            "example": 41
+          },
+          "code": {
+            "type": "string",
+            "description": "Required service code",
+            "example": "CORE_DATABASE"
+          },
+          "name": {
+            "type": "string",
+            "description": "Required service name",
+            "example": "Core Database"
+          },
+          "tier": {
+            "type": "string",
+            "description": "Required service criticality tier",
+            "enum": ["TIER_1", "TIER_2", "TIER_3"],
+            "example": "TIER_1"
+          },
+          "active": {
+            "type": "boolean",
+            "description": "Whether the required service is active",
+            "example": true
+          },
+          "type": {
+            "type": "string",
+            "description": "Dependency interaction type",
+            "enum": ["SYNC", "ASYNC", "DATA"],
+            "example": "DATA"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Relationship creation timestamp",
+            "example": "2026-09-01T10:00:00Z"
+          }
+        }
+      },
+      "AffectedServiceResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Affected service identifier",
+            "example": 44
+          },
+          "code": {
+            "type": "string",
+            "description": "Affected service code",
+            "example": "CUSTOMER_PORTAL"
+          },
+          "name": {
+            "type": "string",
+            "description": "Affected service name",
+            "example": "Customer Portal"
+          },
+          "tier": {
+            "type": "string",
+            "description": "Business criticality tier",
+            "enum": ["TIER_1", "TIER_2", "TIER_3"],
+            "example": "TIER_2"
+          },
+          "active": {
+            "type": "boolean",
+            "description": "Whether the affected service is active",
+            "example": true
+          },
+          "ownerTeamId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Owner team identifier",
+            "example": 15
+          },
+          "ownerTeamName": {
+            "type": "string",
+            "description": "Owner team name",
+            "example": "Customer Operations"
+          },
+          "depth": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Minimum number of dependency edges from the failed service",
+            "example": 2
+          },
+          "dependencyType": {
+            "type": "string",
+            "description": "Type of the edge used on the selected minimum-depth path",
+            "enum": ["SYNC", "ASYNC", "DATA"],
+            "example": "SYNC"
+          }
+        }
+      },
+      "GetAffectedServicesResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "description": "Deduplicated affected services ordered by minimum depth",
+            "example": [],
+            "items": {
+              "$ref": "#/components/schemas/AffectedServiceResponse"
+            }
+          },
+          "businessServiceId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Identifier of the failed root service",
+            "example": 41
+          },
+          "maxDepth": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Maximum dependency depth traversed by the query",
+            "example": 3
+          }
+        }
+      },
+      "IncidentListItemResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Incident identifier",
+            "example": 73
+          },
+          "title": {
+            "type": "string",
+            "description": "Incident title",
+            "example": "Card payment authorization failures"
+          },
+          "affectedServiceId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Affected service identifier",
+            "example": 42
+          },
+          "affectedServiceCode": {
+            "type": "string",
+            "description": "Affected service code",
+            "example": "PAYMENT_API"
+          },
+          "affectedServiceName": {
+            "type": "string",
+            "description": "Affected service name",
+            "example": "Payment API"
+          },
+          "source": {
+            "type": "string",
+            "description": "How the incident was registered",
+            "enum": ["MANUAL", "AUTOMATIC"],
+            "example": "MANUAL"
+          },
+          "priority": {
+            "type": "string",
+            "description": "Work ordering urgency",
+            "enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"],
+            "example": "CRITICAL"
+          },
+          "severity": {
+            "type": "string",
+            "description": "Business impact level, independent of priority",
+            "enum": ["SEV1", "SEV2", "SEV3", "SEV4"],
+            "example": "SEV1"
+          },
+          "status": {
+            "type": "string",
+            "description": "Current lifecycle status",
+            "enum": [
+              "OPEN",
+              "ASSIGNED",
+              "IN_PROGRESS",
+              "RESOLVED",
+              "CLOSED",
+              "CANCELLED"
+            ],
+            "example": "OPEN"
+          },
+          "reporterId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Reporter identifier",
+            "example": 20
+          },
+          "reporterDisplayName": {
+            "type": "string",
+            "description": "Reporter display name",
+            "example": "Anna Ivanova"
+          },
+          "responsibleTeamId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Responsible team identifier",
+            "example": 12
+          },
+          "responsibleTeamName": {
+            "type": "string",
+            "description": "Responsible team name",
+            "example": "Payments Platform"
+          },
+          "responsibleTeamCode": {
+            "type": "string",
+            "description": "Responsible team code",
+            "example": "PAYMENTS"
+          },
+          "assigneeId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Assigned user identifier",
+            "example": 21
+          },
+          "assigneeDisplayName": {
+            "type": "string",
+            "description": "Assigned user display name",
+            "example": "Maksim Kuznetsov"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp",
+            "example": "2026-09-01T10:00:00Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last update timestamp",
+            "example": "2026-09-01T10:15:00Z"
+          }
+        }
+      },
+      "ListIncidentsResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "description": "Incidents on the requested page",
+            "example": [],
+            "items": {
+              "$ref": "#/components/schemas/IncidentListItemResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Zero-based page index",
+            "example": 0
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Actual page size",
+            "example": 20
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Total number of matching incidents",
+            "example": 12
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Total number of pages",
+            "example": 1
+          },
+          "hasNext": {
+            "type": "boolean",
+            "description": "Whether another page follows",
+            "example": false
+          },
+          "hasPrevious": {
+            "type": "boolean",
+            "description": "Whether a previous page exists",
+            "example": false
+          }
+        }
+      },
+      "IncidentHistoryItemResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Audit event identifier",
+            "example": 301
+          },
+          "eventType": {
+            "type": "string",
+            "description": "Lifecycle action that produced the event",
+            "enum": [
+              "CREATED",
+              "ASSIGNED",
+              "STARTED",
+              "RESOLVED",
+              "REOPENED",
+              "CLOSED",
+              "CANCELLED"
+            ],
+            "example": "STARTED"
+          },
+          "fromStatus": {
+            "type": "string",
+            "description": "Status before the action; null for CREATED",
+            "enum": [
+              "OPEN",
+              "ASSIGNED",
+              "IN_PROGRESS",
+              "RESOLVED",
+              "CLOSED",
+              "CANCELLED"
+            ],
+            "example": "ASSIGNED"
+          },
+          "toStatus": {
+            "type": "string",
+            "description": "Status after the action",
+            "enum": [
+              "OPEN",
+              "ASSIGNED",
+              "IN_PROGRESS",
+              "RESOLVED",
+              "CLOSED",
+              "CANCELLED"
+            ],
+            "example": "IN_PROGRESS"
+          },
+          "actorId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "User who performed the action; null for legacy events",
+            "example": 20
+          },
+          "actorDisplayName": {
+            "type": "string",
+            "description": "Display name of the action author; null for legacy events",
+            "example": "Boris Petrov"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Event timestamp",
+            "example": "2026-09-01T10:15:00Z"
+          }
+        }
+      },
+      "IncidentHistoryResponse": {
+        "type": "object",
+        "properties": {
+          "incidentId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Incident identifier",
+            "example": 73
+          },
+          "items": {
+            "type": "array",
+            "description": "Chronological lifecycle events",
+            "example": [],
+            "items": {
+              "$ref": "#/components/schemas/IncidentHistoryItemResponse"
+            }
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}
