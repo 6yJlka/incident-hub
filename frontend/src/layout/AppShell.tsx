@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { NavLink, Outlet } from 'react-router-dom'
+import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth'
 import styles from './AppShell.module.css'
 
@@ -21,6 +21,7 @@ function initials(displayName: string): string {
 export function AppShell() {
   const { t } = useTranslation()
   const { logout, user } = useAuth()
+  const location = useLocation()
 
   if (!user) {
     return null
@@ -41,9 +42,14 @@ export function AppShell() {
               key={item.to}
               to={item.to}
               end={item.end}
-              className={({ isActive }) =>
-                isActive ? `${styles.link} ${styles.activeLink}` : styles.link
-              }
+              className={({ isActive }) => {
+                const isIncidentDetail =
+                  item.to === '/incidents' &&
+                  /^\/incidents\/\d+$/.test(location.pathname)
+                return isActive || isIncidentDetail
+                  ? `${styles.link} ${styles.activeLink}`
+                  : styles.link
+              }}
             >
               {t(item.key)}
             </NavLink>

@@ -3,6 +3,8 @@ import { ProtectedRoute } from '../auth/ProtectedRoute'
 import { AppShell } from '../layout/AppShell'
 import { LoginPage } from '../pages/LoginPage'
 import { PlaceholderPage } from '../pages/PlaceholderPage'
+import { IncidentFeedPage } from '../features/incidents/feed/IncidentFeedPage'
+import { IncidentDetailPage } from '../features/incidents/detail/IncidentDetailPage'
 
 export const router = createBrowserRouter([
   {
@@ -21,15 +23,23 @@ export const router = createBrowserRouter([
           },
           {
             path: '/incidents',
+            element: <IncidentFeedPage />,
+          },
+          {
+            path: '/incidents/:id',
+            element: <IncidentDetailPage />,
+          },
+          {
+            path: '/services',
             element: (
               <PlaceholderPage
-                titleKey="placeholders.incidentsTitle"
-                descriptionKey="placeholders.incidentsDescription"
+                titleKey="placeholders.servicesTitle"
+                descriptionKey="placeholders.servicesDescription"
               />
             ),
           },
           {
-            path: '/services',
+            path: '/services/:id',
             element: (
               <PlaceholderPage
                 titleKey="placeholders.servicesTitle"

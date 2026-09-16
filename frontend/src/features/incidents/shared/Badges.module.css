@@ -1,0 +1,99 @@
+.severity,
+.status,
+.tier,
+.source {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+
+.severity {
+  padding: var(--space-0-5) var(--space-1-25);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+}
+
+.sev1 {
+  background: var(--color-sev1-bg);
+  color: var(--color-sev1-text);
+}
+.sev2 {
+  background: var(--color-sev2-bg);
+  color: var(--color-sev2-text);
+}
+.sev3 {
+  background: var(--color-sev3-bg);
+  color: var(--color-sev3-text);
+}
+.sev4 {
+  background: var(--color-sev4-bg);
+  color: var(--color-sev4-text);
+}
+
+.status {
+  gap: var(--space-1-5);
+  padding: var(--space-0-5) var(--space-2);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: 999px;
+  background: var(--color-hover);
+  color: var(--color-text-soft);
+  font-size: var(--font-size-micro);
+  letter-spacing: 0.06em;
+}
+
+.status::before {
+  width: var(--status-dot-size);
+  height: var(--status-dot-size);
+  border-radius: 50%;
+  background: var(--color-neutral);
+  content: '';
+}
+
+.open::before {
+  background: var(--color-danger);
+}
+.assigned::before {
+  background: var(--color-warning);
+}
+.inProgress::before {
+  background: var(--color-info);
+}
+.resolved::before {
+  background: var(--color-success);
+}
+
+.tier {
+  gap: var(--space-1-5);
+  color: var(--color-text-soft);
+  font-size: var(--font-size-micro);
+}
+
+.tier::before {
+  width: var(--space-1-25);
+  height: var(--space-1-25);
+  border-radius: var(--radius-brand);
+  background: var(--color-neutral);
+  content: '';
+}
+
+.tier1::before {
+  background: var(--color-tier1);
+}
+.tier2::before {
+  background: var(--color-tier2);
+}
+.tier3::before {
+  background: var(--color-tier3);
+}
+
+.source {
+  padding: var(--space-0-5) var(--space-1-5);
+  border: var(--border-width) dashed var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-micro);
+  letter-spacing: 0.05em;
+}

@@ -27,6 +27,21 @@
   --color-placeholder-end: rgba(255, 255, 255, 0.025);
   --color-selection: #274a7a;
   --color-on-accent: #fff;
+  --color-warning: #f0a34a;
+  --color-success: #4fa97a;
+  --color-info: #5b9bf5;
+  --color-neutral: #69757a;
+  --color-sev1-bg: rgba(239, 68, 68, 0.2);
+  --color-sev1-text: #ff9b9b;
+  --color-sev2-bg: rgba(240, 163, 74, 0.18);
+  --color-sev2-text: #f6bb75;
+  --color-sev3-bg: rgba(91, 155, 245, 0.16);
+  --color-sev3-text: #91bdf9;
+  --color-sev4-bg: rgba(125, 135, 139, 0.16);
+  --color-sev4-text: #a9b3b7;
+  --color-tier1: #ef4444;
+  --color-tier2: #f0a34a;
+  --color-tier3: #5b9bf5;
 
   --font-sans: 'IBM Plex Sans', Helvetica, Arial, sans-serif;
   --font-mono: 'IBM Plex Mono', Consolas, monospace;
@@ -72,6 +87,8 @@
   --letter-spacing-wide: 0.08em;
   --letter-spacing-section: 0.1em;
   --line-height-message: 1.45;
+  --line-height-title: 1.25;
+  --line-height-copy: 1.6;
 
   --login-width: 23.5rem;
   --login-brand-mark-size: 1.125rem;
@@ -84,4 +101,33 @@
   --focus-ring-offset: 2px;
   --sidebar-width: 13.125rem;
   --desktop-min-width: 64rem;
+  --content-max-width: 100rem;
+  --detail-sidebar-width: 20.125rem;
+  --table-row-height: 2.375rem;
+  --cascade-indent: 1.625rem;
+  --filter-select-max-width: 12rem;
+  --feed-table-min-width: 76rem;
+  --feed-column-id: 5.5rem;
+  --feed-column-service: 12rem;
+  --feed-column-severity: 4rem;
+  --feed-column-priority: 6.5rem;
+  --feed-column-status: 9rem;
+  --feed-column-team: 8.5rem;
+  --feed-column-assignee: 9rem;
+  --feed-column-created: 7.5rem;
+  --pagination-button-min-width: 2rem;
+  --feed-state-min-height: 18rem;
+  --empty-copy-max-width: 24rem;
+  --empty-mark-size: 2.375rem;
+  --detail-title-size: 1.375rem;
+  --description-max-width: 76ch;
+  --cascade-row-min-height: 2rem;
+  --cascade-depth-width: 1.75rem;
+  --cascade-column-min-width: 12rem;
+  --catalog-cell-min-width: 10rem;
+  --status-route-step-min-width: 7rem;
+  --status-route-line-offset: 0.3rem;
+  --timeline-dot-column-width: 1rem;
+  --timeline-time-column-width: 7.5rem;
+  --detail-state-min-height: 24rem;
 }
