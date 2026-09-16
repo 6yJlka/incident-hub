@@ -8,9 +8,11 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.MediaType;
 import org.springframework.http.ProblemDetail;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -19,7 +21,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import ru.donskikh.incidenthub.identity.application.CreateUserService;
+import ru.donskikh.incidenthub.identity.application.GetCurrentUserService;
 import ru.donskikh.incidenthub.identity.application.ListUsersService;
+import ru.donskikh.incidenthub.security.AuthenticatedUser;
 
 import java.net.URI;
 
@@ -29,15 +33,18 @@ import java.net.URI;
 public class UserController {
 
     private final CreateUserService createUserService;
+    private final GetCurrentUserService getCurrentUserService;
     private final ListUsersService listUsersService;
     private final UserWebMapper mapper;
 
     public UserController(
             CreateUserService createUserService,
+            GetCurrentUserService getCurrentUserService,
             ListUsersService listUsersService,
             UserWebMapper mapper
     ) {
         this.createUserService = createUserService;
+        this.getCurrentUserService = getCurrentUserService;
         this.listUsersService = listUsersService;
         this.mapper = mapper;
     }
@@ -62,6 +69,27 @@ public class UserController {
                 .buildAndExpand(response.userId())
                 .toUri();
         return ResponseEntity.created(location).body(response);
+    }
+
+    @GetMapping("/me")
+    @Operation(
+            summary = "Get the current user",
+            description = "Returns the user identified by the authenticated principal"
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Current user returned",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = CurrentUserResponse.class)
+                    )),
+            @ApiResponse(responseCode = "404", description = "Authenticated user no longer exists",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
+                            schema = @Schema(implementation = ProblemDetail.class)
+                    ))
+    })
+    public CurrentUserResponse current(@AuthenticationPrincipal AuthenticatedUser currentUser) {
+        return mapper.toResponse(getCurrentUserService.get(currentUser.userId()));
     }
 
     @GetMapping

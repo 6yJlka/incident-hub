@@ -14,6 +14,8 @@ import ru.donskikh.incidenthub.identity.UserRole;
 import ru.donskikh.incidenthub.identity.application.CreateUserCommand;
 import ru.donskikh.incidenthub.identity.application.CreateUserResult;
 import ru.donskikh.incidenthub.identity.application.CreateUserService;
+import ru.donskikh.incidenthub.identity.application.GetCurrentUserResult;
+import ru.donskikh.incidenthub.identity.application.GetCurrentUserService;
 import ru.donskikh.incidenthub.identity.application.ListUserItem;
 import ru.donskikh.incidenthub.identity.application.ListUsersQuery;
 import ru.donskikh.incidenthub.identity.application.ListUsersResult;
@@ -28,6 +30,7 @@ import static org.hamcrest.Matchers.hasItem;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.anonymous;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -61,7 +64,39 @@ class UserControllerTest {
     private CreateUserService createUserService;
 
     @MockitoBean
+    private GetCurrentUserService getCurrentUserService;
+
+    @MockitoBean
     private ListUsersService listUsersService;
+
+    @Test
+    void returnsCurrentUserWithoutPasswordData() throws Exception {
+        when(getCurrentUserService.get(42L)).thenReturn(new GetCurrentUserResult(
+                42L, "mvc-test@example.com", "Example User", UserRole.REPORTER, true
+        ));
+
+        mockMvc.perform(get("/api/v1/users/me")
+                        .with(authenticatedAs(UserRole.REPORTER)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(42))
+                .andExpect(jsonPath("$.email").value("mvc-test@example.com"))
+                .andExpect(jsonPath("$.displayName").value("Example User"))
+                .andExpect(jsonPath("$.role").value("REPORTER"))
+                .andExpect(jsonPath("$.active").value(true))
+                .andExpect(jsonPath("$.password").doesNotExist())
+                .andExpect(jsonPath("$.passwordHash").doesNotExist());
+
+        verify(getCurrentUserService).get(42L);
+    }
+
+    @Test
+    void rejectsCurrentUserRequestWithoutToken() throws Exception {
+        mockMvc.perform(get("/api/v1/users/me").with(anonymous()))
+                .andExpect(status().isUnauthorized())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.type")
+                        .value("urn:incident-hub:problem:authentication-required"));
+    }
 
     @Test
     void createsUserAndAcceptsTrimmedEmail() throws Exception {
