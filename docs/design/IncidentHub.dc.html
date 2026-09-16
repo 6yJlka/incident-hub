@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;padding:0;background:#0b0d0e}
+*{box-sizing:border-box}
+a{color:#7fb2ff;text-decoration:none}
+a:hover{color:#a8caff}
+input,select,textarea,button{font-family:inherit}
+select{appearance:none}
+::selection{background:#274a7a;color:#fff}
+@keyframes ihpulse{0%,100%{opacity:1}50%{opacity:.35}}
+</style>
+</helmet>
+<div style="min-height:100vh;background:#0b0d0e;color:#e6e9ea;font-family:'IBM Plex Sans',Helvetica,sans-serif;font-size:13px;-webkit-font-smoothing:antialiased">
+
+<sc-if value="{{ isLogin }}" hint-placeholder-val="{{ true }}">
+<div style="min-height:100vh;display:grid;place-items:center;padding:40px">
+<div style="width:376px">
+<div style="display:flex;align-items:center;gap:9px;margin-bottom:34px">
+<div style="width:18px;height:18px;border-radius:3px;background:#ef4444"></div>
+<div style="font-weight:600;font-size:15px;letter-spacing:-0.01em">IncidentHub</div>
+<div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#5d676b;letter-spacing:.08em;margin-left:2px;padding-top:2px">SRE&nbsp;PLATFORM</div>
+</div>
+<div style="background:#121517;border:1px solid rgba(255,255,255,.09);border-radius:6px;padding:26px 24px 24px">
+<div style="font-size:15px;font-weight:600;margin-bottom:4px">Вход в систему</div>
+<div style="font-size:12px;color:#7d878b;margin-bottom:22px">Внутренний инструмент. Доступ по корпоративной почте.</div>
+
+<sc-if value="{{ loginError }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;gap:9px;align-items:flex-start;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.4);border-radius:4px;padding:10px 11px;margin-bottom:16px">
+<div style="width:5px;height:5px;border-radius:50%;background:#ef4444;margin-top:6px;flex:none"></div>
+<div style="font-size:12px;line-height:1.45;color:#ffb4b4">Неверный email или пароль</div>
+</div>
+</sc-if>
+
+<div style="display:flex;flex-direction:column;gap:5px;margin-bottom:14px">
+<label style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.09em;color:#7d878b">EMAIL</label>
+<input value="{{ email }}" onChange="{{ setEmail }}" style="background:#0b0d0e;border:1px solid rgba(255,255,255,.13);border-radius:4px;color:#e6e9ea;font-size:13px;padding:9px 11px;outline:none" style-focus="border-color:#5b9bf5">
+</div>
+<div style="display:flex;flex-direction:column;gap:5px;margin-bottom:20px">
+<label style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.09em;color:#7d878b">ПАРОЛЬ</label>
+<input type="password" value="{{ password }}" onChange="{{ setPassword }}" onKeyDown="{{ onLoginKey }}" style="background:#0b0d0e;border:1px solid rgba(255,255,255,.13);border-radius:4px;color:#e6e9ea;font-size:13px;padding:9px 11px;outline:none" style-focus="border-color:#5b9bf5">
+</div>
+<button onClick="{{ doLogin }}" style="width:100%;background:#2f6fe0;border:1px solid #4e87ea;color:#fff;font-size:13px;font-weight:600;padding:10px;border-radius:4px;cursor:pointer" style-hover="background:#3b7cf0">Войти</button>
+</div>
+<div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#4e575b;margin-top:14px;line-height:1.6">ДЕМО: любой пароль от 4 символов — вход; короче — состояние ошибки.</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isApp }}" hint-placeholder-val="{{ false }}">
+<div style="display:grid;grid-template-columns:210px minmax(0,1fr);min-height:100vh">
+
+<aside style="background:#0e1113;border-right:1px solid rgba(255,255,255,.08);display:flex;flex-direction:column;position:sticky;top:0;height:100vh">
+<div style="display:flex;align-items:center;gap:8px;padding:15px 16px;border-bottom:1px solid rgba(255,255,255,.07)">
+<div style="width:14px;height:14px;border-radius:2px;background:#ef4444"></div>
+<div style="font-weight:600;font-size:13px">IncidentHub</div>
+</div>
+
+<div style="padding:13px 10px;display:flex;flex-direction:column;gap:2px">
+<div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.1em;color:#5d676b;padding:0 6px 8px">РАБОТА</div>
+<sc-for list="{{ nav }}" as="n" hint-placeholder-count="3">
+<button onClick="{{ n.go }}" style="display:flex;align-items:center;justify-content:space-between;gap:8px;text-align:left;background:{{ n.bg }};border:none;border-left:2px solid {{ n.mark }};color:{{ n.fg }};font-size:12.5px;font-weight:500;padding:8px 10px;border-radius:0 4px 4px 0;cursor:pointer" style-hover="background:rgba(255,255,255,.05)">
+<span>{{ n.label }}</span>
+<sc-if value="{{ n.count }}" hint-placeholder-val="{{ false }}">
+<span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#8b9599;background:rgba(255,255,255,.06);padding:1px 5px;border-radius:3px">{{ n.count }}</span>
+</sc-if>
+</button>
+</sc-for>
+</div>
+
+<div style="margin-top:auto;border-top:1px solid rgba(255,255,255,.07);padding:12px 12px 14px">
+<div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.1em;color:#5d676b;margin-bottom:8px">РОЛЬ (ДЕМО)</div>
+<div style="display:flex;flex-direction:column;gap:3px;margin-bottom:12px">
+<sc-for list="{{ roles }}" as="r" hint-placeholder-count="3">
+<button onClick="{{ r.pick }}" style="display:flex;align-items:center;gap:7px;text-align:left;background:{{ r.bg }};border:1px solid {{ r.bd }};color:{{ r.fg }};font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.07em;padding:5px 7px;border-radius:3px;cursor:pointer" style-hover="border-color:rgba(255,255,255,.25)">
+<span style="width:4px;height:4px;border-radius:50%;background:{{ r.dot }}"></span>{{ r.code }}
+</button>
+</sc-for>
+</div>
+<div style="display:flex;align-items:center;gap:8px">
+<div style="width:24px;height:24px;border-radius:50%;background:#1d2225;border:1px solid rgba(255,255,255,.12);display:grid;place-items:center;font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:#a9b3b7">{{ userInitials }}</div>
+<div style="min-width:0">
+<div style="font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ userName }}</div>
+<div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:#6f797d">{{ role }}</div>
+</div>
+</div>
+</div>
+</aside>
+
+<main style="min-width:0;display:flex;flex-direction:column">
+
+<sc-if value="{{ isFeed }}" hint-placeholder-val="{{ true }}">
+<div style="padding:20px 24px 12px;border-bottom:1px solid rgba(255,255,255,.07)">
+<div style="display:flex;align-items:baseline;justify-content:space-between;gap:16px;margin-bottom:16px">
+<div>
+<div style="font-size:17px;font-weight:600;letter-spacing:-0.01em">Лента инцидентов</div>
+<div style="font-size:12px;color:#7d878b;margin-top:3px">{{ feedSummary }}</div>
+</div>
+<sc-if value="{{ canCreate }}" hint-placeholder-val="{{ true }}">
+<button onClick="{{ goCreate }}" style="background:#2f6fe0;border:1px solid #4e87ea;color:#fff;font-size:12.5px;font-weight:600;padding:8px 13px;border-radius:4px;cursor:pointer;flex:none" style-hover="background:#3b7cf0">+ Новый инцидент</button>
+</sc-if>
+</div>
+<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+<sc-for list="{{ filterControls }}" as="f" hint-placeholder-count="5">
+<div style="display:flex;align-items:center;gap:6px;background:#121517;border:1px solid {{ f.bd }};border-radius:4px;padding:4px 8px 4px 9px">
+<span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.08em;color:#6f797d">{{ f.label }}</span>
+<select value="{{ f.value }}" onChange="{{ f.onChange }}" style="background:transparent;border:none;color:#dfe5e7;font-size:12px;font-weight:500;outline:none;cursor:pointer;padding:2px 14px 2px 0;background-image:linear-gradient(45deg,transparent 50%,#8b9599 50%),linear-gradient(135deg,#8b9599 50%,transparent 50%);background-position:calc(100% - 5px) 9px,calc(100% - 1px) 9px;background-size:4px 4px,4px 4px;background-repeat:no-repeat">
+<sc-for list="{{ f.options }}" as="o" hint-placeholder-count="3">
+<option value="{{ o.value }}" style="background:#15191b">{{ o.label }}</option>
+</sc-for>
+</select>
+</div>
+</sc-for>
+<sc-if value="{{ filtersDirty }}" hint-placeholder-val="{{ false }}">
+<button onClick="{{ resetFilters }}" style="background:transparent;border:1px dashed rgba(255,255,255,.18);color:#9aa4a8;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.07em;padding:6px 9px;border-radius:4px;cursor:pointer" style-hover="color:#e6e9ea;border-color:rgba(255,255,255,.35)">СБРОСИТЬ ФИЛЬТРЫ</button>
+</sc-if>
+</div>
+</div>
+
+<div style="padding:0 24px;overflow-x:auto">
+<div style="display:grid;grid-template-columns:74px minmax(220px,1fr) 168px 52px 92px 136px 128px 132px 104px;gap:0;align-items:center;padding:9px 10px;border-bottom:1px solid rgba(255,255,255,.1);font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.09em;color:#6f797d">
+<div>ID</div><div>ЗАГОЛОВОК</div><div>УСЛУГА</div><div>SEV</div><div>ПРИОРИТЕТ</div><div>СТАТУС</div><div>КОМАНДА</div><div>ИСПОЛНИТЕЛЬ</div><div style="text-align:right">СОЗДАН</div>
+</div>
+
+<sc-for list="{{ rows }}" as="row" hint-placeholder-count="8">
+<div onClick="{{ row.open }}" style="display:grid;grid-template-columns:74px minmax(220px,1fr) 168px 52px 92px 136px 128px 132px 104px;align-items:center;padding:0 10px;height:38px;border-bottom:1px solid rgba(255,255,255,.055);cursor:pointer" style-hover="background:rgba(255,255,255,.035)">
+<div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#6f797d">{{ row.id }}</div>
+<div style="display:flex;align-items:center;gap:7px;min-width:0;padding-right:14px">
+<sc-if value="{{ row.isAuto }}" hint-placeholder-val="{{ false }}">
+<span title="AUTOMATIC" style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#6f797d;border:1px solid rgba(255,255,255,.14);border-radius:2px;padding:0 3px;flex:none">A</span>
+</sc-if>
+<span style="font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ row.title }}</span>
+</div>
+<div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#a9b3b7;display:flex;align-items:center;gap:6px">
+<span style="width:5px;height:5px;border-radius:1px;background:{{ row.tierDot }};flex:none"></span>{{ row.serviceCode }}
+</div>
+<div><span style="display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.02em;padding:2px 5px;border-radius:3px;background:{{ row.sevBg }};color:{{ row.sevFg }}">{{ row.severity }}</span></div>
+<div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.08em;font-weight:{{ row.prWeight }};color:{{ row.prColor }}">{{ row.priority }}</div>
+<div><span style="display:inline-flex;align-items:center;gap:6px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);border-radius:999px;padding:2px 8px 2px 7px;font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.06em;color:#cdd5d8"><span style="width:6px;height:6px;border-radius:50%;background:{{ row.statusDot }}"></span>{{ row.status }}</span></div>
+<div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#8b9599">{{ row.team }}</div>
+<div style="font-size:12px;color:{{ row.assigneeColor }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:10px">{{ row.assignee }}</div>
+<div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#7d878b;text-align:right">{{ row.created }}</div>
+</div>
+</sc-for>
+
+<sc-if value="{{ isEmpty }}" hint-placeholder-val="{{ false }}">
+<div style="padding:64px 20px;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center">
+<div style="width:38px;height:38px;border:1px dashed rgba(255,255,255,.2);border-radius:4px;display:grid;place-items:center;font-family:'IBM Plex Mono',monospace;font-size:13px;color:#5d676b">0</div>
+<div style="font-size:14px;font-weight:600">Ничего не найдено</div>
+<div style="font-size:12.5px;color:#7d878b;max-width:360px;line-height:1.5">Под текущие фильтры не подходит ни один инцидент. Ослабьте условия или сбросьте фильтры.</div>
+<button onClick="{{ resetFilters }}" style="margin-top:4px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.16);color:#e6e9ea;font-size:12px;font-weight:500;padding:7px 12px;border-radius:4px;cursor:pointer" style-hover="background:rgba(255,255,255,.1)">Сбросить фильтры</button>
+</div>
+</sc-if>
+
+<div style="display:flex;align-items:center;justify-content:space-between;padding:14px 10px 28px">
+<div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#6f797d">{{ pageInfo }}</div>
+<div style="display:flex;gap:4px;align-items:center">
+<button onClick="{{ prevPage }}" style="background:transparent;border:1px solid rgba(255,255,255,.14);color:#a9b3b7;font-size:12px;padding:5px 10px;border-radius:3px;cursor:pointer" style-hover="border-color:rgba(255,255,255,.3);color:#fff">←</button>
+<sc-for list="{{ pages }}" as="p" hint-placeholder-count="2">
+<button onClick="{{ p.go }}" style="min-width:28px;background:{{ p.bg }};border:1px solid {{ p.bd }};color:{{ p.fg }};font-family:'IBM Plex Mono',monospace;font-size:11px;padding:5px 0;border-radius:3px;cursor:pointer">{{ p.n }}</button>
+</sc-for>
+<button onClick="{{ nextPage }}" style="background:transparent;border:1px solid rgba(255,255,255,.14);color:#a9b3b7;font-size:12px;padding:5px 10px;border-radius:3px;cursor:pointer" style-hover="border-color:rgba(255,255,255,.3);color:#fff">→</button>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isIncident }}" hint-placeholder-val="{{ false }}">
+<div style="padding:16px 24px 10px;border-bottom:1px solid rgba(255,255,255,.07)">
+<button onClick="{{ goFeed }}" style="background:transparent;border:none;color:#8b9599;font-size:11.5px;padding:0;cursor:pointer;margin-bottom:12px" style-hover="color:#e6e9ea">← Лента инцидентов</button>
+<div style="display:flex;align-items:flex-start;gap:14px;justify-content:space-between">
+<div style="min-width:0">
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:7px">
+<span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#6f797d">{{ inc.id }}</span>
+<span style="display:inline-flex;align-items:center;gap:6px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);border-radius:999px;padding:2px 9px 2px 8px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.06em;color:#dfe5e7"><span style="width:6px;height:6px;border-radius:50%;background:{{ inc.statusDot }}"></span>{{ inc.status }}</span>
+<span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.07em;color:#6f797d;border:1px dashed rgba(255,255,255,.16);border-radius:3px;padding:2px 6px">{{ inc.source }}</span>
+</div>
+<h1 style="margin:0;font-size:22px;font-weight:600;letter-spacing:-0.015em;line-height:1.25;text-wrap:pretty">{{ inc.title }}</h1>
+</div>
+<div style="display:flex;gap:22px;flex:none;padding-top:2px">
+<div>
+<div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.09em;color:#6f797d;margin-bottom:6px">SEVERITY · ВЛИЯНИЕ</div>
+<div style="display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:600;padding:5px 10px;border-radius:4px;background:{{ inc.sevBg }};color:{{ inc.sevFg }}">{{ inc.severity }}</div>
+</div>
+<div style="border-left:1px solid rgba(255,255,255,.1);padding-left:22px">
+<div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.09em;color:#6f797d;margin-bottom:6px">PRIORITY · ОЧЕРЁДНОСТЬ</div>
+<div style="font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:600;letter-spacing:.06em;color:#e6e9ea;padding:5px 0">{{ inc.priority }}</div>
+</div>
+</div>
+</div>
+</div>
+
+<div style="display:grid;grid-template-columns:minmax(0,1fr) 322px;gap:0;align-items:start">
+<div style="padding:20px 24px 40px;min-width:0;display:flex;flex-direction:column;gap:18px">
+
+<div>
+<div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.09em;color:#6f797d;margin-bottom:8px">ОПИСАНИЕ</div>
+<p style="margin:0;font-size:13px;line-height:1.6;color:#c6cdd0;max-width:76ch;text-wrap:pretty">{{ inc.description }}</p>
+</div>
+
+<div style="background:#121517;border:1px solid rgba(255,255,255,.09);border-radius:6px;padding:14px 16px">
+<div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.09em;color:#6f797d;margin-bottom:11px">ЗАТРОНУТАЯ УСЛУГА</div>
+<div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+<div style="display:flex;align-items:center;gap:9px">
+<span style="width:8px;height:8px;border-radius:2px;background:{{ inc.svcTierDot }}"></span>
+<span style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500">{{ inc.serviceCode }}</span>
+<span style="font-size:13px;color:#a9b3b7">{{ inc.serviceName }}</span>
+</div>
+<span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.07em;color:#cdd5d8;border:1px solid rgba(255,255,255,.14);border-radius:3px;padding:2px 7px">{{ inc.serviceTier }}</span>
+<span style="font-size:12px;color:#8b9599">владелец: {{ inc.serviceTeamName }}</span>
+<button onClick="{{ openIncidentService }}" style="margin-left:auto;background:transparent;border:1px solid rgba(255,255,255,.14);color:#a9b3b7;font-size:11.5px;padding:5px 9px;border-radius:3px;cursor:pointer" style-hover="color:#fff;border-color:rgba(255,255,255,.3)">Карточка услуги →</button>
+</div>
+</div>
+
+<div style="background:#121517;border:1px solid rgba(255,255,255,.09);border-radius:6px;overflow:hidden">
+<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 16px;border-bottom:1px solid rgba(255,255,255,.08);flex-wrap:wrap">
+<div>
+<div style="font-size:13.5px;font-weight:600">Затронутые зависимые услуги</div>
+<div style="font-size:11.5px;color:#7d878b;margin-top:3px">{{ cascadeSummary }}</div>
+</div>
+<div style="display:flex;gap:2px;background:#0b0d0e;border:1px solid rgba(255,255,255,.1);border-radius:4px;padding:2px">
+<sc-for list="{{ cascadeTabs }}" as="t" hint-placeholder-count="3">
+<button onClick="{{ t.pick }}" style="background:{{ t.bg }};border:none;color:{{ t.fg }};font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.07em;padding:5px 9px;border-radius:3px;cursor:pointer">{{ t.label }}</button>
+</sc-for>
+</div>
+</div>
+
+<sc-if value="{{ isTree }}" hint-placeholder-val="{{ true }}">
+<div style="padding:14px 16px 16px">
+<div style="display:flex;align-items:center;gap:9px;padding-bottom:10px;margin-bottom:4px;border-bottom:1px solid rgba(255,255,255,.06)">
+<span style="width:7px;height:7px;border-radius:50%;background:#ef4444;animation:ihpulse 2s ease-in-out infinite"></span>
+<span style="font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600">{{ inc.serviceCode }}</span>
+<span style="font-size:11.5px;color:#7d878b">источник отказа</span>
+</div>
+<sc-for list="{{ treeRows }}" as="t" hint-placeholder-count="7">
+<div style="display:flex;align-items:center;gap:10px;height:32px;padding-left:{{ t.indent }}px;border-bottom:1px solid rgba(255,255,255,.04)">
+<span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#4e575b;flex:none">{{ t.glyph }}</span>
+<span style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:#e6e9ea">{{ t.code }}</span>
+<span style="font-size:12px;color:#8b9599;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ t.name }}</span>
+<span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.07em;color:#a9b3b7;border:1px {{ t.edgeStyle }} rgba(255,255,255,.28);border-radius:2px;padding:1px 5px;flex:none">{{ t.type }}</span>
+<span style="margin-left:auto;display:flex;align-items:center;gap:9px;flex:none">
+<span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:#cdd5d8;border:1px solid rgba(255,255,255,.12);border-radius:2px;padding:1px 5px">{{ t.tierShort }}</span>
+<span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:#6f797d;width:24px;text-align:right">D{{ t.depth }}</span>
+</span>
+</div>
+</sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{ isColumns }}" hint-placeholder-val="{{ false }}">
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:1px;background:rgba(255,255,255,.08)">
+<sc-for list="{{ depthGroups }}" as="g" hint-placeholder-count="3">
+<div style="background:#121517;padding:13px 14px 15px;display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px">
+<span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.08em;color:#e6e9ea">ГЛУБИНА {{ g.depth }}</span>
+<span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:#6f797d">{{ g.count }}</span>
+</div>
+<div style="height:2px;background:{{ g.bar }};border-radius:1px"></div>
+<sc-for list="{{ g.items }}" as="s" hint-placeholder-count="2">
+<div style="background:#171b1e;border:1px solid rgba(255,255,255,.07);border-radius:4px;padding:8px 9px">
+<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+<span style="width:6px;height:6px;border-radius:1px;background:{{ s.tierDot }}"></span>
+<span style="font-family:'IBM Plex Mono',monospace;font-size:11px">{{ s.code }}</span>
+</div>
+<div style="font-size:11.5px;color:#8b9599;margin-bottom:6px">{{ s.name }}</div>
+<div style="display:flex;align-items:center;gap:6px">
+<span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.07em;color:#a9b3b7;border:1px {{ s.edgeStyle }} rgba(255,255,255,.28);border-radius:2px;padding:1px 4px">{{ s.type }}</span>
+<span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#6f797d">← {{ s.parent }}</span>
+</div>
+</div>
+</sc-for>
+</div>
+</sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{ isMap }}" hint-placeholder-val="{{ false }}">
+<div style="padding:14px 16px 16px">
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:7px">
+<sc-for list="{{ mapCells }}" as="m" hint-placeholder-count="10">
+<div style="background:{{ m.bg }};border:1px solid {{ m.bd }};border-radius:4px;padding:9px 10px;display:flex;flex-direction:column;gap:5px">
+<div style="display:flex;align-items:center;justify-content:space-between;gap:6px">
+<span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:{{ m.codeColor }}">{{ m.code }}</span>
+<span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.06em;color:{{ m.badgeColor }};border:1px solid {{ m.badgeBd }};border-radius:2px;padding:1px 4px">{{ m.badge }}</span>
+</div>
+<div style="font-size:11px;color:{{ m.nameColor }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ m.name }}</div>
+<div style="display:flex;gap:3px">
+<sc-for list="{{ m.ticks }}" as="tk" hint-placeholder-count="3">
+<span style="flex:1;height:3px;border-radius:1px;background:{{ tk.c }}"></span>
+</sc-for>
+</div>
+</div>
+</sc-for>
+</div>
+<div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:13px;font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:#6f797d">
+<span>ЗАКРАШЕНО = ПОСТРАДАЕТ · ЧИСЛО = ГЛУБИНА</span>
+<span>SYNC — СПЛОШНАЯ · ASYNC — ПУНКТИР · DATA — ТОЧКИ</span>
+</div>
+</div>
+</sc-if>
+</div>
+
+<div>
+<div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.09em;color:#6f797d;margin-bottom:10px">ХРОНИКА</div>
+<div style="display:flex;flex-direction:column;gap:0">
+<sc-for list="{{ timeline }}" as="e" hint-placeholder-count="3">
+<div style="display:grid;grid-template-columns:18px minmax(0,1fr) 124px;gap:10px;align-items:start;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.05)">
+<div style="display:flex;justify-content:center;padding-top:4px"><span style="width:7px;height:7px;border-radius:50%;background:{{ e.dot }};box-shadow:0 0 0 3px rgba(255,255,255,.04)"></span></div>
+<div style="font-size:12.5px;line-height:1.5;color:#c6cdd0"><span style="color:#e6e9ea;font-weight:500">{{ e.who }}</span> — {{ e.what }}</div>
+<div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#6f797d;text-align:right">{{ e.when }}</div>
+</div>
+</sc-for>
+</div>
+</div>
+</div>
+
+<div style="border-left:1px solid rgba(255,255,255,.08);padding:20px 22px 40px;display:flex;flex-direction:column;gap:20px;position:sticky;top:0">
+<div>
+<div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.09em;color:#6f797d;margin-bottom:10px">ДЕЙСТВИЯ</div>
+<sc-if value="{{ hasActions }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;flex-direction:column;gap:7px">
+<sc-for list="{{ actions }}" as="a" hint-placeholder-count="2">
+<button onClick="{{ a.run }}" style="text-align:left;background:{{ a.bg }};border:1px solid {{ a.bd }};color:{{ a.fg }};font-size:12.5px;font-weight:600;padding:9px 12px;border-radius:4px;cursor:pointer" style-hover="filter:brightness(1.18)">{{ a.label }}</button>
+</sc-for>
+<div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:#4e575b;line-height:1.6;margin-top:3px">ДОСТУПНО ПРИ {{ inc.status }} · РОЛЬ {{ role }}</div>
+</div>
+</sc-if>
+<sc-if value="{{ noActionsRole }}" hint-placeholder-val="{{ false }}">
+<div style="border:1px dashed rgba(255,255,255,.14);border-radius:4px;padding:12px;font-size:12px;line-height:1.55;color:#7d878b">
+Роль <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#cdd5d8">{{ role }}</span> не меняет состояние инцидентов — только чтение.
+</div>
+</sc-if>
+<sc-if value="{{ noActionsStatus }}" hint-placeholder-val="{{ false }}">
+<div style="border:1px dashed rgba(255,255,255,.14);border-radius:4px;padding:12px;font-size:12px;line-height:1.55;color:#7d878b">
+В статусе <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#cdd5d8">{{ inc.status }}</span> переходов нет — инцидент завершён. Роль <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#cdd5d8">{{ role }}</span> здесь не ограничивает.
+</div>
+</sc-if>
+</div>
+
+<div style="border-top:1px solid rgba(255,255,255,.08);padding-top:16px;display:flex;flex-direction:column;gap:11px">
+<sc-for list="{{ incMeta }}" as="m" hint-placeholder-count="5">
+<div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px">
+<span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.07em;color:#6f797d;flex:none">{{ m.k }}</span>
+<span style="font-size:12px;color:{{ m.color }};text-align:right">{{ m.v }}</span>
+</div>
+</sc-for>
+</div>
+
+<div style="border-top:1px solid rgba(255,255,255,.08);padding-top:16px">
+<div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.09em;color:#6f797d;margin-bottom:9px">МАРШРУТ СТАТУСОВ</div>
+<div style="display:flex;flex-direction:column;gap:5px">
+<sc-for list="{{ statusPath }}" as="s" hint-placeholder-count="5">
+<div style="display:flex;align-items:center;gap:8px">
+<span style="width:6px;height:6px;border-radius:50%;background:{{ s.dot }};flex:none"></span>
+<span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.06em;color:{{ s.fg }}">{{ s.code }}</span>
+<sc-if value="{{ s.current }}" hint-placeholder-val="{{ false }}">
+<span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#5b9bf5;border:1px solid rgba(91,155,245,.5);border-radius:2px;padding:0 4px">СЕЙЧАС</span>
+</sc-if>
+</div>
+</sc-for>
+</div>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isCatalog }}" hint-placeholder-val="{{ false }}">
+<div style="padding:20px 24px 12px;border-bottom:1px solid rgba(255,255,255,.07)">
+<div style="font-size:17px;font-weight:600;letter-spacing:-0.01em">Каталог услуг</div>
+<div style="font-size:12px;color:#7d878b;margin-top:3px">{{ catalogSummary }}</div>
+</div>
+<div style="padding:0 24px 40px;overflow-x:auto">
+<div style="display:grid;grid-template-columns:200px minmax(200px,1fr) 96px 220px 152px 90px;align-items:center;padding:9px 10px;border-bottom:1px solid rgba(255,255,255,.1);font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.09em;color:#6f797d">
+<div>КОД</div><div>НАЗВАНИЕ</div><div>УРОВЕНЬ</div><div>ВЛАДЕЛЕЦ</div><div>ЗАВИСИМОСТИ</div><div style="text-align:right">АКТИВНЫХ</div>
+</div>
+<sc-for list="{{ catalogRows }}" as="c" hint-placeholder-count="10">
+<div onClick="{{ c.open }}" style="display:grid;grid-template-columns:200px minmax(200px,1fr) 96px 220px 152px 90px;align-items:center;padding:0 10px;height:40px;border-bottom:1px solid rgba(255,255,255,.055);cursor:pointer" style-hover="background:rgba(255,255,255,.035)">
+<div style="display:flex;align-items:center;gap:8px;font-family:'IBM Plex Mono',monospace;font-size:11.5px">
+<span style="width:6px;height:6px;border-radius:1px;background:{{ c.tierDot }}"></span>{{ c.code }}
+</div>
+<div style="font-size:12.5px;color:#c6cdd0">{{ c.name }}</div>
+<div><span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.06em;color:#cdd5d8;border:1px solid rgba(255,255,255,.13);border-radius:3px;padding:2px 6px">{{ c.tier }}</span></div>
+<div style="font-size:12px;color:#8b9599">{{ c.teamName }}</div>
+<div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#7d878b">↑{{ c.upCount }} · ↓{{ c.downCount }}</div>
+<div style="text-align:right"><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;color:{{ c.activeColor }}">{{ c.active }}</span></div>
+</div>
+</sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{ isService }}" hint-placeholder-val="{{ false }}">
+<div style="padding:16px 24px 14px;border-bottom:1px solid rgba(255,255,255,.07)">
+<button onClick="{{ goCatalog }}" style="background:transparent;border:none;color:#8b9599;font-size:11.5px;padding:0;cursor:pointer;margin-bottom:12px" style-hover="color:#e6e9ea">← Каталог услуг</button>
+<div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+<span style="width:10px;height:10px;border-radius:2px;background:{{ svc.tierDot }}"></span>
+<div style="font-family:'IBM Plex Mono',monospace;font-size:19px;font-weight:600;letter-spacing:-0.01em">{{ svc.code }}</div>
+<div style="font-size:15px;color:#a9b3b7">{{ svc.name }}</div>
+<span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.07em;color:#cdd5d8;border:1px solid rgba(255,255,255,.14);border-radius:3px;padding:3px 8px">{{ svc.tier }}</span>
+<span style="font-size:12px;color:#8b9599">владелец: {{ svc.teamName }}</span>
+</div>
+</div>
+<div style="padding:20px 24px 40px;display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;align-items:start">
+<div style="background:#121517;border:1px solid rgba(255,255,255,.09);border-radius:6px;padding:14px 16px 16px">
+<div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.09em;color:#6f797d;margin-bottom:4px">ЗАВИСИТ ОТ</div>
+<div style="font-size:11.5px;color:#7d878b;margin-bottom:12px">Отказ этих услуг ломает {{ svc.code }}</div>
+<sc-for list="{{ svc.upstream }}" as="u" hint-placeholder-count="2">
+<div style="display:flex;align-items:center;gap:9px;height:32px;border-bottom:1px solid rgba(255,255,255,.05)">
+<span style="width:6px;height:6px;border-radius:1px;background:{{ u.tierDot }}"></span>
+<span style="font-family:'IBM Plex Mono',monospace;font-size:11.5px">{{ u.code }}</span>
+<span style="font-size:12px;color:#8b9599;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ u.name }}</span>
+<span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.07em;color:#a9b3b7;border:1px {{ u.edgeStyle }} rgba(255,255,255,.28);border-radius:2px;padding:1px 5px">{{ u.type }}</span>
+</div>
+</sc-for>
+<sc-if value="{{ svc.noUpstream }}" hint-placeholder-val="{{ false }}">
+<div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#5d676b;padding:8px 0">— БАЗОВАЯ УСЛУГА, ЗАВИСИМОСТЕЙ НЕТ</div>
+</sc-if>
+</div>
+<div style="background:#121517;border:1px solid rgba(255,255,255,.09);border-radius:6px;padding:14px 16px 16px">
+<div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.09em;color:#6f797d;margin-bottom:4px">ЗАВИСЯТ ОТ НЕЁ</div>
+<div style="font-size:11.5px;color:#7d878b;margin-bottom:12px">Пострадают при отказе {{ svc.code }}</div>
+<sc-for list="{{ svc.downstream }}" as="d" hint-placeholder-count="3">
+<div style="display:flex;align-items:center;gap:9px;height:32px;border-bottom:1px solid rgba(255,255,255,.05);padding-left:{{ d.indent }}px">
+<span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#4e575b">{{ d.glyph }}</span>
+<span style="font-family:'IBM Plex Mono',monospace;font-size:11.5px">{{ d.code }}</span>
+<span style="font-size:12px;color:#8b9599;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ d.name }}</span>
+<span style="margin-left:auto;display:flex;gap:7px;align-items:center;flex:none">
+<span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.07em;color:#a9b3b7;border:1px {{ d.edgeStyle }} rgba(255,255,255,.28);border-radius:2px;padding:1px 5px">{{ d.type }}</span>
+<span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:#6f797d">D{{ d.depth }}</span>
+</span>
+</div>
+</sc-for>
+<sc-if value="{{ svc.noDownstream }}" hint-placeholder-val="{{ false }}">
+<div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#5d676b;padding:8px 0">— НИ ОДНА УСЛУГА НЕ ЗАВИСИТ</div>
+</sc-if>
+</div>
+<div style="background:#121517;border:1px solid rgba(255,255,255,.09);border-radius:6px;padding:14px 16px 16px">
+<div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.09em;color:#6f797d;margin-bottom:12px">ТЕКУЩИЕ ИНЦИДЕНТЫ</div>
+<sc-for list="{{ svc.incidents }}" as="i" hint-placeholder-count="2">
+<div onClick="{{ i.open }}" style="display:flex;align-items:center;gap:9px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.05);cursor:pointer">
+<span style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;padding:2px 5px;border-radius:3px;background:{{ i.sevBg }};color:{{ i.sevFg }};flex:none">{{ i.severity }}</span>
+<span style="font-size:12px;color:#c6cdd0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ i.title }}</span>
+<span style="margin-left:auto;display:inline-flex;align-items:center;gap:5px;flex:none;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.06em;color:#cdd5d8"><span style="width:5px;height:5px;border-radius:50%;background:{{ i.statusDot }}"></span>{{ i.status }}</span>
+</div>
+</sc-for>
+<sc-if value="{{ svc.noIncidents }}" hint-placeholder-val="{{ false }}">
+<div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#5d676b;padding:8px 0">— АКТИВНЫХ ИНЦИДЕНТОВ НЕТ</div>
+</sc-if>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isCreate }}" hint-placeholder-val="{{ false }}">
+<div style="padding:16px 24px 14px;border-bottom:1px solid rgba(255,255,255,.07)">
+<button onClick="{{ goFeed }}" style="background:transparent;border:none;color:#8b9599;font-size:11.5px;padding:0;cursor:pointer;margin-bottom:11px" style-hover="color:#e6e9ea">← Лента инцидентов</button>
+<div style="font-size:17px;font-weight:600;letter-spacing:-0.01em">Новый инцидент</div>
+<div style="font-size:12px;color:#7d878b;margin-top:3px">Автор — {{ userName }} ({{ role }}), подставляется автоматически.</div>
+</div>
+<div style="padding:20px 24px 40px;display:grid;grid-template-columns:minmax(0,1fr) 326px;gap:22px;align-items:start;max-width:1180px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<div style="display:flex;flex-direction:column;gap:6px">
+<label style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.09em;color:#7d878b">ЗАГОЛОВОК</label>
+<input value="{{ form.title }}" onChange="{{ setFormTitle }}" placeholder="Что сломалось — одной строкой" style="background:#0e1113;border:1px solid rgba(255,255,255,.13);border-radius:4px;color:#e6e9ea;font-size:13px;padding:9px 11px;outline:none" style-focus="border-color:#5b9bf5">
+</div>
+<div style="display:flex;flex-direction:column;gap:6px">
+<label style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.09em;color:#7d878b">ОПИСАНИЕ</label>
+<textarea value="{{ form.desc }}" onChange="{{ setFormDesc }}" placeholder="Симптомы, время начала, что уже проверили" style="background:#0e1113;border:1px solid rgba(255,255,255,.13);border-radius:4px;color:#e6e9ea;font-size:13px;line-height:1.55;padding:9px 11px;min-height:96px;resize:vertical;outline:none" style-focus="border-color:#5b9bf5"></textarea>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px">
+<label style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.09em;color:#7d878b">ЗАТРОНУТАЯ УСЛУГА</label>
+<select value="{{ form.service }}" onChange="{{ setFormService }}" style="background:#0e1113;border:1px solid rgba(255,255,255,.13);border-radius:4px;color:#e6e9ea;font-family:'IBM Plex Mono',monospace;font-size:12.5px;padding:9px 11px;outline:none;cursor:pointer">
+<option value="" style="background:#15191b">— выберите услугу —</option>
+<sc-for list="{{ serviceOptions }}" as="o" hint-placeholder-count="10">
+<option value="{{ o.value }}" style="background:#15191b">{{ o.label }}</option>
+</sc-for>
+</select>
+</div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px">
+<div style="display:flex;flex-direction:column;gap:7px">
+<label style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.09em;color:#7d878b">SEVERITY · ВЛИЯНИЕ НА БИЗНЕС</label>
+<div style="display:flex;gap:5px">
+<sc-for list="{{ sevChoices }}" as="s" hint-placeholder-count="4">
+<button onClick="{{ s.pick }}" style="flex:1;background:{{ s.bg }};border:1px solid {{ s.bd }};color:{{ s.fg }};font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;padding:8px 0;border-radius:4px;cursor:pointer" style-hover="filter:brightness(1.2)">{{ s.code }}</button>
+</sc-for>
+</div>
+<div style="font-size:11px;color:#6f797d">{{ sevHint }}</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:7px">
+<label style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.09em;color:#7d878b">PRIORITY · ОЧЕРЁДНОСТЬ РАБОТЫ</label>
+<div style="display:flex;gap:5px">
+<sc-for list="{{ prChoices }}" as="p" hint-placeholder-count="4">
+<button onClick="{{ p.pick }}" style="flex:1;background:{{ p.bg }};border:1px solid {{ p.bd }};color:{{ p.fg }};font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.05em;font-weight:{{ p.weight }};padding:8px 0;border-radius:4px;cursor:pointer" style-hover="filter:brightness(1.2)">{{ p.code }}</button>
+</sc-for>
+</div>
+<div style="font-size:11px;color:#6f797d">Шкалы независимы: SEV1 с MEDIUM — допустимо.</div>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px">
+<label style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.09em;color:#7d878b">ОТВЕТСТВЕННАЯ КОМАНДА · ОПЦИОНАЛЬНО</label>
+<select value="{{ form.team }}" onChange="{{ setFormTeam }}" style="background:#0e1113;border:1px solid rgba(255,255,255,.13);border-radius:4px;color:#e6e9ea;font-size:12.5px;padding:9px 11px;outline:none;cursor:pointer">
+<option value="" style="background:#15191b">{{ ownerFallback }}</option>
+<sc-for list="{{ teamOptions }}" as="o" hint-placeholder-count="4">
+<option value="{{ o.value }}" style="background:#15191b">{{ o.label }}</option>
+</sc-for>
+</select>
+</div>
+<div style="display:flex;gap:9px;align-items:center;padding-top:4px">
+<button onClick="{{ submitForm }}" style="background:#2f6fe0;border:1px solid #4e87ea;color:#fff;font-size:12.5px;font-weight:600;padding:9px 16px;border-radius:4px;cursor:pointer" style-hover="background:#3b7cf0">Создать инцидент</button>
+<button onClick="{{ goFeed }}" style="background:transparent;border:1px solid rgba(255,255,255,.14);color:#a9b3b7;font-size:12.5px;padding:9px 14px;border-radius:4px;cursor:pointer" style-hover="color:#fff;border-color:rgba(255,255,255,.3)">Отмена</button>
+<span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#5d676b;margin-left:auto">ИСТОЧНИК: MANUAL</span>
+</div>
+</div>
+
+<div style="background:#121517;border:1px solid rgba(255,255,255,.09);border-radius:6px;padding:15px 16px 17px;position:sticky;top:20px">
+<div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.09em;color:#6f797d;margin-bottom:12px">ПРЕДВАРИТЕЛЬНЫЙ ОХВАТ</div>
+<sc-if value="{{ form.hasService }}" hint-placeholder-val="{{ false }}">
+<div>
+<div style="display:flex;align-items:baseline;gap:9px;margin-bottom:3px">
+<div style="font-family:'IBM Plex Mono',monospace;font-size:30px;font-weight:600;line-height:1;color:{{ previewColor }}">{{ previewCount }}</div>
+<div style="font-size:12px;color:#a9b3b7">зависимых услуг пострадает</div>
+</div>
+<div style="font-size:11.5px;color:#7d878b;margin-bottom:13px">{{ previewNote }}</div>
+<div style="display:flex;flex-direction:column;gap:6px">
+<sc-for list="{{ previewGroups }}" as="g" hint-placeholder-count="3">
+<div style="display:flex;align-items:center;gap:9px">
+<span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:#6f797d;flex:none;width:26px">D{{ g.depth }}</span>
+<span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#cdd5d8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ g.codes }}</span>
+</div>
+</sc-for>
+</div>
+<div style="border-top:1px solid rgba(255,255,255,.08);margin-top:14px;padding-top:12px;display:flex;flex-direction:column;gap:9px">
+<div style="display:flex;justify-content:space-between;gap:10px"><span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:#6f797d">TIER_1 В ОХВАТЕ</span><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#e6e9ea">{{ previewTier1 }}</span></div>
+<div style="display:flex;justify-content:space-between;gap:10px"><span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:#6f797d">ВЛАДЕЛЕЦ УСЛУГИ</span><span style="font-size:12px;color:#e6e9ea">{{ previewOwner }}</span></div>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{ form.noService }}" hint-placeholder-val="{{ true }}">
+<div style="border:1px dashed rgba(255,255,255,.14);border-radius:4px;padding:16px;font-size:12px;line-height:1.55;color:#7d878b">Выберите услугу — покажем, сколько зависимых услуг пострадает по цепочке. Это помогает выставить severity осознанно.</div>
+</sc-if>
+</div>
+</div>
+</sc-if>
+
+</main>
+</div>
+</sc-if>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:900},&quot;startScreen&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;login&quot;,&quot;feed&quot;,&quot;incident&quot;,&quot;catalog&quot;,&quot;service&quot;,&quot;create&quot;],&quot;default&quot;:&quot;login&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Демо&quot;},&quot;initialRole&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;REPORTER&quot;,&quot;ENGINEER&quot;,&quot;ADMIN&quot;],&quot;default&quot;:&quot;ENGINEER&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Демо&quot;},&quot;cascadeView&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;tree&quot;,&quot;columns&quot;,&quot;map&quot;],&quot;default&quot;:&quot;tree&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Каскад зависимостей&quot;}}">
+class Component extends DCLogic {
+  teams = {
+    PLATFORM: 'Platform Engineering',
+    IDENTITY: 'Identity & Access',
+    PAYMENTS: 'Payments Platform',
+    CUSTOMER_OPS: 'Customer Operations'
+  };
+  services = [
+    { code: 'CORE_DATABASE', name: 'Core Database', tier: 'TIER_1', team: 'PLATFORM' },
+    { code: 'EVENT_BUS', name: 'Event Bus', tier: 'TIER_1', team: 'PLATFORM' },
+    { code: 'API_GATEWAY', name: 'API Gateway', tier: 'TIER_1', team: 'PLATFORM' },
+    { code: 'IDENTITY_API', name: 'Identity API', tier: 'TIER_1', team: 'IDENTITY' },
+    { code: 'PAYMENT_API', name: 'Payment API', tier: 'TIER_1', team: 'PAYMENTS' },
+    { code: 'BILLING_WORKER', name: 'Billing Worker', tier: 'TIER_2', team: 'PAYMENTS' },
+    { code: 'NOTIFICATION_SERVICE', name: 'Notification Service', tier: 'TIER_2', team: 'CUSTOMER_OPS' },
+    { code: 'CUSTOMER_PORTAL', name: 'Customer Portal', tier: 'TIER_2', team: 'CUSTOMER_OPS' },
+    { code: 'SUPPORT_DESK', name: 'Support Desk', tier: 'TIER_3', team: 'CUSTOMER_OPS' },
+    { code: 'ANALYTICS', name: 'Operations Analytics', tier: 'TIER_3', team: 'CUSTOMER_OPS' }
+  ];
+  edges = [
+    { from: 'CORE_DATABASE', to: 'IDENTITY_API', type: 'DATA' },
+    { from: 'CORE_DATABASE', to: 'PAYMENT_API', type: 'DATA' },
+    { from: 'IDENTITY_API', to: 'API_GATEWAY', type: 'SYNC' },
+    { from: 'PAYMENT_API', to: 'BILLING_WORKER', type: 'ASYNC' },
+    { from: 'PAYMENT_API', to: 'CUSTOMER_PORTAL', type: 'SYNC' },
+    { from: 'BILLING_WORKER', to: 'ANALYTICS', type: 'DATA' },
+    { from: 'CUSTOMER_PORTAL', to: 'SUPPORT_DESK', type: 'SYNC' },
+    { from: 'API_GATEWAY', to: 'CUSTOMER_PORTAL', type: 'SYNC' },
+    { from: 'EVENT_BUS', to: 'NOTIFICATION_SERVICE', type: 'ASYNC' },
+    { from: 'EVENT_BUS', to: 'BILLING_WORKER', type: 'ASYNC' }
+  ];
+  users = {
+    ANNA: { name: 'Anna Ivanova', role: 'REPORTER' },
+    BORIS: { name: 'Boris Petrov', role: 'ENGINEER' },
+    ELENA: { name: 'Elena Sokolova', role: 'ENGINEER' },
+    MAKSIM: { name: 'Maksim Kuznetsov', role: 'ENGINEER' },
+    OLGA: { name: 'Olga Smirnova', role: 'ADMIN' }
+  };
+  incidents = [
+    { id: 'INC-1042', title: 'Card payment authorization failures', service: 'PAYMENT_API', severity: 'SEV1', priority: 'CRITICAL', status: 'OPEN', team: 'PAYMENTS', assignee: null, created: '14 сен 15:41', source: 'AUTOMATIC',
+      description: 'Авторизация карточных платежей падает с таймаутом на стороне процессинга. Доля ошибок 38% и растёт, затронуты все регионы кроме APAC.' },
+    { id: 'INC-1041', title: 'Database connection pool saturation', service: 'CORE_DATABASE', severity: 'SEV1', priority: 'CRITICAL', status: 'IN_PROGRESS', team: 'PLATFORM', assignee: 'Elena Sokolova', created: '14 сен 15:41', source: 'AUTOMATIC',
+      description: 'Пул соединений основной базы исчерпан: 500 из 500 занято, очередь ожидания растёт. Запросы на запись отваливаются по таймауту, реплики отстают на 40 секунд.' },
+    { id: 'INC-1039', title: 'Billing event queue lag', service: 'BILLING_WORKER', severity: 'SEV2', priority: 'HIGH', status: 'ASSIGNED', team: 'PAYMENTS', assignee: 'Maksim Kuznetsov', created: '14 сен 14:08', source: 'AUTOMATIC',
+      description: 'Очередь биллинговых событий отстаёт на 2.1 млн сообщений. Счета за текущий период формируются с задержкой.' },
+    { id: 'INC-1036', title: 'Customer portal degradation', service: 'CUSTOMER_PORTAL', severity: 'SEV2', priority: 'HIGH', status: 'CLOSED', team: 'CUSTOMER_OPS', assignee: 'Boris Petrov', created: '14 сен 11:20', source: 'MANUAL',
+      description: 'Портал отвечал за 8-12 секунд на страницах со списком заказов. Причина — деградация Payment API.' },
+    { id: 'INC-1034', title: 'Notification delivery delays', service: 'NOTIFICATION_SERVICE', severity: 'SEV3', priority: 'MEDIUM', status: 'RESOLVED', team: 'CUSTOMER_OPS', assignee: 'Elena Sokolova', created: '14 сен 09:55', source: 'AUTOMATIC',
+      description: 'Push и email уходят с задержкой 15-20 минут из-за медленного консьюмера Event Bus.' },
+    { id: 'INC-1031', title: 'Support desk attachment errors', service: 'SUPPORT_DESK', severity: 'SEV4', priority: 'LOW', status: 'IN_PROGRESS', team: 'CUSTOMER_OPS', assignee: 'Maksim Kuznetsov', created: '13 сен 18:42', source: 'MANUAL',
+      description: 'Вложения больше 10 МБ не прикрепляются к тикетам: ошибка 413 на прокси.' },
+    { id: 'INC-1029', title: 'Identity token refresh errors', service: 'IDENTITY_API', severity: 'SEV2', priority: 'HIGH', status: 'RESOLVED', team: 'IDENTITY', assignee: 'Boris Petrov', created: '13 сен 16:10', source: 'AUTOMATIC',
+      description: 'Обновление токенов падало для сессий старше 24 часов.' },
+    { id: 'INC-1027', title: 'API gateway 5xx spike', service: 'API_GATEWAY', severity: 'SEV1', priority: 'HIGH', status: 'CLOSED', team: 'PLATFORM', assignee: 'Elena Sokolova', created: '13 сен 12:03', source: 'AUTOMATIC',
+      description: 'Всплеск 5xx до 12% запросов на восточном кластере.' },
+    { id: 'INC-1024', title: 'Event bus consumer rebalance loop', service: 'EVENT_BUS', severity: 'SEV2', priority: 'MEDIUM', status: 'CLOSED', team: 'PLATFORM', assignee: 'Maksim Kuznetsov', created: '12 сен 22:31', source: 'AUTOMATIC',
+      description: 'Группа консьюмеров непрерывно ребалансировалась после деплоя.' },
+    { id: 'INC-1021', title: 'Analytics nightly job failure', service: 'ANALYTICS', severity: 'SEV4', priority: 'LOW', status: 'OPEN', team: 'CUSTOMER_OPS', assignee: null, created: '12 сен 04:15', source: 'AUTOMATIC',
+      description: 'Ночной расчёт операционных отчётов не завершился: нет данных биллинга за 11 сентября.' },
+    { id: 'INC-1018', title: 'Payment retries exhausted for EU region', service: 'PAYMENT_API', severity: 'SEV2', priority: 'CRITICAL', status: 'CLOSED', team: 'PAYMENTS', assignee: 'Boris Petrov', created: '11 сен 19:44', source: 'MANUAL',
+      description: 'Ретраи платежей в EU исчерпаны, часть операций осталась в статусе pending.' },
+    { id: 'INC-1015', title: 'Support desk search timeouts', service: 'SUPPORT_DESK', severity: 'SEV3', priority: 'LOW', status: 'CANCELLED', team: 'CUSTOMER_OPS', assignee: null, created: '11 сен 10:02', source: 'MANUAL',
+      description: 'Поиск по тикетам отваливался по таймауту. Отменено: дубликат INC-1012.' },
+    { id: 'INC-1012', title: 'Core database replica lag', service: 'CORE_DATABASE', severity: 'SEV2', priority: 'HIGH', status: 'CLOSED', team: 'PLATFORM', assignee: 'Elena Sokolova', created: '10 сен 20:18', source: 'AUTOMATIC',
+      description: 'Отставание реплик до 90 секунд во время ночного бэкапа.' },
+    { id: 'INC-1009', title: 'Customer portal login redirect loop', service: 'CUSTOMER_PORTAL', severity: 'SEV3', priority: 'MEDIUM', status: 'CLOSED', team: 'CUSTOMER_OPS', assignee: 'Maksim Kuznetsov', created: '10 сен 09:07', source: 'MANUAL',
+      description: 'Часть пользователей попадала в цикл редиректов при входе через Identity API.' }
+  ];
+  timelines = {
+    'INC-1041': [
+      { who: 'Anna Ivanova', what: 'создала инцидент', when: '14 сентября, 15:41', dot: '#f0f3f4' },
+      { who: 'Boris Petrov', what: 'назначил Elena Sokolova', when: '14 сентября, 15:46', dot: '#5b9bf5' },
+      { who: 'Elena Sokolova', what: 'взяла в работу', when: '14 сентября, 16:02', dot: '#46c6d8' }
+    ]
+  };
+  sev = {
+    SEV1: { bg: '#ef4444', fg: '#120606' },
+    SEV2: { bg: '#f59e0b', fg: '#1a1205' },
+    SEV3: { bg: '#cbb53d', fg: '#14130a' },
+    SEV4: { bg: '#4a555a', fg: '#dfe6e9' }
+  };
+  statusDots = { OPEN: '#f0f3f4', ASSIGNED: '#5b9bf5', IN_PROGRESS: '#46c6d8', RESOLVED: '#5ec27a', CLOSED: '#6b7478', CANCELLED: '#6b7478' };
+  tierDots = { TIER_1: '#ef4444', TIER_2: '#cbb53d', TIER_3: '#55636a' };
+  edgeStyles = { SYNC: 'solid', ASYNC: 'dashed', DATA: 'dotted' };
+  roleUser = { REPORTER: 'ANNA', ENGINEER: 'ELENA', ADMIN: 'OLGA' };
+
+  state = {
+    screen: 'login',
+    role: 'ENGINEER',
+    email: 'elena.sokolova@incidenthub.io',
+    password: '',
+    loginError: false,
+    filters: { status: 'ALL', severity: 'ALL', priority: 'ALL', service: 'ALL', team: 'ALL' },
+    page: 1,
+    incidentId: 'INC-1041',
+    cascade: 'tree',
+    serviceCode: 'PAYMENT_API',
+    form: { title: '', desc: '', service: '', severity: 'SEV3', priority: 'MEDIUM', team: '' }
+  };
+
+  componentDidMount() {
+    const p = this.props;
+    const next = {};
+    if (p.startScreen && p.startScreen !== 'login') next.screen = p.startScreen;
+    if (p.initialRole) next.role = p.initialRole;
+    if (p.cascadeView) next.cascade = p.cascadeView;
+    if (Object.keys(next).length) this.setState(next);
+  }
+
+  svc(code) { return this.services.find(s => s.code === code) || null; }
+
+  impact(code) {
+    const out = [];
+    let frontier = [code];
+    const seen = { [code]: true };
+    for (let depth = 1; depth <= 6 && frontier.length; depth++) {
+      const nextF = [];
+      frontier.forEach(cur => {
+        this.edges.filter(e => e.from === cur).forEach(e => {
+          if (seen[e.to]) return;
+          seen[e.to] = true;
+          nextF.push(e.to);
+          const s = this.svc(e.to);
+          out.push({ code: e.to, name: s ? s.name : e.to, tier: s ? s.tier : '', depth, type: e.type, parent: cur });
+        });
+      });
+      frontier = nextF;
+    }
+    return out;
+  }
+
+  upstreamOf(code) {
+    return this.edges.filter(e => e.to === code).map(e => {
+      const s = this.svc(e.from);
+      return { code: e.from, name: s ? s.name : e.from, tier: s ? s.tier : '', type: e.type, tierDot: this.tierDots[s ? s.tier : 'TIER_3'], edgeStyle: this.edgeStyles[e.type] };
+    });
+  }
+
+  activeCount(code) {
+    return this.incidents.filter(i => i.service === code && ['OPEN', 'ASSIGNED', 'IN_PROGRESS'].indexOf(i.status) >= 0).length;
+  }
+
+  set(patch) { this.setState(patch); }
+  setFilter(k, v) { this.setState(s => ({ filters: Object.assign({}, s.filters, { [k]: v }), page: 1 })); }
+  setForm(k, v) { this.setState(s => ({ form: Object.assign({}, s.form, { [k]: v }) })); }
+
+  filtered() {
+    const f = this.state.filters;
+    return this.incidents.filter(i =>
+      (f.status === 'ALL' || i.status === f.status) &&
+      (f.severity === 'ALL' || i.severity === f.severity) &&
+      (f.priority === 'ALL' || i.priority === f.priority) &&
+      (f.service === 'ALL' || i.service === f.service) &&
+      (f.team === 'ALL' || i.team === f.team));
+  }
+
+  renderVals() {
+    const st = this.state;
+    const role = st.role;
+    const screen = st.screen;
+    const PAGE = 8;
+    const list = this.filtered();
+    const totalPages = Math.max(1, Math.ceil(list.length / PAGE));
+    const page = Math.min(st.page, totalPages);
+    const pageRows = list.slice((page - 1) * PAGE, page * PAGE);
+
+    const row = i => {
+      const s = this.svc(i.service);
+      const sv = this.sev[i.severity];
+      const strong = i.priority === 'CRITICAL' || i.priority === 'HIGH';
+      return {
+        id: i.id, title: i.title, serviceCode: i.service, severity: i.severity, priority: i.priority,
+        status: i.status, team: i.team, created: i.created, isAuto: i.source === 'AUTOMATIC',
+        assignee: i.assignee || 'не назначен',
+        assigneeColor: i.assignee ? '#c6cdd0' : '#6f797d',
+        sevBg: sv.bg, sevFg: sv.fg,
+        prWeight: strong ? '600' : '400',
+        prColor: strong ? '#e6e9ea' : '#8b9599',
+        statusDot: this.statusDots[i.status],
+        tierDot: this.tierDots[s ? s.tier : 'TIER_3'],
+        open: () => this.setState({ screen: 'incident', incidentId: i.id })
+      };
+    };
+
+    const mkFilter = (k, label, options) => ({
+      label, value: st.filters[k], options,
+      bd: st.filters[k] === 'ALL' ? 'rgba(255,255,255,.1)' : 'rgba(91,155,245,.55)',
+      onChange: e => this.setFilter(k, e.target.value)
+    });
+    const all = extra => [{ value: 'ALL', label: extra }];
+
+    const filterControls = [
+      mkFilter('status', 'СТАТУС', all('все').concat(['OPEN', 'ASSIGNED', 'IN_PROGRESS', 'RESOLVED', 'CLOSED', 'CANCELLED'].map(v => ({ value: v, label: v })))),
+      mkFilter('severity', 'SEVERITY', all('все').concat(['SEV1', 'SEV2', 'SEV3', 'SEV4'].map(v => ({ value: v, label: v })))),
+      mkFilter('priority', 'ПРИОРИТЕТ', all('все').concat(['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'].map(v => ({ value: v, label: v })))),
+      mkFilter('service', 'УСЛУГА', all('все').concat(this.services.map(s => ({ value: s.code, label: s.code })))),
+      mkFilter('team', 'КОМАНДА', all('все').concat(Object.keys(this.teams).map(t => ({ value: t, label: t }))))
+    ];
+    const filtersDirty = Object.keys(st.filters).some(k => st.filters[k] !== 'ALL');
+
+    const inc = this.incidents.find(i => i.id === st.incidentId) || this.incidents[1];
+    const incSvc = this.svc(inc.service);
+    const incSev = this.sev[inc.severity];
+    const imp = this.impact(inc.service);
+    const depths = [];
+    imp.forEach(x => { if (depths.indexOf(x.depth) < 0) depths.push(x.depth); });
+    const depthBars = { 1: '#ef4444', 2: '#f59e0b', 3: '#cbb53d', 4: '#4a555a' };
+
+    const treeRows = imp.slice().sort((a, b) => a.depth - b.depth).map(x => ({
+      code: x.code, name: x.name, type: x.type, depth: x.depth,
+      indent: (x.depth - 1) * 26, glyph: x.depth === 1 ? '├─' : '└─',
+      tierShort: x.tier, edgeStyle: this.edgeStyles[x.type]
+    }));
+
+    const depthGroups = depths.map(d => ({
+      depth: d, count: imp.filter(x => x.depth === d).length + ' услуг', bar: depthBars[d] || '#4a555a',
+      items: imp.filter(x => x.depth === d).map(x => ({
+        code: x.code, name: x.name, type: x.type, parent: x.parent,
+        edgeStyle: this.edgeStyles[x.type], tierDot: this.tierDots[x.tier]
+      }))
+    }));
+
+    const impMap = {};
+    imp.forEach(x => { impMap[x.code] = x; });
+    const mapCells = this.services.map(s => {
+      const hit = impMap[s.code];
+      const origin = s.code === inc.service;
+      const ticks = [1, 2, 3].map(n => ({ c: origin ? '#ef4444' : (hit && hit.depth >= n ? (depthBars[hit.depth] || '#4a555a') : 'rgba(255,255,255,.07)') }));
+      return {
+        code: s.code, name: s.name, ticks,
+        bg: origin ? 'rgba(239,68,68,.14)' : (hit ? 'rgba(255,255,255,.045)' : 'transparent'),
+        bd: origin ? 'rgba(239,68,68,.55)' : (hit ? 'rgba(255,255,255,.13)' : 'rgba(255,255,255,.06)'),
+        codeColor: origin || hit ? '#e6e9ea' : '#5d676b',
+        nameColor: origin || hit ? '#8b9599' : '#4e575b',
+        badge: origin ? 'ИСТОЧНИК' : (hit ? 'D' + hit.depth + ' · ' + hit.type : '—'),
+        badgeColor: origin ? '#ffb4b4' : (hit ? '#cdd5d8' : '#4e575b'),
+        badgeBd: origin ? 'rgba(239,68,68,.5)' : (hit ? 'rgba(255,255,255,.14)' : 'rgba(255,255,255,.07)')
+      };
+    });
+
+    const cascadeTabs = [
+      { key: 'tree', label: 'ДЕРЕВО' },
+      { key: 'columns', label: 'ПО ГЛУБИНЕ' },
+      { key: 'map', label: 'КАРТА КАТАЛОГА' }
+    ].map(t => ({
+      label: t.label, pick: () => this.set({ cascade: t.key }),
+      bg: st.cascade === t.key ? 'rgba(255,255,255,.1)' : 'transparent',
+      fg: st.cascade === t.key ? '#e6e9ea' : '#7d878b'
+    }));
+
+    const tier1Hit = imp.filter(x => x.tier === 'TIER_1').length;
+    const actionDefs = {
+      OPEN: [{ label: 'Назначить', primary: true }, { label: 'Отменить', primary: false }],
+      ASSIGNED: [{ label: 'Взять в работу', primary: true }, { label: 'Отменить', primary: false }],
+      IN_PROGRESS: [{ label: 'Устранить', primary: true }, { label: 'Отменить', primary: false }],
+      RESOLVED: [{ label: 'Закрыть', primary: true }, { label: 'Переоткрыть', primary: false }],
+      CLOSED: [], CANCELLED: []
+    };
+    const actions = (role === 'REPORTER' ? [] : (actionDefs[inc.status] || [])).map(a => ({
+      label: a.label, run: () => {},
+      bg: a.primary ? '#2f6fe0' : 'transparent',
+      bd: a.primary ? '#4e87ea' : 'rgba(255,255,255,.16)',
+      fg: a.primary ? '#ffffff' : '#c6cdd0'
+    }));
+
+    const statusOrder = ['OPEN', 'ASSIGNED', 'IN_PROGRESS', 'RESOLVED', 'CLOSED'];
+    const curIdx = statusOrder.indexOf(inc.status);
+    const statusPath = statusOrder.map((c, idx) => ({
+      code: c, dot: idx <= curIdx ? this.statusDots[c] : 'rgba(255,255,255,.14)',
+      fg: idx === curIdx ? '#e6e9ea' : (idx < curIdx ? '#a9b3b7' : '#5d676b'),
+      current: idx === curIdx
+    }));
+
+    const sd = this.svc(st.serviceCode) || this.services[0];
+    const sdImp = this.impact(sd.code).sort((a, b) => a.depth - b.depth);
+    const sdUp = this.upstreamOf(sd.code);
+    const sdInc = this.incidents.filter(i => i.service === sd.code && ['OPEN', 'ASSIGNED', 'IN_PROGRESS', 'RESOLVED'].indexOf(i.status) >= 0);
+
+    const fs = st.form;
+    const fSvc = this.svc(fs.service);
+    const fImp = fSvc ? this.impact(fSvc.code) : [];
+    const fDepths = [];
+    fImp.forEach(x => { if (fDepths.indexOf(x.depth) < 0) fDepths.push(x.depth); });
+    const sevHints = { SEV1: 'SEV1 — полная недоступность для клиентов.', SEV2: 'SEV2 — крупная деградация, часть функций недоступна.', SEV3: 'SEV3 — заметно, но обходной путь есть.', SEV4: 'SEV4 — мелкий дефект, влияния на бизнес почти нет.' };
+
+    const user = this.users[this.roleUser[role]];
+
+    return {
+      isLogin: screen === 'login',
+      isApp: screen !== 'login',
+      isFeed: screen === 'feed',
+      isIncident: screen === 'incident',
+      isCatalog: screen === 'catalog',
+      isService: screen === 'service',
+      isCreate: screen === 'create',
+      role, userName: user.name,
+      userInitials: user.name.split(' ').map(w => w[0]).join(''),
+
+      email: st.email, password: st.password, loginError: st.loginError,
+      setEmail: e => this.set({ email: e.target.value }),
+      setPassword: e => this.set({ password: e.target.value, loginError: false }),
+      onLoginKey: e => { if (e.key === 'Enter') this.doLogin(); },
+      doLogin: () => this.doLogin(),
+
+      nav: [
+        { key: 'feed', label: 'Лента инцидентов', count: String(this.incidents.filter(i => ['OPEN', 'ASSIGNED', 'IN_PROGRESS'].indexOf(i.status) >= 0).length) },
+        { key: 'catalog', label: 'Каталог услуг', count: '' },
+        { key: 'create', label: 'Новый инцидент', count: '' }
+      ].filter(n => n.key !== 'create' || role !== 'REPORTER' || true).map(n => {
+        const active = screen === n.key || (n.key === 'feed' && screen === 'incident') || (n.key === 'catalog' && screen === 'service');
+        return {
+          label: n.label, count: n.count, go: () => this.set({ screen: n.key }),
+          bg: active ? 'rgba(255,255,255,.07)' : 'transparent',
+          mark: active ? '#ef4444' : 'transparent',
+          fg: active ? '#f2f5f6' : '#9aa4a8'
+        };
+      }),
+      roles: ['REPORTER', 'ENGINEER', 'ADMIN'].map(r => ({
+        code: r, pick: () => this.set({ role: r }),
+        bg: role === r ? 'rgba(91,155,245,.14)' : 'transparent',
+        bd: role === r ? 'rgba(91,155,245,.5)' : 'rgba(255,255,255,.1)',
+        fg: role === r ? '#dfe5e7' : '#8b9599',
+        dot: role === r ? '#5b9bf5' : 'rgba(255,255,255,.2)'
+      })),
+
+      goFeed: () => this.set({ screen: 'feed' }),
+      goCatalog: () => this.set({ screen: 'catalog' }),
+      goCreate: () => this.set({ screen: 'create' }),
+      canCreate: true,
+
+      rows: pageRows.map(row),
+      isEmpty: list.length === 0,
+      filterControls, filtersDirty,
+      resetFilters: () => this.setState({ filters: { status: 'ALL', severity: 'ALL', priority: 'ALL', service: 'ALL', team: 'ALL' }, page: 1 }),
+      feedSummary: list.length + ' из ' + this.incidents.length + ' инцидентов · активных ' + this.incidents.filter(i => ['OPEN', 'ASSIGNED', 'IN_PROGRESS'].indexOf(i.status) >= 0).length,
+      pageInfo: list.length ? ((page - 1) * PAGE + 1) + '–' + Math.min(page * PAGE, list.length) + ' ИЗ ' + list.length : '0 ИЗ 0',
+      pages: Array.from({ length: totalPages }, (_, k) => k + 1).map(n => ({
+        n: String(n), go: () => this.set({ page: n }),
+        bg: n === page ? 'rgba(255,255,255,.1)' : 'transparent',
+        bd: n === page ? 'rgba(255,255,255,.22)' : 'rgba(255,255,255,.1)',
+        fg: n === page ? '#f2f5f6' : '#8b9599'
+      })),
+      prevPage: () => this.set({ page: Math.max(1, page - 1) }),
+      nextPage: () => this.set({ page: Math.min(totalPages, page + 1) }),
+
+      inc: {
+        id: inc.id, title: inc.title, status: inc.status, severity: inc.severity, priority: inc.priority,
+        source: inc.source, description: inc.description,
+        statusDot: this.statusDots[inc.status], sevBg: incSev.bg, sevFg: incSev.fg,
+        serviceCode: incSvc.code, serviceName: incSvc.name, serviceTier: incSvc.tier,
+        serviceTeamName: this.teams[incSvc.team], svcTierDot: this.tierDots[incSvc.tier]
+      },
+      openIncidentService: () => this.set({ screen: 'service', serviceCode: inc.service }),
+      cascadeSummary: imp.length + ' услуг пострадает по цепочке · глубина до ' + (depths.length ? depths[depths.length - 1] : 0) + ' · TIER_1 среди них: ' + tier1Hit,
+      cascadeTabs, isTree: st.cascade === 'tree', isColumns: st.cascade === 'columns', isMap: st.cascade === 'map',
+      treeRows, depthGroups, mapCells,
+      timeline: this.timelines[inc.id] || [
+        { who: inc.assignee || 'Anna Ivanova', what: 'создал(а) инцидент', when: inc.created, dot: '#f0f3f4' }
+      ],
+      actions, hasActions: actions.length > 0,
+      noActionsRole: actions.length === 0 && role === 'REPORTER',
+      noActionsStatus: actions.length === 0 && role !== 'REPORTER',
+      incMeta: [
+        { k: 'КОМАНДА', v: this.teams[inc.team], color: '#e6e9ea' },
+        { k: 'ИСПОЛНИТЕЛЬ', v: inc.assignee || 'не назначен', color: inc.assignee ? '#e6e9ea' : '#7d878b' },
+        { k: 'СОЗДАН', v: inc.created, color: '#c6cdd0' },
+        { k: 'ИСТОЧНИК', v: inc.source, color: '#c6cdd0' },
+        { k: 'ОХВАТ', v: imp.length + ' завис. услуг', color: '#c6cdd0' }
+      ],
+      statusPath,
+
+      catalogSummary: this.services.length + ' услуг · ' + Object.keys(this.teams).length + ' команды-владельца',
+      catalogRows: this.services.map(s => {
+        const active = this.activeCount(s.code);
+        return {
+          code: s.code, name: s.name, tier: s.tier, teamName: this.teams[s.team],
+          tierDot: this.tierDots[s.tier], active: String(active),
+          activeColor: active > 0 ? '#ffb4b4' : '#5d676b',
+          upCount: String(this.upstreamOf(s.code).length),
+          downCount: String(this.impact(s.code).length),
+          open: () => this.set({ screen: 'service', serviceCode: s.code })
+        };
+      }),
+
+      svc: {
+        code: sd.code, name: sd.name, tier: sd.tier, teamName: this.teams[sd.team], tierDot: this.tierDots[sd.tier],
+        upstream: sdUp, noUpstream: sdUp.length === 0,
+        downstream: sdImp.map(x => ({
+          code: x.code, name: x.name, type: x.type, depth: x.depth,
+          indent: (x.depth - 1) * 20, glyph: x.depth === 1 ? '├─' : '└─', edgeStyle: this.edgeStyles[x.type]
+        })),
+        noDownstream: sdImp.length === 0,
+        incidents: sdInc.map(i => ({
+          title: i.title, severity: i.severity, status: i.status,
+          sevBg: this.sev[i.severity].bg, sevFg: this.sev[i.severity].fg,
+          statusDot: this.statusDots[i.status],
+          open: () => this.set({ screen: 'incident', incidentId: i.id })
+        })),
+        noIncidents: sdInc.length === 0
+      },
+
+      form: { title: fs.title, desc: fs.desc, service: fs.service, team: fs.team, hasService: !!fSvc, noService: !fSvc },
+      setFormTitle: e => this.setForm('title', e.target.value),
+      setFormDesc: e => this.setForm('desc', e.target.value),
+      setFormService: e => this.setForm('service', e.target.value),
+      setFormTeam: e => this.setForm('team', e.target.value),
+      serviceOptions: this.services.map(s => ({ value: s.code, label: s.code + ' · ' + s.name + ' · ' + s.tier })),
+      teamOptions: Object.keys(this.teams).map(t => ({ value: t, label: this.teams[t] + ' (' + t + ')' })),
+      ownerFallback: fSvc ? ('по умолчанию: ' + this.teams[fSvc.team]) : 'по умолчанию: владелец услуги',
+      sevChoices: ['SEV1', 'SEV2', 'SEV3', 'SEV4'].map(c => ({
+        code: c, pick: () => this.setForm('severity', c),
+        bg: fs.severity === c ? this.sev[c].bg : 'transparent',
+        bd: fs.severity === c ? this.sev[c].bg : 'rgba(255,255,255,.13)',
+        fg: fs.severity === c ? this.sev[c].fg : '#8b9599'
+      })),
+      prChoices: ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'].map(c => ({
+        code: c, pick: () => this.setForm('priority', c),
+        bg: fs.priority === c ? 'rgba(255,255,255,.12)' : 'transparent',
+        bd: fs.priority === c ? 'rgba(255,255,255,.4)' : 'rgba(255,255,255,.13)',
+        fg: fs.priority === c ? '#f2f5f6' : '#8b9599',
+        weight: fs.priority === c ? '600' : '400'
+      })),
+      sevHint: sevHints[fs.severity],
+      previewCount: String(fImp.length),
+      previewColor: fImp.length >= 5 ? '#ef4444' : (fImp.length >= 2 ? '#f59e0b' : '#e6e9ea'),
+      previewNote: fSvc ? ('от ' + fSvc.code + ' · глубина до ' + (fDepths.length ? fDepths[fDepths.length - 1] : 0)) : '',
+      previewGroups: fDepths.map(d => ({ depth: d, codes: fImp.filter(x => x.depth === d).map(x => x.code).join(', ') })),
+      previewTier1: fSvc ? String(fImp.filter(x => x.tier === 'TIER_1').length) : '0',
+      previewOwner: fSvc ? this.teams[fSvc.team] : '—',
+      submitForm: () => this.setState({ screen: 'feed', page: 1 })
+    };
+  }
+
+  doLogin() {
+    if ((this.state.password || '').length < 4) this.set({ loginError: true });
+    else this.set({ screen: 'feed', loginError: false });
+  }
+}
+
+</script>
+</body>
+</html>
