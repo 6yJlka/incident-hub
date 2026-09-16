@@ -2,9 +2,11 @@ import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { ProtectedRoute } from '../auth/ProtectedRoute'
 import { AppShell } from '../layout/AppShell'
 import { LoginPage } from '../pages/LoginPage'
-import { PlaceholderPage } from '../pages/PlaceholderPage'
 import { IncidentFeedPage } from '../features/incidents/feed/IncidentFeedPage'
 import { IncidentDetailPage } from '../features/incidents/detail/IncidentDetailPage'
+import { CreateIncidentPage } from '../features/incidents/create/CreateIncidentPage'
+import { ServiceCatalogPage } from '../features/services/catalog/ServiceCatalogPage'
+import { ServiceDetailPage } from '../features/services/detail/ServiceDetailPage'
 
 export const router = createBrowserRouter([
   {
@@ -31,30 +33,15 @@ export const router = createBrowserRouter([
           },
           {
             path: '/services',
-            element: (
-              <PlaceholderPage
-                titleKey="placeholders.servicesTitle"
-                descriptionKey="placeholders.servicesDescription"
-              />
-            ),
+            element: <ServiceCatalogPage />,
           },
           {
             path: '/services/:id',
-            element: (
-              <PlaceholderPage
-                titleKey="placeholders.servicesTitle"
-                descriptionKey="placeholders.servicesDescription"
-              />
-            ),
+            element: <ServiceDetailPage />,
           },
           {
             path: '/incidents/new',
-            element: (
-              <PlaceholderPage
-                titleKey="placeholders.createIncidentTitle"
-                descriptionKey="placeholders.createIncidentDescription"
-              />
-            ),
+            element: <CreateIncidentPage />,
           },
         ],
       },
