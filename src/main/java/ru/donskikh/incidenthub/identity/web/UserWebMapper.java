@@ -3,6 +3,7 @@ package ru.donskikh.incidenthub.identity.web;
 import org.springframework.stereotype.Component;
 import ru.donskikh.incidenthub.identity.application.CreateUserCommand;
 import ru.donskikh.incidenthub.identity.application.CreateUserResult;
+import ru.donskikh.incidenthub.identity.application.GetCurrentUserResult;
 import ru.donskikh.incidenthub.identity.application.ListUserItem;
 import ru.donskikh.incidenthub.identity.application.ListUsersQuery;
 import ru.donskikh.incidenthub.identity.application.ListUsersResult;
@@ -21,6 +22,16 @@ public class UserWebMapper {
     public CreateUserResponse toResponse(CreateUserResult result) {
         return new CreateUserResponse(
                 result.userId(),
+                result.email(),
+                result.displayName(),
+                result.role(),
+                result.active()
+        );
+    }
+
+    public CurrentUserResponse toResponse(GetCurrentUserResult result) {
+        return new CurrentUserResponse(
+                result.id(),
                 result.email(),
                 result.displayName(),
                 result.role(),

@@ -56,7 +56,7 @@ class OpenApiIntegrationTest extends PostgreSQLIntegrationTest {
                 .map(String.class::cast)
                 .collect(java.util.stream.Collectors.toSet());
 
-        assertThat(operationCount).isEqualTo(22);
+        assertThat(operationCount).isEqualTo(23);
         assertThat(tags).containsExactlyInAnyOrder(
                 "Authentication", "Incidents", "Service catalog", "Teams", "Users"
         );
@@ -68,8 +68,13 @@ class OpenApiIntegrationTest extends PostgreSQLIntegrationTest {
                 "/api/v1/services",
                 "/api/v1/services/{id}/affected",
                 "/api/v1/teams",
-                "/api/v1/users"
+                "/api/v1/users",
+                "/api/v1/users/me"
         );
+        assertThat(JsonPath.<String>read(
+                document,
+                "$.paths['/api/v1/users/me'].get.responses['200'].content['application/json'].schema['$ref']"
+        )).isEqualTo("#/components/schemas/CurrentUserResponse");
         assertThat(JsonPath.<String>read(document, "$.components.securitySchemes.bearerAuth.type"))
                 .isEqualTo("http");
         assertThat(JsonPath.<String>read(document, "$.components.securitySchemes.bearerAuth.scheme"))
