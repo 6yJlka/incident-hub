@@ -30,6 +30,10 @@
       "description": "Register users and obtain access tokens"
     },
     {
+      "name": "Alert groups",
+      "description": "Suspected incidents produced by alert correlation"
+    },
+    {
       "name": "Alerts",
       "description": "Monitoring signal ingestion"
     },
@@ -1780,6 +1784,147 @@
         }
       }
     },
+    "/api/v1/alert-groups": {
+      "get": {
+        "tags": ["Alert groups"],
+        "summary": "List alert groups",
+        "description": "Returns groups ordered by last alert time and identifier, newest first. Optionally filters by status and probable root service.",
+        "operationId": "listAlertGroups",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["OPEN", "CONFIRMED", "DISMISSED"]
+            }
+          },
+          {
+            "name": "rootServiceId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Alert group page",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListAlertGroupsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid pagination or filters",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication credentials are missing or invalid",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/alert-groups/{id}": {
+      "get": {
+        "tags": ["Alert groups"],
+        "summary": "Get an alert group",
+        "description": "Returns group details and alerts ordered by occurrence time and identifier.",
+        "operationId": "getAlertGroup",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Alert group details and alerts",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertGroupDetailResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid group identifier",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication credentials are missing or invalid",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Alert group not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/services/{id}/dependencies/{dependencyId}": {
       "delete": {
         "tags": ["Service catalog"],
@@ -3301,6 +3446,159 @@
             "items": {
               "$ref": "#/components/schemas/IncidentHistoryItemResponse"
             }
+          }
+        }
+      },
+      "AlertGroupResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["OPEN", "CONFIRMED", "DISMISSED"]
+          },
+          "probableRootServiceId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "probableRootServiceCode": {
+            "type": "string"
+          },
+          "probableRootServiceName": {
+            "type": "string"
+          },
+          "firstAlertAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastAlertAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "incidentId": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "ListAlertGroupsResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AlertGroupResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "hasNext": {
+            "type": "boolean"
+          },
+          "hasPrevious": {
+            "type": "boolean"
+          }
+        }
+      },
+      "AlertGroupDetailResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["OPEN", "CONFIRMED", "DISMISSED"]
+          },
+          "probableRootServiceId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "probableRootServiceCode": {
+            "type": "string"
+          },
+          "probableRootServiceName": {
+            "type": "string"
+          },
+          "firstAlertAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastAlertAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "incidentId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "alerts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GroupAlertResponse"
+            }
+          }
+        }
+      },
+      "GroupAlertResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "source": {
+            "type": "string"
+          },
+          "externalId": {
+            "type": "string"
+          },
+          "businessServiceId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "businessServiceCode": {
+            "type": "string"
+          },
+          "businessServiceName": {
+            "type": "string"
+          },
+          "signalType": {
+            "type": "string",
+            "enum": ["AVAILABILITY", "ERROR_RATE", "LATENCY", "SATURATION"]
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["CRITICAL", "WARNING", "INFO"]
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "receivedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "description": {
+            "type": "string"
           }
         }
       }

@@ -33,6 +33,12 @@ management:
 app:
   alerts:
     max-batch-size: ${ALERT_MAX_BATCH_SIZE:500}
+    correlation:
+      enabled: ${ALERT_CORRELATION_ENABLED:true}
+      interval: ${ALERT_CORRELATION_INTERVAL:PT5S}
+      batch-size: ${ALERT_CORRELATION_BATCH_SIZE:500}
+      implementation: ${ALERT_CORRELATION_IMPLEMENTATION:time-window}
+      window: ${ALERT_CORRELATION_WINDOW:PT5M}
   security:
     integration:
       token: ${INTEGRATION_TOKEN:}
