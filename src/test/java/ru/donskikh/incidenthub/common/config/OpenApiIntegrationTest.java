@@ -76,11 +76,11 @@ class OpenApiIntegrationTest extends PostgreSQLIntegrationTest {
                 "getAffectedServices", "addServiceDependency", "removeServiceDependency",
                 "createIncident", "listIncidents", "getIncident", "getIncidentHistory",
                 "assignIncident", "startIncidentProgress", "resolveIncident", "closeIncident",
-                "reopenIncident", "cancelIncident"
+                "reopenIncident", "cancelIncident", "acceptAlerts"
         );
-        assertThat(operationCount).isEqualTo(23);
+        assertThat(operationCount).isEqualTo(24);
         assertThat(tags).containsExactlyInAnyOrder(
-                "Authentication", "Incidents", "Service catalog", "Teams", "Users"
+                "Authentication", "Incidents", "Service catalog", "Teams", "Users", "Alerts"
         );
         assertThat(paths.keySet()).contains(
                 "/api/v1/auth/register",
@@ -105,6 +105,15 @@ class OpenApiIntegrationTest extends PostgreSQLIntegrationTest {
                 .isEqualTo("JWT");
         assertThat(JsonPath.<List<Map<String, List<String>>>>read(document, "$.security"))
                 .containsExactly(Map.of("bearerAuth", List.of()));
+        assertThat(JsonPath.<List<Map<String, List<String>>>>read(document, "$.paths['/api/v1/alerts'].post.security"))
+                .containsExactly(Map.of("integrationToken", List.of()));
+        assertThat(JsonPath.<String>read(document, "$.components.securitySchemes.integrationToken.name"))
+                .isEqualTo("X-Integration-Token");
+        assertThat(JsonPath.<String>read(document, "$.components.securitySchemes.integrationToken.type"))
+                .isEqualTo("apiKey");
+        assertThat(JsonPath.<String>read(document,
+                "$.paths['/api/v1/alerts'].post.responses['400'].content['application/problem+json'].schema['$ref']"))
+                .isEqualTo("#/components/schemas/ProblemDetail");
         assertThat(JsonPath.<List<?>>read(document, "$.paths['/api/v1/auth/login'].post.security"))
                 .isEmpty();
         assertThat(JsonPath.<String>read(

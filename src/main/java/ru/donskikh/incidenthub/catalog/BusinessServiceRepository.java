@@ -16,6 +16,8 @@ public interface BusinessServiceRepository extends
         JpaRepository<BusinessService, Long>,
         JpaSpecificationExecutor<BusinessService> {
 
+    List<BusinessService> findAllByCodeIn(Collection<String> codes);
+
     @Query("""
             select count(service) > 0
             from BusinessService service

@@ -31,7 +31,12 @@ management:
         include: health,info
 
 app:
+  alerts:
+    max-batch-size: ${ALERT_MAX_BATCH_SIZE:500}
   security:
+    integration:
+      token: ${INTEGRATION_TOKEN:}
+      allow-local-token: false
     cors:
       allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
     jwt:
@@ -47,6 +52,9 @@ spring:
 
 app:
   security:
+    integration:
+      token: ${INTEGRATION_TOKEN:incident-hub-local-integration-token}
+      allow-local-token: true
     jwt:
       secret: ${JWT_SECRET:aW5jaWRlbnQtaHViLWxvY2FsLWRldmVsb3BtZW50LXNlY3JldC0yMDI2}
       allow-local-secret: true

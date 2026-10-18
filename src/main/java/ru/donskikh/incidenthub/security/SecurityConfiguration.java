@@ -1,6 +1,7 @@
 package ru.donskikh.incidenthub.security;
 
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -22,9 +23,10 @@ import java.util.List;
 @Configuration(proxyBeanMethods = false)
 @EnableWebSecurity
 @EnableMethodSecurity
-@EnableConfigurationProperties({JwtProperties.class, CorsProperties.class})
+@EnableConfigurationProperties({JwtProperties.class, CorsProperties.class, IntegrationTokenProperties.class})
 @Import({
         JwtAuthenticationFilter.class,
+        IntegrationAuthenticationFilter.class,
         JwtTokenService.class,
         ProblemDetailAuthenticationEntryPoint.class,
         ProblemDetailAccessDeniedHandler.class
@@ -43,6 +45,7 @@ public class SecurityConfiguration {
     SecurityFilterChain securityFilterChain(
             HttpSecurity http,
             JwtAuthenticationFilter jwtAuthenticationFilter,
+            IntegrationAuthenticationFilter integrationAuthenticationFilter,
             ProblemDetailAuthenticationEntryPoint authenticationEntryPoint,
             ProblemDetailAccessDeniedHandler accessDeniedHandler,
             CorsConfigurationSource corsConfigurationSource
@@ -58,7 +61,17 @@ public class SecurityConfiguration {
                         .requestMatchers(PUBLIC_PATHS).permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(integrationAuthenticationFilter, JwtAuthenticationFilter.class)
                 .build();
+    }
+
+    @Bean
+    FilterRegistrationBean<IntegrationAuthenticationFilter> integrationFilterRegistration(
+            IntegrationAuthenticationFilter filter
+    ) {
+        var registration = new FilterRegistrationBean<>(filter);
+        registration.setEnabled(false);
+        return registration;
     }
 
     @Bean

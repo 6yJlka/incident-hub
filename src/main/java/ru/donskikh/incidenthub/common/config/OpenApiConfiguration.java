@@ -40,6 +40,10 @@ public class OpenApiConfiguration {
                                 .type(SecurityScheme.Type.HTTP)
                                 .scheme("bearer")
                                 .bearerFormat("JWT")
+                ).addSecuritySchemes(
+                        "integrationToken",
+                        new SecurityScheme().type(SecurityScheme.Type.APIKEY)
+                                .in(SecurityScheme.In.HEADER).name("X-Integration-Token")
                 ))
                 .addSecurityItem(new SecurityRequirement().addList(BEARER_AUTH));
     }
