@@ -34,8 +34,9 @@ Backend:
 
 Integration tests use Testcontainers. Check `docker info` first: without a running
 Docker daemon they fail on initialization, and that is not a code problem.
-After migrations that change the schema run `docker compose down -v` before building,
-otherwise the old volume causes schema drift and cascading test failures.
+If integration tests fail with schema drift after a migration change, the cause
+may be an old local volume. `docker compose down -v` fixes it but deletes all
+local data: never run it on your own, report the symptom and ask first.
 
 Frontend (from `frontend/`):
 
@@ -103,8 +104,10 @@ New code must be indistinguishable from existing code.
     `DomainConflictException` (→ 409).
 19. 403 is neutral: neither the required role nor the `@PreAuthorize` expression
     appears in the response.
-20. The role matrix lives in one place, `IncidentActionAuthorization`. Both
+20. The user role matrix lives in one place, `IncidentActionAuthorization`. Both
     `@PreAuthorize` (SpEL) and `availableActions` read it. Never duplicate rules.
+    Integration authorities (`ALERT_INGEST`) are not user roles and live in
+    `security/IntegrationAuthorities`.
 
 ### Database
 
