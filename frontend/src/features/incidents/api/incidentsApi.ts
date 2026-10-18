@@ -1,39 +1,31 @@
 import {
-  affected,
-  get as getService,
-  list2,
+  getAffectedServices,
+  getService,
+  listServices,
 } from '../../../api/generated/service-catalog/service-catalog'
 import {
-  assign,
-  cancel,
-  close,
-  get1,
-  history,
-  list3,
-  reopen,
-  resolve,
-  start,
+  assignIncident,
+  cancelIncident,
+  closeIncident,
+  reopenIncident,
+  resolveIncident,
+  startIncidentProgress,
 } from '../../../api/generated/incidents/incidents'
-import { list1 } from '../../../api/generated/teams/teams'
-import { list as listUsers } from '../../../api/generated/users/users'
+import { listTeams } from '../../../api/generated/teams/teams'
+import { listUsers } from '../../../api/generated/users/users'
 import type {
   BusinessServiceListItemResponse,
   IncidentResponseAvailableActionsItem,
-  List3Params,
   TeamListItemResponse,
   UserListItemResponse,
 } from '../../../api/generated/model'
 
 const REFERENCE_PAGE_SIZE = 100
 
-export const getIncidentPage = list3
-export const getIncident = get1
-export const getIncidentHistory = history
-
 export async function getIncidentServiceContext(serviceId: number) {
   return Promise.all([
     getService(serviceId),
-    affected(serviceId, { maxDepth: 10 }),
+    getAffectedServices(serviceId, { maxDepth: 10 }),
     getAllServices(),
   ])
 }
@@ -46,7 +38,7 @@ export async function getAllServices(): Promise<
   let hasNext = true
 
   while (hasNext) {
-    const response = await list2({ page, size: REFERENCE_PAGE_SIZE })
+    const response = await listServices({ page, size: REFERENCE_PAGE_SIZE })
     result.push(...(response.items ?? []))
     hasNext = response.hasNext ?? false
     page += 1
@@ -61,7 +53,7 @@ export async function getAllTeams(): Promise<TeamListItemResponse[]> {
   let hasNext = true
 
   while (hasNext) {
-    const response = await list1({ page, size: REFERENCE_PAGE_SIZE })
+    const response = await listTeams({ page, size: REFERENCE_PAGE_SIZE })
     result.push(...(response.items ?? []))
     hasNext = response.hasNext ?? false
     page += 1
@@ -99,18 +91,16 @@ export function executeIncidentAction(
       if (assigneeId === undefined) {
         throw new Error('ASSIGN requires an assignee')
       }
-      return assign(incidentId, { assigneeId })
+      return assignIncident(incidentId, { assigneeId })
     case 'START':
-      return start(incidentId)
+      return startIncidentProgress(incidentId)
     case 'RESOLVE':
-      return resolve(incidentId)
+      return resolveIncident(incidentId)
     case 'CLOSE':
-      return close(incidentId)
+      return closeIncident(incidentId)
     case 'REOPEN':
-      return reopen(incidentId)
+      return reopenIncident(incidentId)
     case 'CANCEL':
-      return cancel(incidentId)
+      return cancelIncident(incidentId)
   }
 }
-
-export type IncidentFeedParams = List3Params

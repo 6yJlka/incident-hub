@@ -1,19 +1,19 @@
 import { useTranslation } from 'react-i18next'
-import type { ListIncidentsResponse } from '../../../api/generated/model'
-import styles from './IncidentFeedPage.module.css'
+import styles from './Pagination.module.css'
 
-interface IncidentPaginationProps {
+interface PaginationProps {
   onPageChange: (page: number) => void
-  page: Pick<
-    ListIncidentsResponse,
-    'hasNext' | 'hasPrevious' | 'page' | 'size' | 'totalElements' | 'totalPages'
-  >
+  page: {
+    hasNext?: boolean
+    hasPrevious?: boolean
+    page?: number
+    size?: number
+    totalElements?: number
+    totalPages?: number
+  }
 }
 
-export function IncidentPagination({
-  onPageChange,
-  page,
-}: IncidentPaginationProps) {
+export function Pagination({ onPageChange, page }: PaginationProps) {
   const { t } = useTranslation()
   const current = page.page ?? 0
   const totalPages = page.totalPages ?? 0
@@ -27,7 +27,7 @@ export function IncidentPagination({
   return (
     <div className={styles.pagination}>
       <span>
-        {t('incidents.pagination.summary', {
+        {t('common.pagination.summary', {
           first: firstItem,
           last: lastItem,
           total: page.totalElements ?? 0,
@@ -38,12 +38,12 @@ export function IncidentPagination({
           type="button"
           disabled={!page.hasPrevious}
           onClick={() => onPageChange(current - 1)}
-          aria-label={t('incidents.pagination.previous')}
+          aria-label={t('common.pagination.previous')}
         >
           ←
         </button>
         <span>
-          {t('incidents.pagination.page', {
+          {t('common.pagination.page', {
             current: current + 1,
             total: Math.max(totalPages, 1),
           })}
@@ -52,7 +52,7 @@ export function IncidentPagination({
           type="button"
           disabled={!page.hasNext}
           onClick={() => onPageChange(current + 1)}
-          aria-label={t('incidents.pagination.next')}
+          aria-label={t('common.pagination.next')}
         >
           →
         </button>

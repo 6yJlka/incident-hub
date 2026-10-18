@@ -9,10 +9,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.donskikh.incidenthub.catalog.BusinessService;
 import ru.donskikh.incidenthub.catalog.BusinessServiceRepository;
+import ru.donskikh.incidenthub.catalog.BusinessServiceRepository.ServiceCountsProjection;
 import ru.donskikh.incidenthub.catalog.infrastructure.BusinessServiceSpecifications;
 import ru.donskikh.incidenthub.team.Team;
+import ru.donskikh.incidenthub.incident.IncidentStatus;
 
+import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 public class ListBusinessServicesService {
@@ -42,9 +47,16 @@ public class ListBusinessServicesService {
         );
         Page<BusinessService> businessServices = businessServiceRepository.findAll(specification, pageable);
 
+        Map<Long, ServiceCountsProjection> counts = businessServices.isEmpty()
+                ? Map.of()
+                : businessServiceRepository.findCounts(
+                        businessServices.getContent().stream().map(BusinessService::getId).toList(),
+                        IncidentStatus.activeStatuses().stream().map(Enum::name).toList()
+                ).stream().collect(Collectors.toMap(ServiceCountsProjection::getServiceId, Function.identity()));
+
         return new ListBusinessServicesResult(
                 businessServices.getContent().stream()
-                        .map(this::toItem)
+                        .map(service -> toItem(service, counts.get(service.getId())))
                         .toList(),
                 businessServices.getNumber(),
                 businessServices.getSize(),
@@ -55,7 +67,7 @@ public class ListBusinessServicesService {
         );
     }
 
-    private ListBusinessServiceItem toItem(BusinessService businessService) {
+    private ListBusinessServiceItem toItem(BusinessService businessService, ServiceCountsProjection counts) {
         Team ownerTeam = businessService.getOwnerTeam();
 
         return new ListBusinessServiceItem(
@@ -68,7 +80,10 @@ public class ListBusinessServicesService {
                 businessService.getTier(),
                 businessService.isActive(),
                 businessService.getCreatedAt(),
-                businessService.getUpdatedAt()
+                businessService.getUpdatedAt(),
+                counts == null ? 0 : counts.getDependencyCount(),
+                counts == null ? 0 : counts.getDependentCount(),
+                counts == null ? 0 : counts.getActiveIncidentCount()
         );
     }
 }

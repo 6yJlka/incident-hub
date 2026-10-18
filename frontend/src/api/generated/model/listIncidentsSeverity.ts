@@ -6,9 +6,10 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type List3Severity = (typeof List3Severity)[keyof typeof List3Severity]
+export type ListIncidentsSeverity =
+  (typeof ListIncidentsSeverity)[keyof typeof ListIncidentsSeverity]
 
-export const List3Severity = {
+export const ListIncidentsSeverity = {
   SEV1: 'SEV1',
   SEV2: 'SEV2',
   SEV3: 'SEV3',

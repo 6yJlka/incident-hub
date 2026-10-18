@@ -61,6 +61,23 @@ class OpenApiIntegrationTest extends PostgreSQLIntegrationTest {
                 .map(String.class::cast)
                 .collect(java.util.stream.Collectors.toSet());
 
+        List<String> operationIds = paths.values().stream()
+                .flatMap(path -> path.entrySet().stream())
+                .filter(entry -> HTTP_METHODS.contains(entry.getKey()))
+                .map(entry -> ((Map<?, ?>) entry.getValue()).get("operationId"))
+                .map(value -> (String) value)
+                .toList();
+
+        assertThat(operationIds).hasSize(operationCount).doesNotHaveDuplicates();
+        assertThat(operationIds).allSatisfy(id -> assertThat(id).isNotBlank());
+        assertThat(operationIds).containsExactlyInAnyOrder(
+                "registerUser", "login", "createUser", "getCurrentUser", "listUsers",
+                "createTeam", "listTeams", "createService", "listServices", "getService",
+                "getAffectedServices", "addServiceDependency", "removeServiceDependency",
+                "createIncident", "listIncidents", "getIncident", "getIncidentHistory",
+                "assignIncident", "startIncidentProgress", "resolveIncident", "closeIncident",
+                "reopenIncident", "cancelIncident"
+        );
         assertThat(operationCount).isEqualTo(23);
         assertThat(tags).containsExactlyInAnyOrder(
                 "Authentication", "Incidents", "Service catalog", "Teams", "Users"

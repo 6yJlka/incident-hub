@@ -9,10 +9,10 @@ import type {
   CreateIncidentRequestSeverity,
   TeamListItemResponse,
 } from '../../../api/generated/model'
+import { createIncident } from '../../../api/generated/incidents/incidents'
 import { ApiError } from '../../../api/http'
 import { useAuth } from '../../../auth/useAuth'
 import {
-  createIncident,
   getCreateIncidentReferences,
   getIncidentImpactPreview,
 } from './createIncidentApi'

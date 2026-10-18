@@ -66,7 +66,7 @@ public class BusinessServiceController {
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(
+    @Operation(operationId = "createService",
             summary = "Create a business service",
             description = "Creates an active catalog service owned by an existing team. The normalized code must be unique."
     )
@@ -93,7 +93,7 @@ public class BusinessServiceController {
     }
 
     @GetMapping
-    @Operation(
+    @Operation(operationId = "listServices",
             summary = "List business services",
             description = "Returns services ordered by name and identifier with optional owner, tier, and activity filters."
     )
@@ -120,7 +120,7 @@ public class BusinessServiceController {
     }
 
     @GetMapping("/{id}")
-    @Operation(
+    @Operation(operationId = "getService",
             summary = "Get a business service",
             description = "Returns service details together with its direct dependencies."
     )
@@ -138,7 +138,7 @@ public class BusinessServiceController {
     }
 
     @GetMapping("/{id}/affected")
-    @Operation(
+    @Operation(operationId = "getAffectedServices",
             summary = "Find affected services",
             description = "Traverses reverse dependencies and returns each affected service once at its minimum depth."
     )
@@ -161,7 +161,7 @@ public class BusinessServiceController {
 
     @PostMapping("/{id}/dependencies")
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(
+    @Operation(operationId = "addServiceDependency",
             summary = "Add a service dependency",
             description = "Declares that the service in the path depends on another existing service. Self-dependencies and duplicate pairs are rejected."
     )
@@ -187,7 +187,7 @@ public class BusinessServiceController {
 
     @DeleteMapping("/{id}/dependencies/{dependencyId}")
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(
+    @Operation(operationId = "removeServiceDependency",
             summary = "Remove a service dependency",
             description = "Removes the direct dependency from the service in the path to the specified required service."
     )

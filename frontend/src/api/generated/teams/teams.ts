@@ -8,13 +8,13 @@
 import type {
   CreateTeamRequest,
   CreateTeamResponse,
-  List1Params,
+  ListTeamsParams,
   ListTeamsResponse,
 } from '../model'
 
 import { apiFetch } from '../../http'
 
-export const getList1Url = (params?: List1Params) => {
+export const getListTeamsUrl = (params?: ListTeamsParams) => {
   const normalizedParams = new URLSearchParams()
 
   Object.entries(params || {}).forEach(([key, value]) => {
@@ -34,17 +34,17 @@ export const getList1Url = (params?: List1Params) => {
  * Returns teams ordered by name and identifier, optionally filtered by activity.
  * @summary List teams
  */
-export const list1 = async (
-  params?: List1Params,
+export const listTeams = async (
+  params?: ListTeamsParams,
   options?: Parameters<typeof apiFetch>[1],
 ): Promise<ListTeamsResponse> => {
-  return apiFetch<ListTeamsResponse>(getList1Url(params), {
+  return apiFetch<ListTeamsResponse>(getListTeamsUrl(params), {
     ...options,
     method: 'GET',
   })
 }
 
-export const getCreate1Url = () => {
+export const getCreateTeamUrl = () => {
   return `/api/v1/teams`
 }
 
@@ -52,7 +52,7 @@ export const getCreate1Url = () => {
  * Creates an active team. The normalized code must be unique.
  * @summary Create a team
  */
-export const create1 = async (
+export const createTeam = async (
   createTeamRequest: CreateTeamRequest,
   options?: Parameters<typeof apiFetch>[1],
 ): Promise<CreateTeamResponse> => {
@@ -77,7 +77,7 @@ export const create1 = async (
     }
     return headers
   }
-  return apiFetch<CreateTeamResponse>(getCreate1Url(), {
+  return apiFetch<CreateTeamResponse>(getCreateTeamUrl(), {
     ...options,
     method: 'POST',
     headers: {

@@ -8,10 +8,11 @@ import { IncidentFeedPage } from './IncidentFeedPage'
 const api = vi.hoisted(() => ({
   getAllServices: vi.fn(),
   getAllTeams: vi.fn(),
-  getIncidentPage: vi.fn(),
+  listIncidents: vi.fn(),
 }))
 
 vi.mock('../api/incidentsApi', () => api)
+vi.mock('../../../api/generated/incidents/incidents', () => api)
 
 const populatedPage: ListIncidentsResponse = {
   items: [
@@ -68,7 +69,7 @@ describe('IncidentFeedPage', () => {
     api.getAllTeams.mockResolvedValue([
       { id: 2, code: 'PLATFORM', name: 'Platform' },
     ])
-    api.getIncidentPage.mockResolvedValue(populatedPage)
+    api.listIncidents.mockResolvedValue(populatedPage)
   })
 
   it('renders incident rows', async () => {
@@ -90,7 +91,7 @@ describe('IncidentFeedPage', () => {
     await screen.findByText('Database connection pool saturation')
     await user.selectOptions(screen.getByLabelText('СТАТУС'), 'OPEN')
     await waitFor(() =>
-      expect(api.getIncidentPage).toHaveBeenLastCalledWith(
+      expect(api.listIncidents).toHaveBeenLastCalledWith(
         expect.objectContaining({ status: 'OPEN', page: 0 }),
       ),
     )
@@ -98,7 +99,7 @@ describe('IncidentFeedPage', () => {
   })
 
   it('shows the empty result state', async () => {
-    api.getIncidentPage.mockResolvedValue({
+    api.listIncidents.mockResolvedValue({
       items: [],
       page: 0,
       size: 20,

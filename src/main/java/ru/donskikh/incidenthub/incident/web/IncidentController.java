@@ -90,7 +90,7 @@ public class IncidentController {
     }
 
     @PostMapping
-    @Operation(
+    @Operation(operationId = "createIncident",
             summary = "Create an incident",
             description = "Registers a manual incident in OPEN status for the authenticated user. The service owner is used as the responsible team when no team is supplied."
     )
@@ -116,7 +116,7 @@ public class IncidentController {
     }
 
     @GetMapping
-    @Operation(
+    @Operation(operationId = "listIncidents",
             summary = "List incidents",
             description = "Returns incidents ordered by creation time with optional lifecycle, urgency, impact, source, service, and team filters."
     )
@@ -156,7 +156,7 @@ public class IncidentController {
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "Get an incident", description = "Returns the current incident details and assignments.")
+    @Operation(operationId = "getIncident",summary = "Get an incident", description = "Returns the current incident details and assignments.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Incident returned"),
             @ApiResponse(responseCode = "400", description = "Incident identifier is invalid",
@@ -172,7 +172,7 @@ public class IncidentController {
     }
 
     @GetMapping("/{id}/history")
-    @Operation(
+    @Operation(operationId = "getIncidentHistory",
             summary = "Get incident history",
             description = "Returns lifecycle audit events in chronological order."
     )
@@ -191,7 +191,7 @@ public class IncidentController {
 
     @PostMapping("/{id}/assign")
     @PreAuthorize("@incidentActionAuthorization.isAllowed(principal, T(ru.donskikh.incidenthub.incident.IncidentAction).ASSIGN)")
-    @Operation(
+    @Operation(operationId = "assignIncident",
             summary = "Assign an incident",
             description = "Assigns or reassigns an existing user. Allowed only while the incident is OPEN or ASSIGNED."
     )
@@ -217,7 +217,7 @@ public class IncidentController {
 
     @PostMapping("/{id}/start")
     @PreAuthorize("@incidentActionAuthorization.isAllowed(principal, T(ru.donskikh.incidenthub.incident.IncidentAction).START)")
-    @Operation(
+    @Operation(operationId = "startIncidentProgress",
             summary = "Start incident work",
             description = "Moves an ASSIGNED incident to IN_PROGRESS. No other source status is allowed."
     )
@@ -242,7 +242,7 @@ public class IncidentController {
 
     @PostMapping("/{id}/resolve")
     @PreAuthorize("@incidentActionAuthorization.isAllowed(principal, T(ru.donskikh.incidenthub.incident.IncidentAction).RESOLVE)")
-    @Operation(
+    @Operation(operationId = "resolveIncident",
             summary = "Resolve an incident",
             description = "Moves an IN_PROGRESS incident to RESOLVED. No other source status is allowed."
     )
@@ -267,7 +267,7 @@ public class IncidentController {
 
     @PostMapping("/{id}/close")
     @PreAuthorize("@incidentActionAuthorization.isAllowed(principal, T(ru.donskikh.incidenthub.incident.IncidentAction).CLOSE)")
-    @Operation(
+    @Operation(operationId = "closeIncident",
             summary = "Close an incident",
             description = "Moves a RESOLVED incident to CLOSED. No other source status is allowed."
     )
@@ -292,7 +292,7 @@ public class IncidentController {
 
     @PostMapping("/{id}/reopen")
     @PreAuthorize("@incidentActionAuthorization.isAllowed(principal, T(ru.donskikh.incidenthub.incident.IncidentAction).REOPEN)")
-    @Operation(
+    @Operation(operationId = "reopenIncident",
             summary = "Reopen an incident",
             description = "Moves a RESOLVED incident back to IN_PROGRESS when the problem persists."
     )
@@ -317,7 +317,7 @@ public class IncidentController {
 
     @PostMapping("/{id}/cancel")
     @PreAuthorize("@incidentActionAuthorization.isAllowed(principal, T(ru.donskikh.incidenthub.incident.IncidentAction).CANCEL)")
-    @Operation(
+    @Operation(operationId = "cancelIncident",
             summary = "Cancel an incident",
             description = "Moves an OPEN, ASSIGNED, or IN_PROGRESS incident to CANCELLED. Resolved and closed incidents cannot be cancelled."
     )

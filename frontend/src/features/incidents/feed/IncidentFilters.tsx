@@ -1,8 +1,8 @@
 import { useTranslation } from 'react-i18next'
 import {
-  List3Priority,
-  List3Severity,
-  List3Status,
+  ListIncidentsPriority,
+  ListIncidentsSeverity,
+  ListIncidentsStatus,
 } from '../../../api/generated/model'
 import type {
   BusinessServiceListItemResponse,
@@ -27,9 +27,9 @@ interface IncidentFiltersProps {
 }
 
 const contractOptions = {
-  status: Object.values(List3Status),
-  severity: Object.values(List3Severity),
-  priority: Object.values(List3Priority),
+  status: Object.values(ListIncidentsStatus),
+  severity: Object.values(ListIncidentsSeverity),
+  priority: Object.values(ListIncidentsPriority),
 }
 
 export function IncidentFilters({

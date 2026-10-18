@@ -9,13 +9,13 @@ import type {
   CreateUserRequest,
   CreateUserResponse,
   CurrentUserResponse,
-  ListParams,
+  ListUsersParams,
   ListUsersResponse,
 } from '../model'
 
 import { apiFetch } from '../../http'
 
-export const getListUrl = (params?: ListParams) => {
+export const getListUsersUrl = (params?: ListUsersParams) => {
   const normalizedParams = new URLSearchParams()
 
   Object.entries(params || {}).forEach(([key, value]) => {
@@ -35,17 +35,17 @@ export const getListUrl = (params?: ListParams) => {
  * Returns users ordered by display name and identifier, optionally filtered by activity.
  * @summary List users
  */
-export const list = async (
-  params?: ListParams,
+export const listUsers = async (
+  params?: ListUsersParams,
   options?: Parameters<typeof apiFetch>[1],
 ): Promise<ListUsersResponse> => {
-  return apiFetch<ListUsersResponse>(getListUrl(params), {
+  return apiFetch<ListUsersResponse>(getListUsersUrl(params), {
     ...options,
     method: 'GET',
   })
 }
 
-export const getCreateUrl = () => {
+export const getCreateUserUrl = () => {
   return `/api/v1/users`
 }
 
@@ -53,7 +53,7 @@ export const getCreateUrl = () => {
  * Creates an active login-enabled user with the selected role. The normalized email must be unique.
  * @summary Create a user as an administrator
  */
-export const create = async (
+export const createUser = async (
   createUserRequest: CreateUserRequest,
   options?: Parameters<typeof apiFetch>[1],
 ): Promise<CreateUserResponse> => {
@@ -78,7 +78,7 @@ export const create = async (
     }
     return headers
   }
-  return apiFetch<CreateUserResponse>(getCreateUrl(), {
+  return apiFetch<CreateUserResponse>(getCreateUserUrl(), {
     ...options,
     method: 'POST',
     headers: {
@@ -89,7 +89,7 @@ export const create = async (
   })
 }
 
-export const getCurrentUrl = () => {
+export const getGetCurrentUserUrl = () => {
   return `/api/v1/users/me`
 }
 
@@ -97,10 +97,10 @@ export const getCurrentUrl = () => {
  * Returns the user identified by the authenticated principal
  * @summary Get the current user
  */
-export const current = async (
+export const getCurrentUser = async (
   options?: Parameters<typeof apiFetch>[1],
 ): Promise<CurrentUserResponse> => {
-  return apiFetch<CurrentUserResponse>(getCurrentUrl(), {
+  return apiFetch<CurrentUserResponse>(getGetCurrentUserUrl(), {
     ...options,
     method: 'GET',
   })

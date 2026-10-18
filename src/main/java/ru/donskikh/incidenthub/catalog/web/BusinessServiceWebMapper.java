@@ -146,7 +146,10 @@ public class BusinessServiceWebMapper {
                 item.tier(),
                 item.active(),
                 item.createdAt(),
-                item.updatedAt()
+                item.updatedAt(),
+                item.dependencyCount(),
+                item.dependentCount(),
+                item.activeIncidentCount()
         );
     }
 

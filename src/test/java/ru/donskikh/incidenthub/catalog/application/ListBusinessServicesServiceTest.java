@@ -15,6 +15,7 @@ import org.springframework.data.jpa.domain.Specification;
 import ru.donskikh.incidenthub.catalog.BusinessService;
 import ru.donskikh.incidenthub.catalog.BusinessServiceRepository;
 import ru.donskikh.incidenthub.catalog.ServiceTier;
+import ru.donskikh.incidenthub.catalog.BusinessServiceRepository.ServiceCountsProjection;
 import ru.donskikh.incidenthub.team.Team;
 
 import java.time.Instant;
@@ -88,6 +89,14 @@ class ListBusinessServicesServiceTest {
         when(ownerTeam.getName()).thenReturn("Platform");
         when(ownerTeam.getCode()).thenReturn("PLATFORM");
 
+        ServiceCountsProjection counts = mock(ServiceCountsProjection.class);
+        when(counts.getServiceId()).thenReturn(42L);
+        when(counts.getDependencyCount()).thenReturn(2L);
+        when(counts.getDependentCount()).thenReturn(3L);
+        when(counts.getActiveIncidentCount()).thenReturn(1L);
+        when(businessServiceRepository.findCounts(org.mockito.ArgumentMatchers.eq(List.of(42L)), any()))
+                .thenReturn(List.of(counts));
+
         ListBusinessServiceItem item = service.execute(emptyQuery()).items().getFirst();
 
         assertThat(item.id()).isEqualTo(42L);
@@ -100,6 +109,9 @@ class ListBusinessServicesServiceTest {
         assertThat(item.active()).isTrue();
         assertThat(item.createdAt()).isEqualTo(createdAt);
         assertThat(item.updatedAt()).isEqualTo(updatedAt);
+        assertThat(item.dependencyCount()).isEqualTo(2);
+        assertThat(item.dependentCount()).isEqualTo(3);
+        assertThat(item.activeIncidentCount()).isEqualTo(1);
     }
 
     @Test

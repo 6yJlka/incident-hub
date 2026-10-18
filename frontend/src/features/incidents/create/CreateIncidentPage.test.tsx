@@ -14,6 +14,7 @@ const api = vi.hoisted(() => ({
 }))
 
 vi.mock('./createIncidentApi', () => api)
+vi.mock('../../../api/generated/incidents/incidents', () => api)
 
 const auth: AuthContextValue = {
   hasToken: true,

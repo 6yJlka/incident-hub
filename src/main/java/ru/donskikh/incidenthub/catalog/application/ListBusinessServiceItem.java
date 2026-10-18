@@ -14,6 +14,9 @@ public record ListBusinessServiceItem(
         ServiceTier tier,
         boolean active,
         Instant createdAt,
-        Instant updatedAt
+        Instant updatedAt,
+        long dependencyCount,
+        long dependentCount,
+        long activeIncidentCount
 ) {
 }

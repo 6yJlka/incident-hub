@@ -28,4 +28,10 @@ export interface BusinessServiceListItemResponse {
   createdAt?: string
   /** Last update timestamp */
   updatedAt?: string
+  /** Number of direct dependencies */
+  dependencyCount?: number
+  /** Number of services directly depending on this service */
+  dependentCount?: number
+  /** Number of incidents in OPEN, ASSIGNED or IN_PROGRESS status */
+  activeIncidentCount?: number
 }

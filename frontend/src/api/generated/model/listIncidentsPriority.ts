@@ -6,9 +6,10 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type List3Priority = (typeof List3Priority)[keyof typeof List3Priority]
+export type ListIncidentsPriority =
+  (typeof ListIncidentsPriority)[keyof typeof ListIncidentsPriority]
 
-export const List3Priority = {
+export const ListIncidentsPriority = {
   LOW: 'LOW',
   MEDIUM: 'MEDIUM',
   HIGH: 'HIGH',

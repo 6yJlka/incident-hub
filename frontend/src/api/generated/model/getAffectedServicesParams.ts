@@ -6,7 +6,7 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type AffectedParams = {
+export type GetAffectedServicesParams = {
   /**
    * Maximum number of dependency levels to traverse, from 1 to 10
    */

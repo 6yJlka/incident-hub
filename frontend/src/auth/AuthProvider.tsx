@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { PropsWithChildren } from 'react'
 import { login as loginRequest } from '../api/generated/authentication/authentication'
 import type { LoginRequest } from '../api/generated/model'
-import { current as currentUserRequest } from '../api/generated/users/users'
+import { getCurrentUser as currentUserRequest } from '../api/generated/users/users'
 import { AuthContext } from './AuthContext'
 import {
   AUTH_EXPIRED_EVENT,

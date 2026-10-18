@@ -8,13 +8,13 @@ import type {
   IncidentHistoryItemResponse,
   IncidentResponse,
 } from '../../../api/generated/model'
-import { ApiError } from '../../../api/http'
-import { useAuth } from '../../../auth/useAuth'
 import {
   getIncident,
   getIncidentHistory,
-  getIncidentServiceContext,
-} from '../api/incidentsApi'
+} from '../../../api/generated/incidents/incidents'
+import { ApiError } from '../../../api/http'
+import { useAuth } from '../../../auth/useAuth'
+import { getIncidentServiceContext } from '../api/incidentsApi'
 import { ServiceTier } from '../shared/ServiceTier'
 import { AffectedServicesPanel } from './AffectedServicesPanel'
 import { IncidentActions } from './IncidentActions'

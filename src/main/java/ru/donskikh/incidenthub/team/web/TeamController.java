@@ -44,7 +44,7 @@ public class TeamController {
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(
+    @Operation(operationId = "createTeam",
             summary = "Create a team",
             description = "Creates an active team. The normalized code must be unique."
     )
@@ -65,7 +65,7 @@ public class TeamController {
     }
 
     @GetMapping
-    @Operation(
+    @Operation(operationId = "listTeams",
             summary = "List teams",
             description = "Returns teams ordered by name and identifier, optionally filtered by activity."
     )
