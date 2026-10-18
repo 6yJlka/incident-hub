@@ -30,6 +30,10 @@
       "description": "Register users and obtain access tokens"
     },
     {
+      "name": "Alerts",
+      "description": "Monitoring signal ingestion"
+    },
+    {
       "name": "Users",
       "description": "Administratively create login-enabled users and browse them"
     },
@@ -1407,6 +1411,71 @@
         "security": []
       }
     },
+    "/api/v1/alerts": {
+      "post": {
+        "tags": ["Alerts"],
+        "summary": "Accept a batch of monitoring alerts",
+        "description": "Returns a result per item in input order. Duplicates ignore the incoming event body. Unknown services reject only that item. Invalid batch structure rejects the entire request.",
+        "operationId": "acceptAlerts",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcceptAlertsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Batch processed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcceptAlertsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid batch structure or maximum size exceeded",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication credentials are missing or invalid",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The authenticated user does not have the required role",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "integrationToken": []
+          }
+        ]
+      }
+    },
     "/api/v1/users/me": {
       "get": {
         "tags": ["Users"],
@@ -2352,6 +2421,106 @@
           }
         }
       },
+      "AcceptAlertsRequest": {
+        "type": "object",
+        "properties": {
+          "alerts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IncomingAlertRequest"
+            },
+            "minItems": 1
+          }
+        },
+        "required": ["alerts"]
+      },
+      "IncomingAlertRequest": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string",
+            "description": "Monitoring system; part of the idempotency key",
+            "example": "prometheus",
+            "maxLength": 100,
+            "minLength": 0
+          },
+          "externalId": {
+            "type": "string",
+            "description": "Event identifier within the source",
+            "example": "database-latency-123",
+            "maxLength": 255,
+            "minLength": 0
+          },
+          "serviceCode": {
+            "type": "string",
+            "description": "Business service code",
+            "example": "CORE_DATABASE",
+            "maxLength": 50,
+            "minLength": 0
+          },
+          "signalType": {
+            "type": "string",
+            "enum": ["AVAILABILITY", "ERROR_RATE", "LATENCY", "SATURATION"]
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["CRITICAL", "WARNING", "INFO"]
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Time when the signal occurred",
+            "example": "2026-10-18T12:00:00Z"
+          },
+          "description": {
+            "type": "string",
+            "description": "Short description of the observed signal",
+            "example": "Database p95 latency exceeds threshold",
+            "maxLength": 2000,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "description",
+          "externalId",
+          "occurredAt",
+          "serviceCode",
+          "severity",
+          "signalType",
+          "source"
+        ]
+      },
+      "AcceptAlertsResponse": {
+        "type": "object",
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AlertAcceptanceResponse"
+            }
+          }
+        }
+      },
+      "AlertAcceptanceResponse": {
+        "type": "object",
+        "properties": {
+          "externalId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["ACCEPTED", "DUPLICATE", "REJECTED"]
+          },
+          "alertId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "reason": {
+            "type": "string",
+            "enum": ["UNKNOWN_SERVICE"]
+          }
+        }
+      },
       "ListUsersResponse": {
         "type": "object",
         "properties": {
@@ -3141,6 +3310,11 @@
         "type": "http",
         "scheme": "bearer",
         "bearerFormat": "JWT"
+      },
+      "integrationToken": {
+        "type": "apiKey",
+        "name": "X-Integration-Token",
+        "in": "header"
       }
     }
   }

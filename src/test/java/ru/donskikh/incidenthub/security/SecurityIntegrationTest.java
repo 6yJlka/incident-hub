@@ -13,6 +13,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 import ru.donskikh.incidenthub.PostgreSQLIntegrationTest;
 import ru.donskikh.incidenthub.identity.UserRole;
+import ru.donskikh.incidenthub.common.web.AuthorizationProblemDetails;
 
 import java.time.Clock;
 import java.time.Duration;
@@ -61,6 +62,70 @@ class SecurityIntegrationTest extends PostgreSQLIntegrationTest {
         assertThat(applicationContext.getBeansOfType(SecurityFilterChain.class))
                 .containsOnlyKeys("securityFilterChain");
         assertThat(applicationContext.getBeansOfType(UserDetailsService.class)).isEmpty();
+    }
+
+    private static final String ALERT_BATCH = """
+            {"alerts":[{"source":"prometheus","externalId":"security-test","serviceCode":"UNKNOWN",
+            "signalType":"LATENCY","severity":"WARNING","occurredAt":"2026-10-18T12:00:00Z",
+            "description":"Security test"}]}
+            """;
+
+    @Test
+    void rejectsWebhookWithoutIntegrationTokenAndWithInvalidToken() throws Exception {
+        mockMvc.perform(post("/api/v1/alerts").contentType(MediaType.APPLICATION_JSON).content(ALERT_BATCH))
+                .andExpect(status().isUnauthorized())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON));
+        mockMvc.perform(post("/api/v1/alerts").header("X-Integration-Token", "invalid")
+                        .contentType(MediaType.APPLICATION_JSON).content(ALERT_BATCH))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.type").value("urn:incident-hub:problem:authentication-required"));
+    }
+
+    @Test
+    void acceptsWebhookOnlyWithIntegrationAuthorityAndDoesNotLeakAuthentication() throws Exception {
+        mockMvc.perform(post("/api/v1/alerts").header("X-Integration-Token", "test-integration-token")
+                        .contentType(MediaType.APPLICATION_JSON).content(ALERT_BATCH))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.results[0].status").value("REJECTED"));
+        mockMvc.perform(get("/api/v1/services")).andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void ignoresIntegrationHeaderOnEveryOtherRoute() throws Exception {
+        for (String path : java.util.List.of("/api/v1/incidents", "/api/v1/services", "/api/v1/alerts")) {
+            mockMvc.perform(get(path).header("X-Integration-Token", "test-integration-token"))
+                    .andExpect(status().isUnauthorized());
+        }
+        String jwt = jwtTokenService.issue(USER, clock.instant()).value();
+        mockMvc.perform(get("/api/v1/services")
+                        .header("X-Integration-Token", "invalid")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwt))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void forbidsEveryUserRoleFromIngestingAlertsWithJwt() throws Exception {
+        for (UserRole role : UserRole.values()) {
+            String jwt = jwtTokenService.issue(new AuthenticatedUser(42L, "test@example.com", role), clock.instant()).value();
+            mockMvc.perform(post("/api/v1/alerts").header(HttpHeaders.AUTHORIZATION, "Bearer " + jwt)
+                            .contentType(MediaType.APPLICATION_JSON).content(ALERT_BATCH))
+                    .andExpect(status().isForbidden())
+                    .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                    .andExpect(jsonPath("$.detail").value(AuthorizationProblemDetails.DETAIL));
+        }
+    }
+
+    @Test
+    void invalidIntegrationHeaderDoesNotFallBackToValidJwtOnWebhook() throws Exception {
+        String jwt = jwtTokenService.issue(ADMIN, clock.instant()).value();
+        mockMvc.perform(post("/api/v1/alerts").header(HttpHeaders.AUTHORIZATION, "Bearer " + jwt)
+                        .header("X-Integration-Token", "invalid")
+                        .contentType(MediaType.APPLICATION_JSON).content(ALERT_BATCH))
+                .andExpect(status().isUnauthorized());
+        mockMvc.perform(post("/api/v1/alerts").header(HttpHeaders.AUTHORIZATION, "Bearer " + jwt)
+                        .header("X-Integration-Token", "test-integration-token")
+                        .contentType(MediaType.APPLICATION_JSON).content(ALERT_BATCH))
+                .andExpect(status().isOk());
     }
 
     @Test
