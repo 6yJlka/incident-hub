@@ -13,6 +13,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import org.hibernate.annotations.Immutable;
 import ru.donskikh.incidenthub.catalog.BusinessService;
+import ru.donskikh.incidenthub.alertgroup.AlertGroup;
 
 import java.time.Instant;
 
@@ -50,6 +51,14 @@ public class Alert {
 
     @Column(nullable = false, updatable = false, length = 2000)
     private String description;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "group_id", updatable = false)
+    private AlertGroup group;
+
+    public AlertGroup getGroup() {
+        return group;
+    }
 
     protected Alert() {
     }

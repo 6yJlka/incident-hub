@@ -1,3 +1,4 @@
+export * from './alert-groups/alert-groups'
 export * from './alerts/alerts'
 export * from './authentication/authentication'
 export * from './incidents/incidents'

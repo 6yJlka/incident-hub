@@ -137,7 +137,7 @@ class IncidentAuditEventRepositoryIntegrationTest extends PostgreSQLIntegrationT
                 String.class
         );
 
-        assertThat(versions).containsExactly("1", "2", "3", "4", "5", "6", "8", "10", "12");
+        assertThat(versions).containsExactly("1", "2", "3", "4", "5", "6", "8", "10", "12", "13");
     }
 
     private long insertAuditEvent(

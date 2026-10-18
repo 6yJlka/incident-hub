@@ -76,11 +76,17 @@ class OpenApiIntegrationTest extends PostgreSQLIntegrationTest {
                 "getAffectedServices", "addServiceDependency", "removeServiceDependency",
                 "createIncident", "listIncidents", "getIncident", "getIncidentHistory",
                 "assignIncident", "startIncidentProgress", "resolveIncident", "closeIncident",
-                "reopenIncident", "cancelIncident", "acceptAlerts"
+                "reopenIncident", "cancelIncident", "acceptAlerts", "listAlertGroups", "getAlertGroup"
         );
-        assertThat(operationCount).isEqualTo(24);
+        assertThat(operationCount).isEqualTo(26);
+        assertThat(JsonPath.<String>read(document,
+                "$.paths['/api/v1/alert-groups'].get.responses['200'].content['*/*'].schema['$ref']"))
+                .isEqualTo("#/components/schemas/ListAlertGroupsResponse");
+        assertThat(JsonPath.<String>read(document,
+                "$.paths['/api/v1/alert-groups/{id}'].get.responses['200'].content['*/*'].schema['$ref']"))
+                .isEqualTo("#/components/schemas/AlertGroupDetailResponse");
         assertThat(tags).containsExactlyInAnyOrder(
-                "Authentication", "Incidents", "Service catalog", "Teams", "Users", "Alerts"
+                "Authentication", "Incidents", "Service catalog", "Teams", "Users", "Alerts", "Alert groups"
         );
         assertThat(paths.keySet()).contains(
                 "/api/v1/auth/register",
