@@ -160,33 +160,6 @@
 .muted {
   color: var(--color-text-subtle);
 }
-.pagination {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--space-3-5) var(--space-8) var(--space-8);
-  color: var(--color-text-subtle);
-  font-family: var(--font-mono);
-  font-size: var(--font-size-caption);
-}
-.pageButtons {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-.pageButtons button {
-  min-width: var(--pagination-button-min-width);
-  padding: var(--space-1) var(--space-2);
-  border: var(--border-width) solid var(--color-border-strong);
-  border-radius: var(--radius-sm);
-  background: transparent;
-  color: var(--color-text-soft);
-  cursor: pointer;
-}
-.pageButtons button:disabled {
-  cursor: default;
-  opacity: 0.35;
-}
 .state,
 .empty {
   display: flex;

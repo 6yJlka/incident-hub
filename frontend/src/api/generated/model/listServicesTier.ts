@@ -6,9 +6,10 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type List2Tier = (typeof List2Tier)[keyof typeof List2Tier]
+export type ListServicesTier =
+  (typeof ListServicesTier)[keyof typeof ListServicesTier]
 
-export const List2Tier = {
+export const ListServicesTier = {
   TIER_1: 'TIER_1',
   TIER_2: 'TIER_2',
   TIER_3: 'TIER_3',

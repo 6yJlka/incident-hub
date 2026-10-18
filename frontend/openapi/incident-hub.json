@@ -48,7 +48,7 @@
         "tags": ["Users"],
         "summary": "List users",
         "description": "Returns users ordered by display name and identifier, optionally filtered by activity.",
-        "operationId": "list",
+        "operationId": "listUsers",
         "parameters": [
           {
             "name": "page",
@@ -122,7 +122,7 @@
         "tags": ["Users"],
         "summary": "Create a user as an administrator",
         "description": "Creates an active login-enabled user with the selected role. The normalized email must be unique.",
-        "operationId": "create",
+        "operationId": "createUser",
         "requestBody": {
           "content": {
             "application/json": {
@@ -192,7 +192,7 @@
         "tags": ["Teams"],
         "summary": "List teams",
         "description": "Returns teams ordered by name and identifier, optionally filtered by activity.",
-        "operationId": "list_1",
+        "operationId": "listTeams",
         "parameters": [
           {
             "name": "page",
@@ -266,7 +266,7 @@
         "tags": ["Teams"],
         "summary": "Create a team",
         "description": "Creates an active team. The normalized code must be unique.",
-        "operationId": "create_1",
+        "operationId": "createTeam",
         "requestBody": {
           "content": {
             "application/json": {
@@ -336,7 +336,7 @@
         "tags": ["Service catalog"],
         "summary": "List business services",
         "description": "Returns services ordered by name and identifier with optional owner, tier, and activity filters.",
-        "operationId": "list_2",
+        "operationId": "listServices",
         "parameters": [
           {
             "name": "page",
@@ -432,7 +432,7 @@
         "tags": ["Service catalog"],
         "summary": "Create a business service",
         "description": "Creates an active catalog service owned by an existing team. The normalized code must be unique.",
-        "operationId": "create_2",
+        "operationId": "createService",
         "requestBody": {
           "content": {
             "application/json": {
@@ -512,7 +512,7 @@
         "tags": ["Service catalog"],
         "summary": "Add a service dependency",
         "description": "Declares that the service in the path depends on another existing service. Self-dependencies and duplicate pairs are rejected.",
-        "operationId": "addDependency",
+        "operationId": "addServiceDependency",
         "parameters": [
           {
             "name": "id",
@@ -605,7 +605,7 @@
         "tags": ["Incidents"],
         "summary": "List incidents",
         "description": "Returns incidents ordered by creation time with optional lifecycle, urgency, impact, source, service, and team filters.",
-        "operationId": "list_3",
+        "operationId": "listIncidents",
         "parameters": [
           {
             "name": "page",
@@ -742,7 +742,7 @@
         "tags": ["Incidents"],
         "summary": "Create an incident",
         "description": "Registers a manual incident in OPEN status for the authenticated user. The service owner is used as the responsible team when no team is supplied.",
-        "operationId": "create_3",
+        "operationId": "createIncident",
         "requestBody": {
           "content": {
             "application/json": {
@@ -802,7 +802,7 @@
         "tags": ["Incidents"],
         "summary": "Start incident work",
         "description": "Moves an ASSIGNED incident to IN_PROGRESS. No other source status is allowed.",
-        "operationId": "start",
+        "operationId": "startIncidentProgress",
         "parameters": [
           {
             "name": "id",
@@ -885,7 +885,7 @@
         "tags": ["Incidents"],
         "summary": "Resolve an incident",
         "description": "Moves an IN_PROGRESS incident to RESOLVED. No other source status is allowed.",
-        "operationId": "resolve",
+        "operationId": "resolveIncident",
         "parameters": [
           {
             "name": "id",
@@ -968,7 +968,7 @@
         "tags": ["Incidents"],
         "summary": "Reopen an incident",
         "description": "Moves a RESOLVED incident back to IN_PROGRESS when the problem persists.",
-        "operationId": "reopen",
+        "operationId": "reopenIncident",
         "parameters": [
           {
             "name": "id",
@@ -1051,7 +1051,7 @@
         "tags": ["Incidents"],
         "summary": "Close an incident",
         "description": "Moves a RESOLVED incident to CLOSED. No other source status is allowed.",
-        "operationId": "close",
+        "operationId": "closeIncident",
         "parameters": [
           {
             "name": "id",
@@ -1134,7 +1134,7 @@
         "tags": ["Incidents"],
         "summary": "Cancel an incident",
         "description": "Moves an OPEN, ASSIGNED, or IN_PROGRESS incident to CANCELLED. Resolved and closed incidents cannot be cancelled.",
-        "operationId": "cancel",
+        "operationId": "cancelIncident",
         "parameters": [
           {
             "name": "id",
@@ -1217,7 +1217,7 @@
         "tags": ["Incidents"],
         "summary": "Assign an incident",
         "description": "Assigns or reassigns an existing user. Allowed only while the incident is OPEN or ASSIGNED.",
-        "operationId": "assign",
+        "operationId": "assignIncident",
         "parameters": [
           {
             "name": "id",
@@ -1310,7 +1310,7 @@
         "tags": ["Authentication"],
         "summary": "Register a user",
         "description": "Creates an active user with the REPORTER role",
-        "operationId": "register",
+        "operationId": "registerUser",
         "requestBody": {
           "content": {
             "application/json": {
@@ -1412,7 +1412,7 @@
         "tags": ["Users"],
         "summary": "Get the current user",
         "description": "Returns the user identified by the authenticated principal",
-        "operationId": "current",
+        "operationId": "getCurrentUser",
         "responses": {
           "200": {
             "description": "Current user returned",
@@ -1452,7 +1452,7 @@
         "tags": ["Service catalog"],
         "summary": "Get a business service",
         "description": "Returns service details together with its direct dependencies.",
-        "operationId": "get",
+        "operationId": "getService",
         "parameters": [
           {
             "name": "id",
@@ -1515,7 +1515,7 @@
         "tags": ["Service catalog"],
         "summary": "Find affected services",
         "description": "Traverses reverse dependencies and returns each affected service once at its minimum depth.",
-        "operationId": "affected",
+        "operationId": "getAffectedServices",
         "parameters": [
           {
             "name": "id",
@@ -1590,7 +1590,7 @@
         "tags": ["Incidents"],
         "summary": "Get an incident",
         "description": "Returns the current incident details and assignments.",
-        "operationId": "get_1",
+        "operationId": "getIncident",
         "parameters": [
           {
             "name": "id",
@@ -1653,7 +1653,7 @@
         "tags": ["Incidents"],
         "summary": "Get incident history",
         "description": "Returns lifecycle audit events in chronological order.",
-        "operationId": "history",
+        "operationId": "getIncidentHistory",
         "parameters": [
           {
             "name": "id",
@@ -1716,7 +1716,7 @@
         "tags": ["Service catalog"],
         "summary": "Remove a service dependency",
         "description": "Removes the direct dependency from the service in the path to the specified required service.",
-        "operationId": "removeDependency",
+        "operationId": "removeServiceDependency",
         "parameters": [
           {
             "name": "id",
@@ -2617,6 +2617,24 @@
             "format": "date-time",
             "description": "Last update timestamp",
             "example": "2026-09-02T11:00:00Z"
+          },
+          "dependencyCount": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Number of direct dependencies",
+            "example": 2
+          },
+          "dependentCount": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Number of services directly depending on this service",
+            "example": 3
+          },
+          "activeIncidentCount": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Number of incidents in OPEN, ASSIGNED or IN_PROGRESS status",
+            "example": 1
           }
         }
       },

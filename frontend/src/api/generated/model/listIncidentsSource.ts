@@ -6,9 +6,10 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type List3Source = (typeof List3Source)[keyof typeof List3Source]
+export type ListIncidentsSource =
+  (typeof ListIncidentsSource)[keyof typeof ListIncidentsSource]
 
-export const List3Source = {
+export const ListIncidentsSource = {
   MANUAL: 'MANUAL',
   AUTOMATIC: 'AUTOMATIC',
 } as const

@@ -14,7 +14,7 @@ import type {
 
 import { apiFetch } from '../../http'
 
-export const getRegisterUrl = () => {
+export const getRegisterUserUrl = () => {
   return `/api/v1/auth/register`
 }
 
@@ -22,7 +22,7 @@ export const getRegisterUrl = () => {
  * Creates an active user with the REPORTER role
  * @summary Register a user
  */
-export const register = async (
+export const registerUser = async (
   registerRequest: RegisterRequest,
   options?: Parameters<typeof apiFetch>[1],
 ): Promise<RegisterResponse> => {
@@ -47,7 +47,7 @@ export const register = async (
     }
     return headers
   }
-  return apiFetch<RegisterResponse>(getRegisterUrl(), {
+  return apiFetch<RegisterResponse>(getRegisterUserUrl(), {
     ...options,
     method: 'POST',
     headers: {

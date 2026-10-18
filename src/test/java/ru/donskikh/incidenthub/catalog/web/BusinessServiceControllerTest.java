@@ -157,6 +157,9 @@ class BusinessServiceControllerTest {
                 .andExpect(jsonPath("$.items[0].id").value(42))
                 .andExpect(jsonPath("$.items[0].code").value("PAYMENTS"))
                 .andExpect(jsonPath("$.items[0].ownerTeamCode").value("PAYMENT_PLATFORM"))
+                .andExpect(jsonPath("$.items[0].dependencyCount").value(2))
+                .andExpect(jsonPath("$.items[0].dependentCount").value(3))
+                .andExpect(jsonPath("$.items[0].activeIncidentCount").value(1))
                 .andExpect(jsonPath("$.page").value(1))
                 .andExpect(jsonPath("$.size").value(5))
                 .andExpect(jsonPath("$.totalElements").value(8))
@@ -450,7 +453,10 @@ class BusinessServiceControllerTest {
                 ServiceTier.TIER_1,
                 true,
                 CREATED_AT,
-                UPDATED_AT
+                UPDATED_AT,
+                2,
+                3,
+                1
         );
     }
 

@@ -6,9 +6,10 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type List3Status = (typeof List3Status)[keyof typeof List3Status]
+export type ListIncidentsStatus =
+  (typeof ListIncidentsStatus)[keyof typeof ListIncidentsStatus]
 
-export const List3Status = {
+export const ListIncidentsStatus = {
   OPEN: 'OPEN',
   ASSIGNED: 'ASSIGNED',
   IN_PROGRESS: 'IN_PROGRESS',

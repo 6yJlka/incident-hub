@@ -1,5 +1,7 @@
 package ru.donskikh.incidenthub.incident;
 
+import java.util.Set;
+
 public enum IncidentStatus {
     OPEN,
     ASSIGNED,
@@ -7,6 +9,12 @@ public enum IncidentStatus {
     RESOLVED,
     CLOSED,
     CANCELLED;
+
+    private static final Set<IncidentStatus> ACTIVE_STATUSES = Set.of(OPEN, ASSIGNED, IN_PROGRESS);
+
+    public static Set<IncidentStatus> activeStatuses() {
+        return ACTIVE_STATUSES;
+    }
 
     public boolean allowsAssignment() {
         return this == OPEN || this == ASSIGNED;

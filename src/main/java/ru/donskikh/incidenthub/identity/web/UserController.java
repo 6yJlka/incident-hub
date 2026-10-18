@@ -51,7 +51,7 @@ public class UserController {
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(
+    @Operation(operationId = "createUser",
             summary = "Create a user as an administrator",
             description = "Creates an active login-enabled user with the selected role. The normalized email must be unique."
     )
@@ -72,7 +72,7 @@ public class UserController {
     }
 
     @GetMapping("/me")
-    @Operation(
+    @Operation(operationId = "getCurrentUser",
             summary = "Get the current user",
             description = "Returns the user identified by the authenticated principal"
     )
@@ -93,7 +93,7 @@ public class UserController {
     }
 
     @GetMapping
-    @Operation(
+    @Operation(operationId = "listUsers",
             summary = "List users",
             description = "Returns users ordered by display name and identifier, optionally filtered by activity."
     )

@@ -34,7 +34,7 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    @Operation(summary = "Register a user", description = "Creates an active user with the REPORTER role")
+    @Operation(operationId = "registerUser",summary = "Register a user", description = "Creates an active user with the REPORTER role")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "User registered"),
             @ApiResponse(responseCode = "400", description = "Request validation failed"),
@@ -50,7 +50,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    @Operation(summary = "Log in", description = "Returns a signed JWT access token")
+    @Operation(operationId = "login",summary = "Log in", description = "Returns a signed JWT access token")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Authentication successful"),
             @ApiResponse(responseCode = "400", description = "Request validation failed"),

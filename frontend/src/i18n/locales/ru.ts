@@ -4,6 +4,12 @@ export const ru = {
       brand: 'IncidentHub',
       platform: 'SRE PLATFORM',
       loading: 'Загрузка…',
+      pagination: {
+        summary: '{{first}}–{{last}} из {{total}}',
+        page: 'Страница {{current}} из {{total}}',
+        previous: 'Предыдущая страница',
+        next: 'Следующая страница',
+      },
     },
     auth: {
       title: 'Вход в систему',
@@ -51,12 +57,6 @@ export const ru = {
         assignee: 'ИСПОЛНИТЕЛЬ',
         created: 'СОЗДАН',
         open: 'Открыть инцидент {{id}}',
-      },
-      pagination: {
-        summary: '{{first}}–{{last}} из {{total}}',
-        page: 'Страница {{current}} из {{total}}',
-        previous: 'Предыдущая страница',
-        next: 'Следующая страница',
       },
       empty: {
         title: 'Ничего не найдено',
@@ -130,7 +130,7 @@ export const ru = {
         title: 'Каталог услуг',
         summary: '{{count}} услуг',
         open: 'Открыть услугу {{code}}',
-        dependenciesHint: '↑ зависит от · ↓ зависят от неё',
+        dependenciesHint: '↑ прямые зависимости · ↓ прямые зависимые услуги',
         columns: {
           code: 'КОД',
           name: 'НАЗВАНИЕ',

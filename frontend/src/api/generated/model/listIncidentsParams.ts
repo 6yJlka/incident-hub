@@ -5,12 +5,12 @@
  * REST API for managing service ownership, dependencies, and incident lifecycle
  * OpenAPI spec version: 1.0.0
  */
-import type { List3Priority } from './list3Priority'
-import type { List3Severity } from './list3Severity'
-import type { List3Source } from './list3Source'
-import type { List3Status } from './list3Status'
+import type { ListIncidentsPriority } from './listIncidentsPriority'
+import type { ListIncidentsSeverity } from './listIncidentsSeverity'
+import type { ListIncidentsSource } from './listIncidentsSource'
+import type { ListIncidentsStatus } from './listIncidentsStatus'
 
-export type List3Params = {
+export type ListIncidentsParams = {
   /**
    * Zero-based page index
    */
@@ -22,19 +22,19 @@ export type List3Params = {
   /**
    * Filter by current lifecycle status
    */
-  status?: List3Status
+  status?: ListIncidentsStatus
   /**
    * Filter by work ordering urgency
    */
-  priority?: List3Priority
+  priority?: ListIncidentsPriority
   /**
    * Filter by business impact level, independent of priority
    */
-  severity?: List3Severity
+  severity?: ListIncidentsSeverity
   /**
    * Filter by registration source
    */
-  source?: List3Source
+  source?: ListIncidentsSource
   /**
    * Filter by affected service identifier
    */

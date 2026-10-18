@@ -18,6 +18,17 @@ import ru.donskikh.incidenthub.PostgreSQLIntegrationTest;
 import ru.donskikh.incidenthub.catalog.BusinessService;
 import ru.donskikh.incidenthub.catalog.BusinessServiceRepository;
 import ru.donskikh.incidenthub.catalog.ServiceTier;
+import ru.donskikh.incidenthub.catalog.ServiceDependency;
+import ru.donskikh.incidenthub.catalog.DependencyType;
+import ru.donskikh.incidenthub.catalog.application.ListBusinessServicesService;
+import ru.donskikh.incidenthub.catalog.application.ListBusinessServicesQuery;
+import ru.donskikh.incidenthub.catalog.application.ListBusinessServiceItem;
+import ru.donskikh.incidenthub.identity.User;
+import ru.donskikh.incidenthub.incident.Incident;
+import ru.donskikh.incidenthub.incident.IncidentSource;
+import ru.donskikh.incidenthub.incident.IncidentPriority;
+import ru.donskikh.incidenthub.incident.IncidentSeverity;
+import ru.donskikh.incidenthub.incident.IncidentStatus;
 import ru.donskikh.incidenthub.team.Team;
 import ru.donskikh.incidenthub.team.TeamRepository;
 
@@ -41,6 +52,9 @@ class BusinessServiceSpecificationsIntegrationTest extends PostgreSQLIntegration
 
     @Autowired
     private EntityManagerFactory entityManagerFactory;
+
+    @Autowired
+    private ListBusinessServicesService listBusinessServicesService;
 
     private Long platformTeamId;
     private Long paymentsTeamId;
@@ -121,6 +135,110 @@ class BusinessServiceSpecificationsIntegrationTest extends PostgreSQLIntegration
         result.getContent().forEach(businessService -> businessService.getOwnerTeam().getName());
 
         assertThat(statistics.getPrepareStatementCount()).isEqualTo(2);
+    }
+
+    @Test
+    void listsDirectCountsAndOnlyActiveIncidentsIncludingZeroCounts() {
+        BusinessService billing = findService("BILLING");
+        BusinessService checkout = findService("CHECKOUT");
+        BusinessService ledger = findService("LEDGER");
+        BusinessService notifications = findService("NOTIFICATIONS");
+        entityManager.persist(new ServiceDependency(billing, checkout, DependencyType.SYNC));
+        entityManager.persist(new ServiceDependency(billing, ledger, DependencyType.DATA));
+        entityManager.persist(new ServiceDependency(notifications, billing, DependencyType.ASYNC));
+        entityManager.persist(new ServiceDependency(checkout, ledger, DependencyType.DATA));
+        BusinessService isolated = businessServiceRepository.save(new BusinessService(
+                "ISOLATED", "Isolated", "No relationships", billing.getOwnerTeam(), ServiceTier.TIER_3
+        ));
+        User reporter = new User("catalog-counts@example.com", "Catalog Reporter");
+        entityManager.persist(reporter);
+        for (IncidentStatus status : IncidentStatus.values()) {
+            Incident incident = new Incident(
+                    status.name(), "Incident for count test", billing, IncidentSource.MANUAL,
+                    IncidentPriority.HIGH, IncidentSeverity.SEV2, reporter, billing.getOwnerTeam()
+            );
+            if (status == IncidentStatus.CANCELLED) {
+                incident.cancel();
+            } else if (status != IncidentStatus.OPEN) {
+                incident.assignTo(reporter);
+                if (status != IncidentStatus.ASSIGNED) {
+                    incident.startProgress();
+                    if (status != IncidentStatus.IN_PROGRESS) {
+                        incident.resolve();
+                        if (status == IncidentStatus.CLOSED) {
+                            incident.close();
+                        }
+                    }
+                }
+            }
+            entityManager.persist(incident);
+        }
+        entityManager.flush();
+        entityManager.clear();
+
+        var result = listBusinessServicesService.execute(new ListBusinessServicesQuery(0, 20, null, null, null));
+        assertThat(result.items()).filteredOn(item -> item.id().equals(billing.getId())).singleElement()
+                .satisfies(item -> assertCounts(item, 2, 1, 3));
+        assertThat(result.items()).filteredOn(item -> item.id().equals(ledger.getId())).singleElement()
+                .satisfies(item -> assertCounts(item, 0, 2, 0));
+        assertThat(result.items()).filteredOn(item -> item.id().equals(isolated.getId())).singleElement()
+                .satisfies(item -> assertCounts(item, 0, 0, 0));
+    }
+
+    @Test
+    void listsCountsAndOwnerTeamsWithFixedQueryCountForDifferentPageSizes() {
+        for (int index = 0; index < 8; index++) {
+            Team team = teamRepository.save(new Team("Extra " + index, "EXTRA_" + index));
+            BusinessService service = businessServiceRepository.save(new BusinessService(
+                    "EXTRA_" + index, "Extra " + index, "Extra service", team, ServiceTier.TIER_2
+            ));
+            entityManager.persist(new ServiceDependency(service, findService("BILLING"), DependencyType.SYNC));
+        }
+        entityManager.flush();
+
+        assertListQueryCount(1);
+        assertListQueryCount(10);
+    }
+
+    @Test
+    void returnsEmptyCatalogPageWithoutRunningAggregateQuery() {
+        entityManager.flush();
+        entityManager.clear();
+        Statistics statistics = entityManagerFactory.unwrap(SessionFactory.class).getStatistics();
+        statistics.clear();
+
+        var result = listBusinessServicesService.execute(
+                new ListBusinessServicesQuery(0, 20, 999_999L, null, null)
+        );
+
+        assertThat(result.items()).isEmpty();
+        assertThat(statistics.getPrepareStatementCount()).isEqualTo(1);
+    }
+
+    private void assertListQueryCount(int size) {
+        entityManager.clear();
+        Statistics statistics = entityManagerFactory.unwrap(SessionFactory.class).getStatistics();
+        statistics.clear();
+
+        var result = listBusinessServicesService.execute(new ListBusinessServicesQuery(0, size, null, null, null));
+
+        assertThat(result.items()).hasSize(size);
+        assertThat(result.totalElements()).isEqualTo(12);
+        assertThat(result.items()).allSatisfy(item -> assertThat(item.ownerTeamName()).isNotBlank());
+        assertThat(statistics.getPrepareStatementCount()).isEqualTo(3);
+    }
+
+    private BusinessService findService(String code) {
+        return entityManager.createQuery("select service from BusinessService service where service.code = :code",
+                        BusinessService.class)
+                .setParameter("code", code)
+                .getSingleResult();
+    }
+
+    private static void assertCounts(ListBusinessServiceItem item, long dependencies, long dependents, long incidents) {
+        assertThat(item.dependencyCount()).isEqualTo(dependencies);
+        assertThat(item.dependentCount()).isEqualTo(dependents);
+        assertThat(item.activeIncidentCount()).isEqualTo(incidents);
     }
 
     private Page<BusinessService> findAll(

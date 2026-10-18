@@ -7,15 +7,12 @@ import type {
   TeamListItemResponse,
 } from '../../../api/generated/model'
 import { ApiError } from '../../../api/http'
-import {
-  getAllServices,
-  getAllTeams,
-  getIncidentPage,
-} from '../api/incidentsApi'
-import type { IncidentFeedParams } from '../api/incidentsApi'
+import { getAllServices, getAllTeams } from '../api/incidentsApi'
+import { listIncidents } from '../../../api/generated/incidents/incidents'
+import type { ListIncidentsParams } from '../../../api/generated/model'
 import { IncidentFilters } from './IncidentFilters'
 import type { FeedFilterValues } from './IncidentFilters'
-import { IncidentPagination } from './IncidentPagination'
+import { Pagination } from '../../../components/Pagination'
 import { IncidentTable } from './IncidentTable'
 import styles from './IncidentFeedPage.module.css'
 
@@ -46,18 +43,18 @@ export function IncidentFeedPage() {
     teamId: searchParams.get('teamId') ?? '',
   }
   const currentPage = positiveNumber(searchParams.get('page')) ?? 0
-  const requestParams = useMemo<IncidentFeedParams>(
+  const requestParams = useMemo<ListIncidentsParams>(
     () => ({
       page: currentPage,
       size: PAGE_SIZE,
       status: values.status
-        ? (values.status as IncidentFeedParams['status'])
+        ? (values.status as ListIncidentsParams['status'])
         : undefined,
       severity: values.severity
-        ? (values.severity as IncidentFeedParams['severity'])
+        ? (values.severity as ListIncidentsParams['severity'])
         : undefined,
       priority: values.priority
-        ? (values.priority as IncidentFeedParams['priority'])
+        ? (values.priority as ListIncidentsParams['priority'])
         : undefined,
       affectedServiceId: positiveNumber(values.serviceId),
       responsibleTeamId: positiveNumber(values.teamId),
@@ -93,7 +90,7 @@ export function IncidentFeedPage() {
     // oxlint-disable-next-line react/set-state-in-effect
     setLoading(true)
     setError(null)
-    void getIncidentPage(requestParams)
+    void listIncidents(requestParams)
       .then((response) => {
         if (active) setPage(response)
       })
@@ -163,7 +160,7 @@ export function IncidentFeedPage() {
       {!loading && !error && page && (page.items?.length ?? 0) > 0 && (
         <>
           <IncidentTable items={page.items ?? []} services={services} />
-          <IncidentPagination page={page} onPageChange={changePage} />
+          <Pagination page={page} onPageChange={changePage} />
         </>
       )}
       {!loading && !error && page && (page.items?.length ?? 0) === 0 && (

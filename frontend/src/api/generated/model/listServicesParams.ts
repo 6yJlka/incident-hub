@@ -5,9 +5,9 @@
  * REST API for managing service ownership, dependencies, and incident lifecycle
  * OpenAPI spec version: 1.0.0
  */
-import type { List2Tier } from './list2Tier'
+import type { ListServicesTier } from './listServicesTier'
 
-export type List2Params = {
+export type ListServicesParams = {
   /**
    * Zero-based page index
    */
@@ -23,7 +23,7 @@ export type List2Params = {
   /**
    * Filter by business criticality tier
    */
-  tier?: List2Tier
+  tier?: ListServicesTier
   /**
    * Filter by active or inactive services
    */

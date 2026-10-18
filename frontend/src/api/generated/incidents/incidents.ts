@@ -11,13 +11,13 @@ import type {
   CreateIncidentResponse,
   IncidentHistoryResponse,
   IncidentResponse,
-  List3Params,
+  ListIncidentsParams,
   ListIncidentsResponse,
 } from '../model'
 
 import { apiFetch } from '../../http'
 
-export const getList3Url = (params?: List3Params) => {
+export const getListIncidentsUrl = (params?: ListIncidentsParams) => {
   const normalizedParams = new URLSearchParams()
 
   Object.entries(params || {}).forEach(([key, value]) => {
@@ -37,17 +37,17 @@ export const getList3Url = (params?: List3Params) => {
  * Returns incidents ordered by creation time with optional lifecycle, urgency, impact, source, service, and team filters.
  * @summary List incidents
  */
-export const list3 = async (
-  params?: List3Params,
+export const listIncidents = async (
+  params?: ListIncidentsParams,
   options?: Parameters<typeof apiFetch>[1],
 ): Promise<ListIncidentsResponse> => {
-  return apiFetch<ListIncidentsResponse>(getList3Url(params), {
+  return apiFetch<ListIncidentsResponse>(getListIncidentsUrl(params), {
     ...options,
     method: 'GET',
   })
 }
 
-export const getCreate3Url = () => {
+export const getCreateIncidentUrl = () => {
   return `/api/v1/incidents`
 }
 
@@ -55,7 +55,7 @@ export const getCreate3Url = () => {
  * Registers a manual incident in OPEN status for the authenticated user. The service owner is used as the responsible team when no team is supplied.
  * @summary Create an incident
  */
-export const create3 = async (
+export const createIncident = async (
   createIncidentRequest: CreateIncidentRequest,
   options?: Parameters<typeof apiFetch>[1],
 ): Promise<CreateIncidentResponse> => {
@@ -80,7 +80,7 @@ export const create3 = async (
     }
     return headers
   }
-  return apiFetch<CreateIncidentResponse>(getCreate3Url(), {
+  return apiFetch<CreateIncidentResponse>(getCreateIncidentUrl(), {
     ...options,
     method: 'POST',
     headers: {
@@ -91,7 +91,7 @@ export const create3 = async (
   })
 }
 
-export const getStartUrl = (id: number) => {
+export const getStartIncidentProgressUrl = (id: number) => {
   return `/api/v1/incidents/${id}/start`
 }
 
@@ -99,17 +99,17 @@ export const getStartUrl = (id: number) => {
  * Moves an ASSIGNED incident to IN_PROGRESS. No other source status is allowed.
  * @summary Start incident work
  */
-export const start = async (
+export const startIncidentProgress = async (
   id: number,
   options?: Parameters<typeof apiFetch>[1],
 ): Promise<IncidentResponse> => {
-  return apiFetch<IncidentResponse>(getStartUrl(id), {
+  return apiFetch<IncidentResponse>(getStartIncidentProgressUrl(id), {
     ...options,
     method: 'POST',
   })
 }
 
-export const getResolveUrl = (id: number) => {
+export const getResolveIncidentUrl = (id: number) => {
   return `/api/v1/incidents/${id}/resolve`
 }
 
@@ -117,17 +117,17 @@ export const getResolveUrl = (id: number) => {
  * Moves an IN_PROGRESS incident to RESOLVED. No other source status is allowed.
  * @summary Resolve an incident
  */
-export const resolve = async (
+export const resolveIncident = async (
   id: number,
   options?: Parameters<typeof apiFetch>[1],
 ): Promise<IncidentResponse> => {
-  return apiFetch<IncidentResponse>(getResolveUrl(id), {
+  return apiFetch<IncidentResponse>(getResolveIncidentUrl(id), {
     ...options,
     method: 'POST',
   })
 }
 
-export const getReopenUrl = (id: number) => {
+export const getReopenIncidentUrl = (id: number) => {
   return `/api/v1/incidents/${id}/reopen`
 }
 
@@ -135,17 +135,17 @@ export const getReopenUrl = (id: number) => {
  * Moves a RESOLVED incident back to IN_PROGRESS when the problem persists.
  * @summary Reopen an incident
  */
-export const reopen = async (
+export const reopenIncident = async (
   id: number,
   options?: Parameters<typeof apiFetch>[1],
 ): Promise<IncidentResponse> => {
-  return apiFetch<IncidentResponse>(getReopenUrl(id), {
+  return apiFetch<IncidentResponse>(getReopenIncidentUrl(id), {
     ...options,
     method: 'POST',
   })
 }
 
-export const getCloseUrl = (id: number) => {
+export const getCloseIncidentUrl = (id: number) => {
   return `/api/v1/incidents/${id}/close`
 }
 
@@ -153,17 +153,17 @@ export const getCloseUrl = (id: number) => {
  * Moves a RESOLVED incident to CLOSED. No other source status is allowed.
  * @summary Close an incident
  */
-export const close = async (
+export const closeIncident = async (
   id: number,
   options?: Parameters<typeof apiFetch>[1],
 ): Promise<IncidentResponse> => {
-  return apiFetch<IncidentResponse>(getCloseUrl(id), {
+  return apiFetch<IncidentResponse>(getCloseIncidentUrl(id), {
     ...options,
     method: 'POST',
   })
 }
 
-export const getCancelUrl = (id: number) => {
+export const getCancelIncidentUrl = (id: number) => {
   return `/api/v1/incidents/${id}/cancel`
 }
 
@@ -171,17 +171,17 @@ export const getCancelUrl = (id: number) => {
  * Moves an OPEN, ASSIGNED, or IN_PROGRESS incident to CANCELLED. Resolved and closed incidents cannot be cancelled.
  * @summary Cancel an incident
  */
-export const cancel = async (
+export const cancelIncident = async (
   id: number,
   options?: Parameters<typeof apiFetch>[1],
 ): Promise<IncidentResponse> => {
-  return apiFetch<IncidentResponse>(getCancelUrl(id), {
+  return apiFetch<IncidentResponse>(getCancelIncidentUrl(id), {
     ...options,
     method: 'POST',
   })
 }
 
-export const getAssignUrl = (id: number) => {
+export const getAssignIncidentUrl = (id: number) => {
   return `/api/v1/incidents/${id}/assign`
 }
 
@@ -189,7 +189,7 @@ export const getAssignUrl = (id: number) => {
  * Assigns or reassigns an existing user. Allowed only while the incident is OPEN or ASSIGNED.
  * @summary Assign an incident
  */
-export const assign = async (
+export const assignIncident = async (
   id: number,
   assignIncidentRequest: AssignIncidentRequest,
   options?: Parameters<typeof apiFetch>[1],
@@ -215,7 +215,7 @@ export const assign = async (
     }
     return headers
   }
-  return apiFetch<IncidentResponse>(getAssignUrl(id), {
+  return apiFetch<IncidentResponse>(getAssignIncidentUrl(id), {
     ...options,
     method: 'POST',
     headers: {
@@ -226,7 +226,7 @@ export const assign = async (
   })
 }
 
-export const getGet1Url = (id: number) => {
+export const getGetIncidentUrl = (id: number) => {
   return `/api/v1/incidents/${id}`
 }
 
@@ -234,17 +234,17 @@ export const getGet1Url = (id: number) => {
  * Returns the current incident details and assignments.
  * @summary Get an incident
  */
-export const get1 = async (
+export const getIncident = async (
   id: number,
   options?: Parameters<typeof apiFetch>[1],
 ): Promise<IncidentResponse> => {
-  return apiFetch<IncidentResponse>(getGet1Url(id), {
+  return apiFetch<IncidentResponse>(getGetIncidentUrl(id), {
     ...options,
     method: 'GET',
   })
 }
 
-export const getHistoryUrl = (id: number) => {
+export const getGetIncidentHistoryUrl = (id: number) => {
   return `/api/v1/incidents/${id}/history`
 }
 
@@ -252,11 +252,11 @@ export const getHistoryUrl = (id: number) => {
  * Returns lifecycle audit events in chronological order.
  * @summary Get incident history
  */
-export const history = async (
+export const getIncidentHistory = async (
   id: number,
   options?: Parameters<typeof apiFetch>[1],
 ): Promise<IncidentHistoryResponse> => {
-  return apiFetch<IncidentHistoryResponse>(getHistoryUrl(id), {
+  return apiFetch<IncidentHistoryResponse>(getGetIncidentHistoryUrl(id), {
     ...options,
     method: 'GET',
   })

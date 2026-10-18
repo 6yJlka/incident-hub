@@ -8,18 +8,18 @@
 import type {
   AddServiceDependencyRequest,
   AddServiceDependencyResponse,
-  AffectedParams,
   BusinessServiceResponse,
   CreateBusinessServiceRequest,
   CreateBusinessServiceResponse,
+  GetAffectedServicesParams,
   GetAffectedServicesResponse,
-  List2Params,
   ListBusinessServicesResponse,
+  ListServicesParams,
 } from '../model'
 
 import { apiFetch } from '../../http'
 
-export const getList2Url = (params?: List2Params) => {
+export const getListServicesUrl = (params?: ListServicesParams) => {
   const normalizedParams = new URLSearchParams()
 
   Object.entries(params || {}).forEach(([key, value]) => {
@@ -39,17 +39,17 @@ export const getList2Url = (params?: List2Params) => {
  * Returns services ordered by name and identifier with optional owner, tier, and activity filters.
  * @summary List business services
  */
-export const list2 = async (
-  params?: List2Params,
+export const listServices = async (
+  params?: ListServicesParams,
   options?: Parameters<typeof apiFetch>[1],
 ): Promise<ListBusinessServicesResponse> => {
-  return apiFetch<ListBusinessServicesResponse>(getList2Url(params), {
+  return apiFetch<ListBusinessServicesResponse>(getListServicesUrl(params), {
     ...options,
     method: 'GET',
   })
 }
 
-export const getCreate2Url = () => {
+export const getCreateServiceUrl = () => {
   return `/api/v1/services`
 }
 
@@ -57,7 +57,7 @@ export const getCreate2Url = () => {
  * Creates an active catalog service owned by an existing team. The normalized code must be unique.
  * @summary Create a business service
  */
-export const create2 = async (
+export const createService = async (
   createBusinessServiceRequest: CreateBusinessServiceRequest,
   options?: Parameters<typeof apiFetch>[1],
 ): Promise<CreateBusinessServiceResponse> => {
@@ -82,7 +82,7 @@ export const create2 = async (
     }
     return headers
   }
-  return apiFetch<CreateBusinessServiceResponse>(getCreate2Url(), {
+  return apiFetch<CreateBusinessServiceResponse>(getCreateServiceUrl(), {
     ...options,
     method: 'POST',
     headers: {
@@ -93,7 +93,7 @@ export const create2 = async (
   })
 }
 
-export const getAddDependencyUrl = (id: number) => {
+export const getAddServiceDependencyUrl = (id: number) => {
   return `/api/v1/services/${id}/dependencies`
 }
 
@@ -101,7 +101,7 @@ export const getAddDependencyUrl = (id: number) => {
  * Declares that the service in the path depends on another existing service. Self-dependencies and duplicate pairs are rejected.
  * @summary Add a service dependency
  */
-export const addDependency = async (
+export const addServiceDependency = async (
   id: number,
   addServiceDependencyRequest: AddServiceDependencyRequest,
   options?: Parameters<typeof apiFetch>[1],
@@ -127,18 +127,21 @@ export const addDependency = async (
     }
     return headers
   }
-  return apiFetch<AddServiceDependencyResponse>(getAddDependencyUrl(id), {
-    ...options,
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...getHeaders(options?.headers),
+  return apiFetch<AddServiceDependencyResponse>(
+    getAddServiceDependencyUrl(id),
+    {
+      ...options,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getHeaders(options?.headers),
+      },
+      body: JSON.stringify(addServiceDependencyRequest),
     },
-    body: JSON.stringify(addServiceDependencyRequest),
-  })
+  )
 }
 
-export const getGetUrl = (id: number) => {
+export const getGetServiceUrl = (id: number) => {
   return `/api/v1/services/${id}`
 }
 
@@ -146,17 +149,20 @@ export const getGetUrl = (id: number) => {
  * Returns service details together with its direct dependencies.
  * @summary Get a business service
  */
-export const get = async (
+export const getService = async (
   id: number,
   options?: Parameters<typeof apiFetch>[1],
 ): Promise<BusinessServiceResponse> => {
-  return apiFetch<BusinessServiceResponse>(getGetUrl(id), {
+  return apiFetch<BusinessServiceResponse>(getGetServiceUrl(id), {
     ...options,
     method: 'GET',
   })
 }
 
-export const getAffectedUrl = (id: number, params?: AffectedParams) => {
+export const getGetAffectedServicesUrl = (
+  id: number,
+  params?: GetAffectedServicesParams,
+) => {
   const normalizedParams = new URLSearchParams()
 
   Object.entries(params || {}).forEach(([key, value]) => {
@@ -176,18 +182,24 @@ export const getAffectedUrl = (id: number, params?: AffectedParams) => {
  * Traverses reverse dependencies and returns each affected service once at its minimum depth.
  * @summary Find affected services
  */
-export const affected = async (
+export const getAffectedServices = async (
   id: number,
-  params?: AffectedParams,
+  params?: GetAffectedServicesParams,
   options?: Parameters<typeof apiFetch>[1],
 ): Promise<GetAffectedServicesResponse> => {
-  return apiFetch<GetAffectedServicesResponse>(getAffectedUrl(id, params), {
-    ...options,
-    method: 'GET',
-  })
+  return apiFetch<GetAffectedServicesResponse>(
+    getGetAffectedServicesUrl(id, params),
+    {
+      ...options,
+      method: 'GET',
+    },
+  )
 }
 
-export const getRemoveDependencyUrl = (id: number, dependencyId: number) => {
+export const getRemoveServiceDependencyUrl = (
+  id: number,
+  dependencyId: number,
+) => {
   return `/api/v1/services/${id}/dependencies/${dependencyId}`
 }
 
@@ -195,12 +207,12 @@ export const getRemoveDependencyUrl = (id: number, dependencyId: number) => {
  * Removes the direct dependency from the service in the path to the specified required service.
  * @summary Remove a service dependency
  */
-export const removeDependency = async (
+export const removeServiceDependency = async (
   id: number,
   dependencyId: number,
   options?: Parameters<typeof apiFetch>[1],
 ): Promise<void> => {
-  return apiFetch<void>(getRemoveDependencyUrl(id, dependencyId), {
+  return apiFetch<void>(getRemoveServiceDependencyUrl(id, dependencyId), {
     ...options,
     method: 'DELETE',
   })

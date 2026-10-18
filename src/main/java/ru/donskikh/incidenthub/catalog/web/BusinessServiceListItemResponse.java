@@ -16,6 +16,9 @@ public record BusinessServiceListItemResponse(
         @Schema(description = "Business criticality tier", example = "TIER_1") ServiceTier tier,
         @Schema(description = "Whether the service is active", example = "true") boolean active,
         @Schema(description = "Creation timestamp", example = "2026-09-01T10:00:00Z") Instant createdAt,
-        @Schema(description = "Last update timestamp", example = "2026-09-02T11:00:00Z") Instant updatedAt
+        @Schema(description = "Last update timestamp", example = "2026-09-02T11:00:00Z") Instant updatedAt,
+        @Schema(description = "Number of direct dependencies", example = "2") long dependencyCount,
+        @Schema(description = "Number of services directly depending on this service", example = "3") long dependentCount,
+        @Schema(description = "Number of incidents in OPEN, ASSIGNED or IN_PROGRESS status", example = "1") long activeIncidentCount
 ) {
 }
