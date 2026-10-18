@@ -11,6 +11,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
+import ru.donskikh.incidenthub.identity.User;
 import ru.donskikh.incidenthub.catalog.BusinessService;
 import ru.donskikh.incidenthub.incident.Incident;
 
@@ -24,6 +26,20 @@ public class AlertGroup {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Version
+    @Column(nullable = false)
+    private long version;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "decided_by_id")
+    private User decidedBy;
+
+    @Column(name = "decided_at")
+    private Instant decidedAt;
+
+    @Column(name = "dismiss_reason", length = 2000)
+    private String dismissReason;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
@@ -62,6 +78,47 @@ public class AlertGroup {
         this.firstAlertAt = occurredAt.isBefore(firstAlertAt) ? occurredAt : firstAlertAt;
         this.lastAlertAt = occurredAt.isAfter(lastAlertAt) ? occurredAt : lastAlertAt;
         this.probableRootService = probableRootService;
+    }
+
+    public void requireOpen() {
+        if (status != AlertGroupStatus.OPEN) {
+            throw new AlertGroupStateConflictException(status);
+        }
+    }
+
+    public void confirm(Incident incident, User actor, Instant decidedAt) {
+        requireOpen();
+        this.incident = Objects.requireNonNull(incident, "incident must not be null");
+        this.decidedBy = Objects.requireNonNull(actor, "actor must not be null");
+        this.decidedAt = Objects.requireNonNull(decidedAt, "decidedAt must not be null");
+        this.status = AlertGroupStatus.CONFIRMED;
+    }
+
+    public void dismiss(User actor, Instant decidedAt, String reason) {
+        requireOpen();
+        if (reason != null && reason.length() > 2000) {
+            throw new IllegalArgumentException("reason must not exceed 2000 characters");
+        }
+        this.decidedBy = Objects.requireNonNull(actor, "actor must not be null");
+        this.decidedAt = Objects.requireNonNull(decidedAt, "decidedAt must not be null");
+        this.dismissReason = reason;
+        this.status = AlertGroupStatus.DISMISSED;
+    }
+
+    public long getVersion() {
+        return version;
+    }
+
+    public User getDecidedBy() {
+        return decidedBy;
+    }
+
+    public Instant getDecidedAt() {
+        return decidedAt;
+    }
+
+    public String getDismissReason() {
+        return dismissReason;
     }
 
     public Long getId() {

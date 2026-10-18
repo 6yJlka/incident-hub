@@ -14,6 +14,14 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import ru.donskikh.incidenthub.alertgroup.AlertGroupStatus;
 import ru.donskikh.incidenthub.alertgroup.application.ListAlertGroupsService;
 import ru.donskikh.incidenthub.alertgroup.application.GetAlertGroupService;
+import ru.donskikh.incidenthub.alertgroup.application.ConfirmAlertGroupService;
+import ru.donskikh.incidenthub.alertgroup.application.DismissAlertGroupService;
+import ru.donskikh.incidenthub.security.AuthenticatedUser;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/v1/alert-groups")
@@ -23,15 +31,21 @@ public class AlertGroupController {
     private final ListAlertGroupsService listService;
     private final GetAlertGroupService getService;
     private final AlertGroupWebMapper mapper;
+    private final ConfirmAlertGroupService confirmService;
+    private final DismissAlertGroupService dismissService;
 
     public AlertGroupController(
             ListAlertGroupsService listService,
             GetAlertGroupService getService,
-            AlertGroupWebMapper mapper
+            AlertGroupWebMapper mapper,
+            ConfirmAlertGroupService confirmService,
+            DismissAlertGroupService dismissService
     ) {
         this.listService = listService;
         this.getService = getService;
         this.mapper = mapper;
+        this.confirmService = confirmService;
+        this.dismissService = dismissService;
     }
 
     @GetMapping
@@ -58,7 +72,35 @@ public class AlertGroupController {
             content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class)))
     @ApiResponse(responseCode = "400", description = "Invalid group identifier",
             content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class)))
-    public AlertGroupDetailResponse get(@PathVariable long id) {
-        return mapper.toResponse(getService.get(mapper.toQuery(id)));
+    public AlertGroupDetailResponse get(@PathVariable long id, @AuthenticationPrincipal AuthenticatedUser user) {
+        return mapper.toResponse(getService.get(mapper.toQuery(id)), user);
+    }
+
+    @PostMapping("/{id}/confirm")
+    @PreAuthorize("@incidentActionAuthorization.isAllowed(principal, T(ru.donskikh.incidenthub.alertgroup.AlertGroupAction).CONFIRM)")
+    @Operation(operationId = "confirmAlertGroup", summary = "Confirm an alert group",
+            description = "Creates an AUTOMATIC incident and confirms the OPEN group atomically. "
+                    + "Severity and priority are supplied by the engineer.")
+    @ApiResponse(responseCode = "200", description = "Confirmed group with incident")
+    @ApiResponse(responseCode = "400", description = "Invalid request", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
+    @ApiResponse(responseCode = "404", description = "Group or service not found", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
+    @ApiResponse(responseCode = "409", description = "Group is not OPEN, or changed concurrently (distinct problem types)", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
+    public AlertGroupDetailResponse confirm(@PathVariable long id, @Valid @RequestBody ConfirmAlertGroupRequest request,
+            @AuthenticationPrincipal AuthenticatedUser user) {
+        return mapper.toResponse(confirmService.confirm(mapper.toCommand(id, request, user.userId())), user);
+    }
+
+    @PostMapping("/{id}/dismiss")
+    @PreAuthorize("@incidentActionAuthorization.isAllowed(principal, T(ru.donskikh.incidenthub.alertgroup.AlertGroupAction).DISMISS)")
+    @Operation(operationId = "dismissAlertGroup", summary = "Dismiss an alert group",
+            description = "Dismisses an OPEN group without creating an incident. A reason is optional.")
+    @ApiResponse(responseCode = "200", description = "Dismissed group")
+    @ApiResponse(responseCode = "400", description = "Invalid request", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
+    @ApiResponse(responseCode = "404", description = "Group not found", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
+    @ApiResponse(responseCode = "409", description = "Group is not OPEN, or changed concurrently (distinct problem types)", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
+    public AlertGroupDetailResponse dismiss(@PathVariable long id,
+            @Valid @RequestBody(required = false) DismissAlertGroupRequest request,
+            @AuthenticationPrincipal AuthenticatedUser user) {
+        return mapper.toResponse(dismissService.dismiss(mapper.toCommand(id, request, user.userId())), user);
     }
 }

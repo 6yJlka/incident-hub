@@ -30,6 +30,9 @@ import static org.mockito.Mockito.when;
 class GetIncidentServiceTest {
 
     @Mock
+    private ru.donskikh.incidenthub.alertgroup.AlertGroupRepository groupRepository;
+
+    @Mock
     private IncidentRepository incidentRepository;
 
     @InjectMocks

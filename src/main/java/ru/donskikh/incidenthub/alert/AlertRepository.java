@@ -12,6 +12,8 @@ import java.util.List;
 
 public interface AlertRepository extends JpaRepository<Alert, Long>, AlertBatchRepository, AlertCorrelationRepository {
 
+    long countByGroup_Id(long groupId);
+
     List<Alert> findAllByGroupIsNullOrderByOccurredAtAscIdAsc(Pageable pageable);
 
     @EntityGraph(attributePaths = "businessService")

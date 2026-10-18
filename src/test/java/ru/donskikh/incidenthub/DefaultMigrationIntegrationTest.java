@@ -34,7 +34,7 @@ class DefaultMigrationIntegrationTest extends PostgreSQLIntegrationTest {
                 String.class
         );
 
-        assertThat(versions).containsExactly("1", "2", "3", "4", "5", "6", "8", "10", "12", "13");
+        assertThat(versions).containsExactly("1", "2", "3", "4", "5", "6", "8", "10", "12", "13", "14");
         assertThat(jdbcTemplate.queryForObject("select count(*) from alerts", Long.class)).isZero();
         assertThat(jdbcTemplate.queryForObject("select count(*) from teams", Long.class)).isZero();
         assertThat(jdbcTemplate.queryForObject("select count(*) from incidents", Long.class)).isZero();

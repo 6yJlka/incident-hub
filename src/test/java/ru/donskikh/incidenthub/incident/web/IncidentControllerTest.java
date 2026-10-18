@@ -621,6 +621,7 @@ class IncidentControllerTest {
                 assigneeId == null ? null : "Исполнитель",
                 CREATED_AT,
                 UPDATED_AT,
+                null,
                 List.of()
         );
     }

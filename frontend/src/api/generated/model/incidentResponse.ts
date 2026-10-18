@@ -50,6 +50,8 @@ export interface IncidentResponse {
   createdAt?: string
   /** Last update timestamp */
   updatedAt?: string
+  /** Originating alert group identifier */
+  alertGroupId?: number
   /** Lifecycle actions available to the current user in the current status */
   availableActions?: IncidentResponseAvailableActionsItem[]
 }

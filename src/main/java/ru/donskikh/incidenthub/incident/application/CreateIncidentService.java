@@ -12,7 +12,6 @@ import ru.donskikh.incidenthub.identity.UserNotFoundException;
 import ru.donskikh.incidenthub.identity.UserRepository;
 import ru.donskikh.incidenthub.incident.Incident;
 import ru.donskikh.incidenthub.incident.IncidentRepository;
-import ru.donskikh.incidenthub.incident.IncidentSource;
 import ru.donskikh.incidenthub.team.Team;
 import ru.donskikh.incidenthub.team.TeamNotFoundException;
 import ru.donskikh.incidenthub.team.TeamRepository;
@@ -62,7 +61,7 @@ public class CreateIncidentService {
                 command.title(),
                 command.description(),
                 affectedService,
-                IncidentSource.MANUAL,
+                command.source(),
                 command.priority(),
                 command.severity(),
                 reporter,

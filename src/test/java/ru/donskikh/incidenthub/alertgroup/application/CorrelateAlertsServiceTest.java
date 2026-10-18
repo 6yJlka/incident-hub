@@ -54,7 +54,8 @@ class CorrelateAlertsServiceTest {
     void setUp() {
         processor = new CorrelateAlertsService(alerts, groups, services, correlator,
                 new AlertCorrelationProperties(false, Duration.ofSeconds(5), 500,
-                        AlertCorrelationProperties.Implementation.TIME_WINDOW, Duration.ofMinutes(5)));
+                        AlertCorrelationProperties.Implementation.TIME_WINDOW, Duration.ofMinutes(5)),
+                mock(jakarta.persistence.EntityManager.class));
     }
 
     @Test

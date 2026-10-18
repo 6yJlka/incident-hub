@@ -26,6 +26,9 @@ public class GetAlertGroupService {
                 .orElseThrow(() -> new AlertGroupNotFoundException(query.groupId()));
         return new GetAlertGroupResult(AlertGroupItem.from(group),
                 alertRepository.findAllByGroup_IdOrderByOccurredAtAscIdAsc(query.groupId())
-                        .stream().map(GroupAlertItem::from).toList());
+                        .stream().map(GroupAlertItem::from).toList(),
+                group.getDecidedBy() == null ? null : group.getDecidedBy().getId(),
+                group.getDecidedBy() == null ? null : group.getDecidedBy().getDisplayName(),
+                group.getDecidedAt(), group.getDismissReason());
     }
 }

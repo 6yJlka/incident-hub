@@ -8,6 +8,7 @@ import ru.donskikh.incidenthub.incident.Incident;
 import ru.donskikh.incidenthub.incident.IncidentNotFoundException;
 import ru.donskikh.incidenthub.incident.IncidentRepository;
 import ru.donskikh.incidenthub.team.Team;
+import ru.donskikh.incidenthub.alertgroup.AlertGroupRepository;
 
 import java.util.List;
 
@@ -15,9 +16,11 @@ import java.util.List;
 public class GetIncidentService {
 
     private final IncidentRepository incidentRepository;
+    private final AlertGroupRepository groupRepository;
 
-    public GetIncidentService(IncidentRepository incidentRepository) {
+    public GetIncidentService(IncidentRepository incidentRepository, AlertGroupRepository groupRepository) {
         this.incidentRepository = incidentRepository;
+        this.groupRepository = groupRepository;
     }
 
     @Transactional(readOnly = true)
@@ -54,6 +57,7 @@ public class GetIncidentService {
                 assignee == null ? null : assignee.getDisplayName(),
                 incident.getCreatedAt(),
                 incident.getUpdatedAt(),
+                groupRepository.findIdByIncidentId(incidentId).orElse(null),
                 List.of()
         );
     }

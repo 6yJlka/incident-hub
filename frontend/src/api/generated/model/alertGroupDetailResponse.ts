@@ -5,6 +5,7 @@
  * REST API for managing service ownership, dependencies, and incident lifecycle
  * OpenAPI spec version: 1.0.0
  */
+import type { AlertGroupDetailResponseAvailableActionsItem } from './alertGroupDetailResponseAvailableActionsItem'
 import type { AlertGroupDetailResponseStatus } from './alertGroupDetailResponseStatus'
 import type { GroupAlertResponse } from './groupAlertResponse'
 
@@ -18,4 +19,9 @@ export interface AlertGroupDetailResponse {
   lastAlertAt?: string
   incidentId?: number
   alerts?: GroupAlertResponse[]
+  decidedById?: number
+  decidedByDisplayName?: string
+  decidedAt?: string
+  dismissReason?: string
+  availableActions?: AlertGroupDetailResponseAvailableActionsItem[]
 }

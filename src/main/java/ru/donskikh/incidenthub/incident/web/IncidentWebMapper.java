@@ -26,7 +26,8 @@ public class IncidentWebMapper {
                 request.priority(),
                 request.severity(),
                 actorId,
-                request.responsibleTeamId()
+                request.responsibleTeamId(),
+                IncidentSource.MANUAL
         );
     }
 
@@ -81,6 +82,7 @@ public class IncidentWebMapper {
                 result.assigneeDisplayName(),
                 result.createdAt(),
                 result.updatedAt(),
+                result.alertGroupId(),
                 result.availableActions()
         );
     }

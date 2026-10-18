@@ -76,9 +76,10 @@ class OpenApiIntegrationTest extends PostgreSQLIntegrationTest {
                 "getAffectedServices", "addServiceDependency", "removeServiceDependency",
                 "createIncident", "listIncidents", "getIncident", "getIncidentHistory",
                 "assignIncident", "startIncidentProgress", "resolveIncident", "closeIncident",
-                "reopenIncident", "cancelIncident", "acceptAlerts", "listAlertGroups", "getAlertGroup"
+                "reopenIncident", "cancelIncident", "acceptAlerts", "listAlertGroups", "getAlertGroup",
+                "confirmAlertGroup", "dismissAlertGroup"
         );
-        assertThat(operationCount).isEqualTo(26);
+        assertThat(operationCount).isEqualTo(28);
         assertThat(JsonPath.<String>read(document,
                 "$.paths['/api/v1/alert-groups'].get.responses['200'].content['*/*'].schema['$ref']"))
                 .isEqualTo("#/components/schemas/ListAlertGroupsResponse");

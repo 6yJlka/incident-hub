@@ -35,6 +35,7 @@ public record IncidentResponse(
         String assigneeDisplayName,
         @Schema(description = "Creation timestamp", example = "2026-09-01T10:00:00Z") Instant createdAt,
         @Schema(description = "Last update timestamp", example = "2026-09-01T10:15:00Z") Instant updatedAt,
+        @Schema(description = "Originating alert group identifier", nullable = true) Long alertGroupId,
         @Schema(
                 description = "Lifecycle actions available to the current user in the current status",
                 example = "[\"ASSIGN\", \"CANCEL\"]"
