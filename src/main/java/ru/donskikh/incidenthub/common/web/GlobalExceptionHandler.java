@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import ru.donskikh.incidenthub.auth.InvalidCredentialsException;
 import ru.donskikh.incidenthub.common.DomainConflictException;
+import ru.donskikh.incidenthub.alertgroup.AlertGroupConcurrentModificationException;
 import ru.donskikh.incidenthub.common.DomainNotFoundException;
 
 import java.net.URI;
@@ -71,6 +72,16 @@ public class GlobalExceptionHandler {
         if (exception.getRequiredState() != null) {
             detail.setProperty("requiredStatus", exception.getRequiredState());
         }
+        return detail;
+    }
+
+    @ExceptionHandler(AlertGroupConcurrentModificationException.class)
+    public ProblemDetail handleConcurrentModification(
+            AlertGroupConcurrentModificationException exception, HttpServletRequest request) {
+        ProblemDetail detail = problem(HttpStatus.CONFLICT,
+                "urn:incident-hub:problem:concurrent-modification", "Concurrent modification",
+                exception.getMessage(), request);
+        detail.setProperty("alertGroupId", exception.getGroupId());
         return detail;
     }
 

@@ -3,6 +3,7 @@ package ru.donskikh.incidenthub.incident.web;
 import org.springframework.stereotype.Component;
 import ru.donskikh.incidenthub.identity.UserRole;
 import ru.donskikh.incidenthub.incident.IncidentAction;
+import ru.donskikh.incidenthub.alertgroup.AlertGroupAction;
 import ru.donskikh.incidenthub.security.AuthenticatedUser;
 
 import java.util.EnumSet;
@@ -24,6 +25,18 @@ public class IncidentActionAuthorization {
             IncidentAction.REOPEN, LIFECYCLE_ROLES,
             IncidentAction.CANCEL, LIFECYCLE_ROLES
     );
+    private static final Map<AlertGroupAction, Set<UserRole>> GROUP_ALLOWED_ROLES = Map.of(
+            AlertGroupAction.CONFIRM, LIFECYCLE_ROLES,
+            AlertGroupAction.DISMISS, LIFECYCLE_ROLES
+    );
+
+    public boolean isAllowed(AuthenticatedUser user, AlertGroupAction action) {
+        if (user == null || action == null) {
+            return false;
+        }
+        Set<UserRole> roles = GROUP_ALLOWED_ROLES.get(action);
+        return roles != null && roles.contains(user.role());
+    }
 
     public boolean isAllowed(AuthenticatedUser user, IncidentAction action) {
         if (user == null || action == null) {

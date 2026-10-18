@@ -105,6 +105,17 @@ class AlertGroupIntegrationTest extends PostgreSQLIntegrationTest {
     @Autowired
     private JwtTokenService tokens;
 
+    @Autowired
+    private ru.donskikh.incidenthub.identity.UserRepository users;
+
+    @Autowired
+    private ru.donskikh.incidenthub.alertgroup.application.ConfirmAlertGroupService confirmService;
+
+    @Autowired
+    private ru.donskikh.incidenthub.alertgroup.application.DismissAlertGroupService dismissService;
+
+    private long actorId;
+
     private List<BusinessService> fixtureServices;
 
     @BeforeEach
@@ -112,9 +123,13 @@ class AlertGroupIntegrationTest extends PostgreSQLIntegrationTest {
         transactions.executeWithoutResult(status -> {
             jdbc.update("delete from alerts");
             jdbc.update("delete from alert_groups");
+            jdbc.update("delete from incident_audit_events");
+            jdbc.update("delete from incidents");
+            jdbc.update("delete from users");
             jdbc.update("delete from business_services");
             jdbc.update("delete from teams");
             Team team = teams.save(new Team("Group tests", "GROUP_TESTS"));
+            actorId = users.save(new ru.donskikh.incidenthub.identity.User("groups@example.com", "Engineer")).getId();
             fixtureServices = new ArrayList<>();
             for (int index = 0; index < 3; index++) {
                 fixtureServices.add(services.save(new BusinessService("GROUP_SERVICE_" + index,
@@ -344,7 +359,14 @@ class AlertGroupIntegrationTest extends PostgreSQLIntegrationTest {
             var group = new AlertGroup(services.getReferenceById(fixtureServices.get(service).getId()), BASE.plusSeconds(first * 60));
             group.includeAlert(BASE.plusSeconds(last * 60), group.getProbableRootService());
             groups.saveAndFlush(group);
-            jdbc.update("update alert_groups set status = ? where id = ?", groupStatus.name(), group.getId());
+            if (groupStatus == AlertGroupStatus.CONFIRMED) {
+                confirmService.confirm(new ru.donskikh.incidenthub.alertgroup.application.ConfirmAlertGroupCommand(
+                        group.getId(), ru.donskikh.incidenthub.incident.IncidentSeverity.SEV2,
+                        ru.donskikh.incidenthub.incident.IncidentPriority.HIGH, null, null, null, actorId));
+            } else if (groupStatus == AlertGroupStatus.DISMISSED) {
+                dismissService.dismiss(new ru.donskikh.incidenthub.alertgroup.application.DismissAlertGroupCommand(
+                        group.getId(), null, actorId));
+            }
             return group.getId();
         });
     }

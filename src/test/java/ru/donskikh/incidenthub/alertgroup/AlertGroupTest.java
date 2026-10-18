@@ -13,6 +13,34 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class AlertGroupTest {
 
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.EnumSource(AlertGroupStatus.class)
+    void enforcesTransitionsFromEveryStatus(AlertGroupStatus status) {
+        var actor = new ru.donskikh.incidenthub.identity.User("engineer@example.com", "Engineer");
+        var incident = org.mockito.Mockito.mock(ru.donskikh.incidenthub.incident.Incident.class);
+        var confirmed = new AlertGroup(service("ROOT"), Instant.now());
+        var dismissed = new AlertGroup(service("ROOT"), Instant.now());
+        ReflectionTestUtils.setField(confirmed, "status", status);
+        ReflectionTestUtils.setField(dismissed, "status", status);
+        Instant decidedAt = Instant.now();
+        if (status == AlertGroupStatus.OPEN) {
+            confirmed.confirm(incident, actor, decidedAt);
+            dismissed.dismiss(actor, decidedAt, "False positive");
+            assertThat(confirmed.getStatus()).isEqualTo(AlertGroupStatus.CONFIRMED);
+            assertThat(confirmed.getIncident()).isSameAs(incident);
+            assertThat(confirmed.getDecidedBy()).isSameAs(actor);
+            assertThat(confirmed.getDecidedAt()).isEqualTo(decidedAt);
+            assertThat(dismissed.getStatus()).isEqualTo(AlertGroupStatus.DISMISSED);
+            assertThat(dismissed.getIncident()).isNull();
+            assertThat(dismissed.getDismissReason()).isEqualTo("False positive");
+        } else {
+            assertThatThrownBy(() -> confirmed.confirm(incident, actor, decidedAt))
+                    .isInstanceOf(AlertGroupStateConflictException.class);
+            assertThatThrownBy(() -> dismissed.dismiss(actor, decidedAt, null))
+                    .isInstanceOf(AlertGroupStateConflictException.class);
+        }
+    }
+
     @Test
     void maintainsBoundsAndAlwaysUsesRootProvidedByCorrelator() {
         var firstRoot = service("FIRST");

@@ -20,8 +20,11 @@ public interface AlertGroupRepository extends JpaRepository<AlertGroup, Long>, J
     Page<AlertGroup> findAll(Specification<AlertGroup> specification, Pageable pageable);
 
     @Override
-    @EntityGraph(attributePaths = "probableRootService")
+    @EntityGraph(attributePaths = {"probableRootService", "decidedBy"})
     Optional<AlertGroup> findById(Long id);
+
+    @Query("select g.id from AlertGroup g where g.incident.id = :incidentId")
+    Optional<Long> findIdByIncidentId(@Param("incidentId") long incidentId);
 
     @Query(value = """
             select * from alert_groups

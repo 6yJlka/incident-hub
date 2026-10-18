@@ -8,9 +8,27 @@ import ru.donskikh.incidenthub.alertgroup.application.ListAlertGroupsResult;
 import ru.donskikh.incidenthub.alertgroup.application.GetAlertGroupQuery;
 import ru.donskikh.incidenthub.alertgroup.application.GetAlertGroupResult;
 import ru.donskikh.incidenthub.alertgroup.application.GroupAlertItem;
+import ru.donskikh.incidenthub.alertgroup.application.ConfirmAlertGroupCommand;
+import ru.donskikh.incidenthub.alertgroup.application.DismissAlertGroupCommand;
+import ru.donskikh.incidenthub.security.AuthenticatedUser;
 
 @Component
 public class AlertGroupWebMapper {
+
+    private final AvailableAlertGroupActions availableActions;
+
+    public AlertGroupWebMapper(AvailableAlertGroupActions availableActions) {
+        this.availableActions = availableActions;
+    }
+
+    public ConfirmAlertGroupCommand toCommand(long id, ConfirmAlertGroupRequest request, long actorId) {
+        return new ConfirmAlertGroupCommand(id, request.severity(), request.priority(), request.businessServiceId(),
+                request.title(), request.description(), actorId);
+    }
+
+    public DismissAlertGroupCommand toCommand(long id, DismissAlertGroupRequest request, long actorId) {
+        return new DismissAlertGroupCommand(id, request == null ? null : request.reason(), actorId);
+    }
 
     public ListAlertGroupsQuery toQuery(int page, int size, AlertGroupStatus status, Long rootServiceId) {
         return new ListAlertGroupsQuery(page, size, status, rootServiceId);
@@ -26,7 +44,7 @@ public class AlertGroupWebMapper {
                 result.hasNext(), result.hasPrevious());
     }
 
-    public AlertGroupDetailResponse toResponse(GetAlertGroupResult result) {
+    public AlertGroupDetailResponse toResponse(GetAlertGroupResult result, AuthenticatedUser user) {
         AlertGroupItem item = result.group();
         return new AlertGroupDetailResponse(
                 item.id(),
@@ -37,7 +55,9 @@ public class AlertGroupWebMapper {
                 item.firstAlertAt(),
                 item.lastAlertAt(),
                 item.incidentId(),
-                result.alerts().stream().map(this::toResponse).toList());
+                result.alerts().stream().map(this::toResponse).toList(),
+                result.decidedById(), result.decidedByDisplayName(), result.decidedAt(), result.dismissReason(),
+                availableActions.forGroup(item.status(), user));
     }
 
     private AlertGroupResponse toResponse(AlertGroupItem item) {

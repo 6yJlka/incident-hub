@@ -7,11 +7,103 @@
  */
 import type {
   AlertGroupDetailResponse,
+  ConfirmAlertGroupRequest,
+  DismissAlertGroupRequest,
   ListAlertGroupsParams,
   ListAlertGroupsResponse,
 } from '../model'
 
 import { apiFetch } from '../../http'
+
+export const getDismissAlertGroupUrl = (id: number) => {
+  return `/api/v1/alert-groups/${id}/dismiss`
+}
+
+/**
+ * Dismisses an OPEN group without creating an incident. A reason is optional.
+ * @summary Dismiss an alert group
+ */
+export const dismissAlertGroup = async (
+  id: number,
+  dismissAlertGroupRequest?: DismissAlertGroupRequest,
+  options?: Parameters<typeof apiFetch>[1],
+): Promise<AlertGroupDetailResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit['headers']>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {}
+    if (h instanceof Headers) return Object.fromEntries(h.entries())
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
+      )
+    }
+    const headers: Record<string, string | readonly string[]> = {}
+    for (const [name, value] of Object.entries<
+      string | readonly string[] | undefined
+    >(h)) {
+      if (value !== undefined) headers[name] = value
+    }
+    return headers
+  }
+  return apiFetch<AlertGroupDetailResponse>(getDismissAlertGroupUrl(id), {
+    ...options,
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getHeaders(options?.headers),
+    },
+    body: JSON.stringify(dismissAlertGroupRequest),
+  })
+}
+
+export const getConfirmAlertGroupUrl = (id: number) => {
+  return `/api/v1/alert-groups/${id}/confirm`
+}
+
+/**
+ * Creates an AUTOMATIC incident and confirms the OPEN group atomically. Severity and priority are supplied by the engineer.
+ * @summary Confirm an alert group
+ */
+export const confirmAlertGroup = async (
+  id: number,
+  confirmAlertGroupRequest: ConfirmAlertGroupRequest,
+  options?: Parameters<typeof apiFetch>[1],
+): Promise<AlertGroupDetailResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit['headers']>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {}
+    if (h instanceof Headers) return Object.fromEntries(h.entries())
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
+      )
+    }
+    const headers: Record<string, string | readonly string[]> = {}
+    for (const [name, value] of Object.entries<
+      string | readonly string[] | undefined
+    >(h)) {
+      if (value !== undefined) headers[name] = value
+    }
+    return headers
+  }
+  return apiFetch<AlertGroupDetailResponse>(getConfirmAlertGroupUrl(id), {
+    ...options,
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getHeaders(options?.headers),
+    },
+    body: JSON.stringify(confirmAlertGroupRequest),
+  })
+}
 
 export const getListAlertGroupsUrl = (params?: ListAlertGroupsParams) => {
   const normalizedParams = new URLSearchParams()

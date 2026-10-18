@@ -53,7 +53,9 @@
   "paths": {
     "/api/v1/users": {
       "get": {
-        "tags": ["Users"],
+        "tags": [
+          "Users"
+        ],
         "summary": "List users",
         "description": "Returns users ordered by display name and identifier, optionally filtered by activity.",
         "operationId": "listUsers",
@@ -127,7 +129,9 @@
         }
       },
       "post": {
-        "tags": ["Users"],
+        "tags": [
+          "Users"
+        ],
         "summary": "Create a user as an administrator",
         "description": "Creates an active login-enabled user with the selected role. The normalized email must be unique.",
         "operationId": "createUser",
@@ -197,7 +201,9 @@
     },
     "/api/v1/teams": {
       "get": {
-        "tags": ["Teams"],
+        "tags": [
+          "Teams"
+        ],
         "summary": "List teams",
         "description": "Returns teams ordered by name and identifier, optionally filtered by activity.",
         "operationId": "listTeams",
@@ -271,7 +277,9 @@
         }
       },
       "post": {
-        "tags": ["Teams"],
+        "tags": [
+          "Teams"
+        ],
         "summary": "Create a team",
         "description": "Creates an active team. The normalized code must be unique.",
         "operationId": "createTeam",
@@ -341,7 +349,9 @@
     },
     "/api/v1/services": {
       "get": {
-        "tags": ["Service catalog"],
+        "tags": [
+          "Service catalog"
+        ],
         "summary": "List business services",
         "description": "Returns services ordered by name and identifier with optional owner, tier, and activity filters.",
         "operationId": "listServices",
@@ -388,7 +398,11 @@
             "required": false,
             "schema": {
               "type": "string",
-              "enum": ["TIER_1", "TIER_2", "TIER_3"]
+              "enum": [
+                "TIER_1",
+                "TIER_2",
+                "TIER_3"
+              ]
             },
             "example": "TIER_1"
           },
@@ -437,7 +451,9 @@
         }
       },
       "post": {
-        "tags": ["Service catalog"],
+        "tags": [
+          "Service catalog"
+        ],
         "summary": "Create a business service",
         "description": "Creates an active catalog service owned by an existing team. The normalized code must be unique.",
         "operationId": "createService",
@@ -517,7 +533,9 @@
     },
     "/api/v1/services/{id}/dependencies": {
       "post": {
-        "tags": ["Service catalog"],
+        "tags": [
+          "Service catalog"
+        ],
         "summary": "Add a service dependency",
         "description": "Declares that the service in the path depends on another existing service. Self-dependencies and duplicate pairs are rejected.",
         "operationId": "addServiceDependency",
@@ -610,7 +628,9 @@
     },
     "/api/v1/incidents": {
       "get": {
-        "tags": ["Incidents"],
+        "tags": [
+          "Incidents"
+        ],
         "summary": "List incidents",
         "description": "Returns incidents ordered by creation time with optional lifecycle, urgency, impact, source, service, and team filters.",
         "operationId": "listIncidents",
@@ -664,7 +684,12 @@
             "required": false,
             "schema": {
               "type": "string",
-              "enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"]
+              "enum": [
+                "LOW",
+                "MEDIUM",
+                "HIGH",
+                "CRITICAL"
+              ]
             },
             "example": "HIGH"
           },
@@ -675,7 +700,12 @@
             "required": false,
             "schema": {
               "type": "string",
-              "enum": ["SEV1", "SEV2", "SEV3", "SEV4"]
+              "enum": [
+                "SEV1",
+                "SEV2",
+                "SEV3",
+                "SEV4"
+              ]
             },
             "example": "SEV2"
           },
@@ -686,7 +716,10 @@
             "required": false,
             "schema": {
               "type": "string",
-              "enum": ["MANUAL", "AUTOMATIC"]
+              "enum": [
+                "MANUAL",
+                "AUTOMATIC"
+              ]
             },
             "example": "MANUAL"
           },
@@ -747,7 +780,9 @@
         }
       },
       "post": {
-        "tags": ["Incidents"],
+        "tags": [
+          "Incidents"
+        ],
         "summary": "Create an incident",
         "description": "Registers a manual incident in OPEN status for the authenticated user. The service owner is used as the responsible team when no team is supplied.",
         "operationId": "createIncident",
@@ -807,7 +842,9 @@
     },
     "/api/v1/incidents/{id}/start": {
       "post": {
-        "tags": ["Incidents"],
+        "tags": [
+          "Incidents"
+        ],
         "summary": "Start incident work",
         "description": "Moves an ASSIGNED incident to IN_PROGRESS. No other source status is allowed.",
         "operationId": "startIncidentProgress",
@@ -890,7 +927,9 @@
     },
     "/api/v1/incidents/{id}/resolve": {
       "post": {
-        "tags": ["Incidents"],
+        "tags": [
+          "Incidents"
+        ],
         "summary": "Resolve an incident",
         "description": "Moves an IN_PROGRESS incident to RESOLVED. No other source status is allowed.",
         "operationId": "resolveIncident",
@@ -973,7 +1012,9 @@
     },
     "/api/v1/incidents/{id}/reopen": {
       "post": {
-        "tags": ["Incidents"],
+        "tags": [
+          "Incidents"
+        ],
         "summary": "Reopen an incident",
         "description": "Moves a RESOLVED incident back to IN_PROGRESS when the problem persists.",
         "operationId": "reopenIncident",
@@ -1056,7 +1097,9 @@
     },
     "/api/v1/incidents/{id}/close": {
       "post": {
-        "tags": ["Incidents"],
+        "tags": [
+          "Incidents"
+        ],
         "summary": "Close an incident",
         "description": "Moves a RESOLVED incident to CLOSED. No other source status is allowed.",
         "operationId": "closeIncident",
@@ -1139,7 +1182,9 @@
     },
     "/api/v1/incidents/{id}/cancel": {
       "post": {
-        "tags": ["Incidents"],
+        "tags": [
+          "Incidents"
+        ],
         "summary": "Cancel an incident",
         "description": "Moves an OPEN, ASSIGNED, or IN_PROGRESS incident to CANCELLED. Resolved and closed incidents cannot be cancelled.",
         "operationId": "cancelIncident",
@@ -1222,7 +1267,9 @@
     },
     "/api/v1/incidents/{id}/assign": {
       "post": {
-        "tags": ["Incidents"],
+        "tags": [
+          "Incidents"
+        ],
         "summary": "Assign an incident",
         "description": "Assigns or reassigns an existing user. Allowed only while the incident is OPEN or ASSIGNED.",
         "operationId": "assignIncident",
@@ -1315,7 +1362,9 @@
     },
     "/api/v1/auth/register": {
       "post": {
-        "tags": ["Authentication"],
+        "tags": [
+          "Authentication"
+        ],
         "summary": "Register a user",
         "description": "Creates an active user with the REPORTER role",
         "operationId": "registerUser",
@@ -1366,7 +1415,9 @@
     },
     "/api/v1/auth/login": {
       "post": {
-        "tags": ["Authentication"],
+        "tags": [
+          "Authentication"
+        ],
         "summary": "Log in",
         "description": "Returns a signed JWT access token",
         "operationId": "login",
@@ -1417,7 +1468,9 @@
     },
     "/api/v1/alerts": {
       "post": {
-        "tags": ["Alerts"],
+        "tags": [
+          "Alerts"
+        ],
         "summary": "Accept a batch of monitoring alerts",
         "description": "Returns a result per item in input order. Duplicates ignore the incoming event body. Unknown services reject only that item. Invalid batch structure rejects the entire request.",
         "operationId": "acceptAlerts",
@@ -1480,9 +1533,196 @@
         ]
       }
     },
+    "/api/v1/alert-groups/{id}/dismiss": {
+      "post": {
+        "tags": [
+          "Alert groups"
+        ],
+        "summary": "Dismiss an alert group",
+        "description": "Dismisses an OPEN group without creating an incident. A reason is optional.",
+        "operationId": "dismissAlertGroup",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DismissAlertGroupRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Dismissed group",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertGroupDetailResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication credentials are missing or invalid",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The authenticated user does not have the required role",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Group not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Group is not OPEN, or changed concurrently (distinct problem types)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/alert-groups/{id}/confirm": {
+      "post": {
+        "tags": [
+          "Alert groups"
+        ],
+        "summary": "Confirm an alert group",
+        "description": "Creates an AUTOMATIC incident and confirms the OPEN group atomically. Severity and priority are supplied by the engineer.",
+        "operationId": "confirmAlertGroup",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmAlertGroupRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Confirmed group with incident",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertGroupDetailResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication credentials are missing or invalid",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The authenticated user does not have the required role",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Group or service not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Group is not OPEN, or changed concurrently (distinct problem types)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/users/me": {
       "get": {
-        "tags": ["Users"],
+        "tags": [
+          "Users"
+        ],
         "summary": "Get the current user",
         "description": "Returns the user identified by the authenticated principal",
         "operationId": "getCurrentUser",
@@ -1522,7 +1762,9 @@
     },
     "/api/v1/services/{id}": {
       "get": {
-        "tags": ["Service catalog"],
+        "tags": [
+          "Service catalog"
+        ],
         "summary": "Get a business service",
         "description": "Returns service details together with its direct dependencies.",
         "operationId": "getService",
@@ -1585,7 +1827,9 @@
     },
     "/api/v1/services/{id}/affected": {
       "get": {
-        "tags": ["Service catalog"],
+        "tags": [
+          "Service catalog"
+        ],
         "summary": "Find affected services",
         "description": "Traverses reverse dependencies and returns each affected service once at its minimum depth.",
         "operationId": "getAffectedServices",
@@ -1660,7 +1904,9 @@
     },
     "/api/v1/incidents/{id}": {
       "get": {
-        "tags": ["Incidents"],
+        "tags": [
+          "Incidents"
+        ],
         "summary": "Get an incident",
         "description": "Returns the current incident details and assignments.",
         "operationId": "getIncident",
@@ -1723,7 +1969,9 @@
     },
     "/api/v1/incidents/{id}/history": {
       "get": {
-        "tags": ["Incidents"],
+        "tags": [
+          "Incidents"
+        ],
         "summary": "Get incident history",
         "description": "Returns lifecycle audit events in chronological order.",
         "operationId": "getIncidentHistory",
@@ -1786,7 +2034,9 @@
     },
     "/api/v1/alert-groups": {
       "get": {
-        "tags": ["Alert groups"],
+        "tags": [
+          "Alert groups"
+        ],
         "summary": "List alert groups",
         "description": "Returns groups ordered by last alert time and identifier, newest first. Optionally filters by status and probable root service.",
         "operationId": "listAlertGroups",
@@ -1817,7 +2067,11 @@
             "required": false,
             "schema": {
               "type": "string",
-              "enum": ["OPEN", "CONFIRMED", "DISMISSED"]
+              "enum": [
+                "OPEN",
+                "CONFIRMED",
+                "DISMISSED"
+              ]
             }
           },
           {
@@ -1866,7 +2120,9 @@
     },
     "/api/v1/alert-groups/{id}": {
       "get": {
-        "tags": ["Alert groups"],
+        "tags": [
+          "Alert groups"
+        ],
         "summary": "Get an alert group",
         "description": "Returns group details and alerts ordered by occurrence time and identifier.",
         "operationId": "getAlertGroup",
@@ -1927,7 +2183,9 @@
     },
     "/api/v1/services/{id}/dependencies/{dependencyId}": {
       "delete": {
-        "tags": ["Service catalog"],
+        "tags": [
+          "Service catalog"
+        ],
         "summary": "Remove a service dependency",
         "description": "Removes the direct dependency from the service in the path to the specified required service.",
         "operationId": "removeServiceDependency",
@@ -2033,11 +2291,20 @@
           "role": {
             "type": "string",
             "description": "Role assigned by an administrator",
-            "enum": ["REPORTER", "ENGINEER", "ADMIN"],
+            "enum": [
+              "REPORTER",
+              "ENGINEER",
+              "ADMIN"
+            ],
             "example": "ENGINEER"
           }
         },
-        "required": ["displayName", "email", "password", "role"]
+        "required": [
+          "displayName",
+          "email",
+          "password",
+          "role"
+        ]
       },
       "ProblemDetail": {
         "type": "object",
@@ -2088,7 +2355,11 @@
           "role": {
             "type": "string",
             "description": "Assigned role",
-            "enum": ["REPORTER", "ENGINEER", "ADMIN"],
+            "enum": [
+              "REPORTER",
+              "ENGINEER",
+              "ADMIN"
+            ],
             "example": "ENGINEER"
           },
           "active": {
@@ -2116,7 +2387,10 @@
             "minLength": 0
           }
         },
-        "required": ["code", "name"]
+        "required": [
+          "code",
+          "name"
+        ]
       },
       "CreateTeamResponse": {
         "type": "object",
@@ -2171,11 +2445,21 @@
           "tier": {
             "type": "string",
             "description": "Business criticality tier; TIER_1 is the most critical",
-            "enum": ["TIER_1", "TIER_2", "TIER_3"],
+            "enum": [
+              "TIER_1",
+              "TIER_2",
+              "TIER_3"
+            ],
             "example": "TIER_1"
           }
         },
-        "required": ["code", "description", "name", "ownerTeamId", "tier"]
+        "required": [
+          "code",
+          "description",
+          "name",
+          "ownerTeamId",
+          "tier"
+        ]
       },
       "CreateBusinessServiceResponse": {
         "type": "object",
@@ -2194,7 +2478,11 @@
           "tier": {
             "type": "string",
             "description": "Business criticality tier",
-            "enum": ["TIER_1", "TIER_2", "TIER_3"],
+            "enum": [
+              "TIER_1",
+              "TIER_2",
+              "TIER_3"
+            ],
             "example": "TIER_1"
           },
           "active": {
@@ -2216,11 +2504,18 @@
           "type": {
             "type": "string",
             "description": "Interaction type: synchronous call, asynchronous messaging, or data dependency",
-            "enum": ["SYNC", "ASYNC", "DATA"],
+            "enum": [
+              "SYNC",
+              "ASYNC",
+              "DATA"
+            ],
             "example": "SYNC"
           }
         },
-        "required": ["dependencyServiceId", "type"]
+        "required": [
+          "dependencyServiceId",
+          "type"
+        ]
       },
       "AddServiceDependencyResponse": {
         "type": "object",
@@ -2246,7 +2541,11 @@
           "type": {
             "type": "string",
             "description": "Dependency interaction type",
-            "enum": ["SYNC", "ASYNC", "DATA"],
+            "enum": [
+              "SYNC",
+              "ASYNC",
+              "DATA"
+            ],
             "example": "SYNC"
           },
           "createdAt": {
@@ -2282,13 +2581,23 @@
           "priority": {
             "type": "string",
             "description": "Work ordering urgency, independent of business impact",
-            "enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"],
+            "enum": [
+              "LOW",
+              "MEDIUM",
+              "HIGH",
+              "CRITICAL"
+            ],
             "example": "CRITICAL"
           },
           "severity": {
             "type": "string",
             "description": "Business impact level; SEV1 is highest and is independent of priority",
-            "enum": ["SEV1", "SEV2", "SEV3", "SEV4"],
+            "enum": [
+              "SEV1",
+              "SEV2",
+              "SEV3",
+              "SEV4"
+            ],
             "example": "SEV1"
           },
           "responsibleTeamId": {
@@ -2368,19 +2677,32 @@
           "source": {
             "type": "string",
             "description": "How the incident was registered",
-            "enum": ["MANUAL", "AUTOMATIC"],
+            "enum": [
+              "MANUAL",
+              "AUTOMATIC"
+            ],
             "example": "MANUAL"
           },
           "priority": {
             "type": "string",
             "description": "Work ordering urgency",
-            "enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"],
+            "enum": [
+              "LOW",
+              "MEDIUM",
+              "HIGH",
+              "CRITICAL"
+            ],
             "example": "CRITICAL"
           },
           "severity": {
             "type": "string",
             "description": "Business impact level, independent of priority",
-            "enum": ["SEV1", "SEV2", "SEV3", "SEV4"],
+            "enum": [
+              "SEV1",
+              "SEV2",
+              "SEV3",
+              "SEV4"
+            ],
             "example": "SEV1"
           },
           "status": {
@@ -2446,10 +2768,18 @@
             "description": "Last update timestamp",
             "example": "2026-09-01T10:15:00Z"
           },
+          "alertGroupId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Originating alert group identifier"
+          },
           "availableActions": {
             "type": "array",
             "description": "Lifecycle actions available to the current user in the current status",
-            "example": ["ASSIGN", "CANCEL"],
+            "example": [
+              "ASSIGN",
+              "CANCEL"
+            ],
             "items": {
               "type": "string",
               "enum": [
@@ -2474,7 +2804,9 @@
             "example": 21
           }
         },
-        "required": ["assigneeId"]
+        "required": [
+          "assigneeId"
+        ]
       },
       "RegisterRequest": {
         "type": "object",
@@ -2499,7 +2831,11 @@
             "minLength": 8
           }
         },
-        "required": ["displayName", "email", "password"]
+        "required": [
+          "displayName",
+          "email",
+          "password"
+        ]
       },
       "RegisterResponse": {
         "type": "object",
@@ -2519,7 +2855,11 @@
           },
           "role": {
             "type": "string",
-            "enum": ["REPORTER", "ENGINEER", "ADMIN"],
+            "enum": [
+              "REPORTER",
+              "ENGINEER",
+              "ADMIN"
+            ],
             "example": "REPORTER"
           },
           "active": {
@@ -2545,7 +2885,10 @@
             "minLength": 0
           }
         },
-        "required": ["email", "password"]
+        "required": [
+          "email",
+          "password"
+        ]
       },
       "LoginResponse": {
         "type": "object",
@@ -2577,7 +2920,9 @@
             "minItems": 1
           }
         },
-        "required": ["alerts"]
+        "required": [
+          "alerts"
+        ]
       },
       "IncomingAlertRequest": {
         "type": "object",
@@ -2605,11 +2950,20 @@
           },
           "signalType": {
             "type": "string",
-            "enum": ["AVAILABILITY", "ERROR_RATE", "LATENCY", "SATURATION"]
+            "enum": [
+              "AVAILABILITY",
+              "ERROR_RATE",
+              "LATENCY",
+              "SATURATION"
+            ]
           },
           "severity": {
             "type": "string",
-            "enum": ["CRITICAL", "WARNING", "INFO"]
+            "enum": [
+              "CRITICAL",
+              "WARNING",
+              "INFO"
+            ]
           },
           "occurredAt": {
             "type": "string",
@@ -2654,7 +3008,11 @@
           },
           "status": {
             "type": "string",
-            "enum": ["ACCEPTED", "DUPLICATE", "REJECTED"]
+            "enum": [
+              "ACCEPTED",
+              "DUPLICATE",
+              "REJECTED"
+            ]
           },
           "alertId": {
             "type": "integer",
@@ -2662,9 +3020,184 @@
           },
           "reason": {
             "type": "string",
-            "enum": ["UNKNOWN_SERVICE"]
+            "enum": [
+              "UNKNOWN_SERVICE"
+            ]
           }
         }
+      },
+      "DismissAlertGroupRequest": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 0
+          }
+        }
+      },
+      "AlertGroupDetailResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "OPEN",
+              "CONFIRMED",
+              "DISMISSED"
+            ]
+          },
+          "probableRootServiceId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "probableRootServiceCode": {
+            "type": "string"
+          },
+          "probableRootServiceName": {
+            "type": "string"
+          },
+          "firstAlertAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastAlertAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "incidentId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "alerts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GroupAlertResponse"
+            }
+          },
+          "decidedById": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "decidedByDisplayName": {
+            "type": "string"
+          },
+          "decidedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "dismissReason": {
+            "type": "string"
+          },
+          "availableActions": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "CONFIRM",
+                "DISMISS"
+              ]
+            }
+          }
+        }
+      },
+      "GroupAlertResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "source": {
+            "type": "string"
+          },
+          "externalId": {
+            "type": "string"
+          },
+          "businessServiceId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "businessServiceCode": {
+            "type": "string"
+          },
+          "businessServiceName": {
+            "type": "string"
+          },
+          "signalType": {
+            "type": "string",
+            "enum": [
+              "AVAILABILITY",
+              "ERROR_RATE",
+              "LATENCY",
+              "SATURATION"
+            ]
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "CRITICAL",
+              "WARNING",
+              "INFO"
+            ]
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "receivedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "description": {
+            "type": "string"
+          }
+        }
+      },
+      "ConfirmAlertGroupRequest": {
+        "type": "object",
+        "properties": {
+          "severity": {
+            "type": "string",
+            "enum": [
+              "SEV1",
+              "SEV2",
+              "SEV3",
+              "SEV4"
+            ]
+          },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "LOW",
+              "MEDIUM",
+              "HIGH",
+              "CRITICAL"
+            ]
+          },
+          "businessServiceId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 2147483647,
+            "minLength": 1
+          }
+        },
+        "required": [
+          "priority",
+          "severity"
+        ]
       },
       "ListUsersResponse": {
         "type": "object",
@@ -2735,7 +3268,11 @@
           "role": {
             "type": "string",
             "description": "Assigned role",
-            "enum": ["REPORTER", "ENGINEER", "ADMIN"],
+            "enum": [
+              "REPORTER",
+              "ENGINEER",
+              "ADMIN"
+            ],
             "example": "ENGINEER"
           },
           "active": {
@@ -2779,7 +3316,11 @@
           "role": {
             "type": "string",
             "description": "Assigned role",
-            "enum": ["REPORTER", "ENGINEER", "ADMIN"],
+            "enum": [
+              "REPORTER",
+              "ENGINEER",
+              "ADMIN"
+            ],
             "example": "ENGINEER"
           },
           "active": {
@@ -2912,7 +3453,11 @@
           "tier": {
             "type": "string",
             "description": "Business criticality tier",
-            "enum": ["TIER_1", "TIER_2", "TIER_3"],
+            "enum": [
+              "TIER_1",
+              "TIER_2",
+              "TIER_3"
+            ],
             "example": "TIER_1"
           },
           "active": {
@@ -3042,7 +3587,11 @@
           "tier": {
             "type": "string",
             "description": "Business criticality tier",
-            "enum": ["TIER_1", "TIER_2", "TIER_3"],
+            "enum": [
+              "TIER_1",
+              "TIER_2",
+              "TIER_3"
+            ],
             "example": "TIER_1"
           },
           "active": {
@@ -3100,7 +3649,11 @@
           "tier": {
             "type": "string",
             "description": "Required service criticality tier",
-            "enum": ["TIER_1", "TIER_2", "TIER_3"],
+            "enum": [
+              "TIER_1",
+              "TIER_2",
+              "TIER_3"
+            ],
             "example": "TIER_1"
           },
           "active": {
@@ -3111,7 +3664,11 @@
           "type": {
             "type": "string",
             "description": "Dependency interaction type",
-            "enum": ["SYNC", "ASYNC", "DATA"],
+            "enum": [
+              "SYNC",
+              "ASYNC",
+              "DATA"
+            ],
             "example": "DATA"
           },
           "createdAt": {
@@ -3144,7 +3701,11 @@
           "tier": {
             "type": "string",
             "description": "Business criticality tier",
-            "enum": ["TIER_1", "TIER_2", "TIER_3"],
+            "enum": [
+              "TIER_1",
+              "TIER_2",
+              "TIER_3"
+            ],
             "example": "TIER_2"
           },
           "active": {
@@ -3172,7 +3733,11 @@
           "dependencyType": {
             "type": "string",
             "description": "Type of the edge used on the selected minimum-depth path",
-            "enum": ["SYNC", "ASYNC", "DATA"],
+            "enum": [
+              "SYNC",
+              "ASYNC",
+              "DATA"
+            ],
             "example": "SYNC"
           }
         }
@@ -3235,19 +3800,32 @@
           "source": {
             "type": "string",
             "description": "How the incident was registered",
-            "enum": ["MANUAL", "AUTOMATIC"],
+            "enum": [
+              "MANUAL",
+              "AUTOMATIC"
+            ],
             "example": "MANUAL"
           },
           "priority": {
             "type": "string",
             "description": "Work ordering urgency",
-            "enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"],
+            "enum": [
+              "LOW",
+              "MEDIUM",
+              "HIGH",
+              "CRITICAL"
+            ],
             "example": "CRITICAL"
           },
           "severity": {
             "type": "string",
             "description": "Business impact level, independent of priority",
-            "enum": ["SEV1", "SEV2", "SEV3", "SEV4"],
+            "enum": [
+              "SEV1",
+              "SEV2",
+              "SEV3",
+              "SEV4"
+            ],
             "example": "SEV1"
           },
           "status": {
@@ -3458,7 +4036,11 @@
           },
           "status": {
             "type": "string",
-            "enum": ["OPEN", "CONFIRMED", "DISMISSED"]
+            "enum": [
+              "OPEN",
+              "CONFIRMED",
+              "DISMISSED"
+            ]
           },
           "probableRootServiceId": {
             "type": "integer",
@@ -3514,91 +4096,6 @@
           },
           "hasPrevious": {
             "type": "boolean"
-          }
-        }
-      },
-      "AlertGroupDetailResponse": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "status": {
-            "type": "string",
-            "enum": ["OPEN", "CONFIRMED", "DISMISSED"]
-          },
-          "probableRootServiceId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "probableRootServiceCode": {
-            "type": "string"
-          },
-          "probableRootServiceName": {
-            "type": "string"
-          },
-          "firstAlertAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "lastAlertAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "incidentId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "alerts": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/GroupAlertResponse"
-            }
-          }
-        }
-      },
-      "GroupAlertResponse": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "source": {
-            "type": "string"
-          },
-          "externalId": {
-            "type": "string"
-          },
-          "businessServiceId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "businessServiceCode": {
-            "type": "string"
-          },
-          "businessServiceName": {
-            "type": "string"
-          },
-          "signalType": {
-            "type": "string",
-            "enum": ["AVAILABILITY", "ERROR_RATE", "LATENCY", "SATURATION"]
-          },
-          "severity": {
-            "type": "string",
-            "enum": ["CRITICAL", "WARNING", "INFO"]
-          },
-          "occurredAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "receivedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "description": {
-            "type": "string"
           }
         }
       }

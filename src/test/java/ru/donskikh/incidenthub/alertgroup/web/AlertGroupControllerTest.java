@@ -28,13 +28,68 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(AlertGroupController.class)
-@Import({SecurityConfiguration.class, AlertGroupWebMapper.class, AuthenticatedMockMvcConfiguration.class})
+@Import({SecurityConfiguration.class, AlertGroupWebMapper.class, AuthenticatedMockMvcConfiguration.class,
+        AvailableAlertGroupActions.class, ru.donskikh.incidenthub.incident.web.IncidentActionAuthorization.class})
 class AlertGroupControllerTest {
+
+    @Test
+    void confirmsAndReturnsAvailableActions() throws Exception {
+        when(confirmService.confirm(any())).thenReturn(new GetAlertGroupResult(item(), List.of()));
+        mockMvc.perform(post("/api/v1/alert-groups/7/confirm").contentType("application/json")
+                        .content("{\"severity\":\"SEV2\",\"priority\":\"HIGH\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.availableActions[0]").value("CONFIRM"));
+    }
+
+    @Test
+    void dismissAcceptsMissingBody() throws Exception {
+        when(dismissService.dismiss(any())).thenReturn(new GetAlertGroupResult(item(), List.of()));
+        mockMvc.perform(post("/api/v1/alert-groups/7/dismiss"))
+                .andExpect(status().isOk());
+        verify(dismissService).dismiss(org.mockito.ArgumentMatchers.argThat(command -> command.reason() == null));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"{}", "{\"severity\":\"SEV2\"}", "{\"priority\":\"HIGH\"}",
+            "{\"severity\":\"CRITICAL\",\"priority\":\"HIGH\"}",
+            "{\"severity\":\"SEV2\",\"priority\":\"HIGH\",\"businessServiceId\":0}",
+            "{\"severity\":\"SEV2\",\"priority\":\"HIGH\",\"title\":\" \"}"})
+    void rejectsInvalidConfirmation(String body) throws Exception {
+        mockMvc.perform(post("/api/v1/alert-groups/7/confirm").contentType("application/json").content(body))
+                .andExpect(status().isBadRequest());
+        verifyNoInteractions(confirmService);
+    }
+
+    @Test
+    void rejectsLongDismissReason() throws Exception {
+        mockMvc.perform(post("/api/v1/alert-groups/7/dismiss").contentType("application/json")
+                        .content("{\"reason\":\"" + "x".repeat(2001) + "\"}"))
+                .andExpect(status().isBadRequest());
+        verifyNoInteractions(dismissService);
+    }
+
+    @Test
+    void distinguishesStateAndVersionProblems() throws Exception {
+        when(confirmService.confirm(any())).thenThrow(new ru.donskikh.incidenthub.alertgroup.AlertGroupStateConflictException(
+                AlertGroupStatus.CONFIRMED));
+        mockMvc.perform(post("/api/v1/alert-groups/7/confirm").contentType("application/json")
+                        .content("{\"severity\":\"SEV2\",\"priority\":\"HIGH\"}"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.type").value("urn:incident-hub:problem:conflict"))
+                .andExpect(jsonPath("$.currentStatus").value("CONFIRMED"));
+        when(dismissService.dismiss(any())).thenThrow(
+                new ru.donskikh.incidenthub.alertgroup.AlertGroupConcurrentModificationException(7, new RuntimeException()));
+        mockMvc.perform(post("/api/v1/alert-groups/7/dismiss"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.type").value("urn:incident-hub:problem:concurrent-modification"))
+                .andExpect(jsonPath("$.alertGroupId").value(7));
+    }
 
     @Autowired
     private MockMvc mockMvc;
@@ -44,6 +99,12 @@ class AlertGroupControllerTest {
 
     @MockitoBean
     private GetAlertGroupService getService;
+
+    @MockitoBean
+    private ru.donskikh.incidenthub.alertgroup.application.ConfirmAlertGroupService confirmService;
+
+    @MockitoBean
+    private ru.donskikh.incidenthub.alertgroup.application.DismissAlertGroupService dismissService;
 
     @Test
     void returnsStandardListFormatAndPassesFilters() throws Exception {

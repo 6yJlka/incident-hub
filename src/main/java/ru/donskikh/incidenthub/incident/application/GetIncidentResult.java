@@ -29,6 +29,7 @@ public record GetIncidentResult(
         String assigneeDisplayName,
         Instant createdAt,
         Instant updatedAt,
+        Long alertGroupId,
         List<IncidentAction> availableActions
 ) {
     public GetIncidentResult {
@@ -56,6 +57,7 @@ public record GetIncidentResult(
                 assigneeDisplayName,
                 createdAt,
                 updatedAt,
+                alertGroupId,
                 actions
         );
     }

@@ -1,5 +1,8 @@
 package ru.donskikh.incidenthub.alertgroup.application;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.LockModeType;
+
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -24,6 +27,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.HashSet;
+import java.util.Set;
 
 @Service
 public class CorrelateAlertsService {
@@ -33,19 +38,22 @@ public class CorrelateAlertsService {
     private final BusinessServiceRepository serviceRepository;
     private final AlertCorrelator correlator;
     private final AlertCorrelationProperties properties;
+    private final EntityManager entityManager;
 
     public CorrelateAlertsService(
             AlertRepository alertRepository,
             AlertGroupRepository groupRepository,
             BusinessServiceRepository serviceRepository,
             AlertCorrelator correlator,
-            AlertCorrelationProperties properties
+            AlertCorrelationProperties properties,
+            EntityManager entityManager
     ) {
         this.alertRepository = alertRepository;
         this.groupRepository = groupRepository;
         this.serviceRepository = serviceRepository;
         this.correlator = correlator;
         this.properties = properties;
+        this.entityManager = entityManager;
     }
 
     @Transactional(isolation = Isolation.READ_COMMITTED)
@@ -77,6 +85,7 @@ public class CorrelateAlertsService {
         groups.values().forEach(group -> snapshots.put(group.getId(),
                 snapshot(group, members.getOrDefault(group.getId(), List.of()))));
         int createdGroups = 0;
+        Set<Long> versionedGroups = new HashSet<>();
         for (Alert alert : alerts) {
             CorrelationDecision decision = Objects.requireNonNull(correlator.correlate(
                     new CorrelationAlert(alert.getId(), alert.getBusinessService().getId(), alert.getOccurredAt(),
@@ -87,6 +96,7 @@ public class CorrelateAlertsService {
             AlertGroup group;
             if (decision instanceof CorrelationDecision.OpenGroup) {
                 group = groupRepository.save(new AlertGroup(rootService, alert.getOccurredAt()));
+                versionedGroups.add(group.getId());
                 groups.put(group.getId(), group);
                 createdGroups++;
             } else {
@@ -96,6 +106,10 @@ public class CorrelateAlertsService {
                     throw new IllegalStateException("Correlator selected a group outside the context");
                 }
                 group.includeAlert(alert.getOccurredAt(), rootService);
+                if (versionedGroups.add(groupId)) {
+                    // Membership changes must conflict even when bounds and root stay unchanged.
+                    entityManager.lock(group, LockModeType.OPTIMISTIC_FORCE_INCREMENT);
+                }
             }
             if (alertRepository.attachToGroup(alert.getId(), group.getId()) != 1) {
                 throw new IllegalStateException("Alert was already assigned by another processor");

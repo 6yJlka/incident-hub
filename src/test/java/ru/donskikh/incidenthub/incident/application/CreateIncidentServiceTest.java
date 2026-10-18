@@ -56,8 +56,9 @@ class CreateIncidentServiceTest {
     @InjectMocks
     private CreateIncidentService service;
 
-    @Test
-    void derivesResponsibleTeamFromAffectedService() {
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.EnumSource(IncidentSource.class)
+    void derivesResponsibleTeamFromAffectedService(IncidentSource source) {
         User reporter = new User("reporter@example.com", "Reporter");
         Team ownerTeam = new Team("Payments", "PAYMENTS");
         BusinessService affectedService = affectedService(ownerTeam);
@@ -68,14 +69,16 @@ class CreateIncidentServiceTest {
         when(savedIncident.getId()).thenReturn(42L);
         when(savedIncident.getStatus()).thenReturn(IncidentStatus.OPEN);
 
-        CreateIncidentResult result = service.create(command(null));
+        var manual = command(null);
+        CreateIncidentResult result = service.create(new CreateIncidentCommand(manual.title(), manual.description(),
+                manual.affectedServiceId(), manual.priority(), manual.severity(), manual.actorId(), null, source));
 
         ArgumentCaptor<Incident> incidentCaptor = ArgumentCaptor.forClass(Incident.class);
         verify(incidentRepository).save(incidentCaptor.capture());
         Incident incident = incidentCaptor.getValue();
         assertThat(incident.getAffectedService()).isSameAs(affectedService);
         assertThat(incident.getSeverity()).isEqualTo(IncidentSeverity.SEV1);
-        assertThat(incident.getSource()).isEqualTo(IncidentSource.MANUAL);
+        assertThat(incident.getSource()).isEqualTo(source);
         assertThat(incident.getReporter()).isSameAs(reporter);
         assertThat(incident.getResponsibleTeam()).isSameAs(ownerTeam);
         assertThat(incident.getStatus()).isEqualTo(IncidentStatus.OPEN);
