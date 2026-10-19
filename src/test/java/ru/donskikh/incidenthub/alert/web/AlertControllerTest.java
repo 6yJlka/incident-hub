@@ -74,6 +74,24 @@ class AlertControllerTest {
         verifyNoInteractions(service);
     }
 
+    @Test
+    void returnsFutureOccurrenceRejectionAlongsideAcceptedItem() throws Exception {
+        when(service.accept(any())).thenReturn(new AcceptAlertsResult(List.of(
+                new AlertAcceptanceResult("one", AlertAcceptanceStatus.REJECTED, null, AlertRejectionReason.OCCURRED_IN_FUTURE),
+                new AlertAcceptanceResult("one", AlertAcceptanceStatus.ACCEPTED, 42L, null)
+        )));
+
+        mockMvc.perform(post("/api/v1/alerts").header("X-Integration-Token", "test-integration-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"alerts\":[" + ITEM + "," + ITEM + "]}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.results[0].status").value("REJECTED"))
+                .andExpect(jsonPath("$.results[0].reason").value("OCCURRED_IN_FUTURE"))
+                .andExpect(jsonPath("$.results[0].alertId").doesNotExist())
+                .andExpect(jsonPath("$.results[1].status").value("ACCEPTED"))
+                .andExpect(jsonPath("$.results[1].alertId").value(42));
+    }
+
     private static Stream<String> invalidBatches() {
         return Stream.of(
                 "{}", "{\"alerts\":null}", "{\"alerts\":[]}", "{\"alerts\":[null]}", ITEM,

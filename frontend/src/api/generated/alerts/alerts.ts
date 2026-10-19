@@ -14,7 +14,7 @@ export const getAcceptAlertsUrl = () => {
 }
 
 /**
- * Returns a result per item in input order. Duplicates ignore the incoming event body. Unknown services reject only that item. Invalid batch structure rejects the entire request.
+ * Returns a result per item in input order. Duplicates ignore the incoming event body. Unknown services or occurredAt beyond receivedAt plus the configured maximum clock skew (default PT1M) reject only that item with UNKNOWN_SERVICE or OCCURRED_IN_FUTURE. Rejected items do not reserve their key; the first valid occurrence can be accepted. Invalid batch structure rejects the entire request.
  * @summary Accept a batch of monitoring alerts
  */
 export const acceptAlerts = async (

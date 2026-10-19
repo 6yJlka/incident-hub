@@ -14,6 +14,7 @@ import ru.donskikh.incidenthub.catalog.BusinessService;
 import ru.donskikh.incidenthub.catalog.BusinessServiceRepository;
 
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.List;
@@ -43,7 +44,7 @@ class AcceptAlertsServiceTest {
     @BeforeEach
     void setUp() {
         service = new AcceptAlertsService(alertRepository, businessServiceRepository,
-                new AlertProperties(500), Clock.fixed(NOW, ZoneOffset.UTC));
+                new AlertProperties(500, Duration.ofMinutes(1)), Clock.fixed(NOW, ZoneOffset.UTC));
     }
 
     @Test
@@ -127,10 +128,95 @@ class AcceptAlertsServiceTest {
     }
 
     @Test
+    void acceptsAlertExactlyAtClockSkewBoundary() {
+        prepareService();
+        var input = alertAt("boundary", NOW.plusSeconds(60));
+        when(alertRepository.findIdsByKeys(any())).thenReturn(Map.of()).thenReturn(Map.of(input.key(), 10L));
+        when(alertRepository.insertIfAbsent(any())).thenReturn(Map.of(input.key(), 10L));
+
+        var result = service.accept(new AcceptAlertsCommand(List.of(input)));
+
+        assertThat(result.results()).containsExactly(new AlertAcceptanceResult(
+                "boundary", AlertAcceptanceStatus.ACCEPTED, 10L, null));
+        verify(alertRepository).insertIfAbsent(List.of(new NewAlert(input.key(), 7,
+                input.signalType(), input.severity(), input.occurredAt(), NOW, input.description())));
+    }
+
+    @Test
+    void rejectsAlertOneNanosecondBeyondClockSkewWithoutInserting() {
+        BusinessService businessService = mock(BusinessService.class);
+        when(businessService.getCode()).thenReturn("SERVICE");
+        when(businessServiceRepository.findAllByCodeIn(any())).thenReturn(List.of(businessService));
+
+        var result = service.accept(new AcceptAlertsCommand(List.of(
+                alertAt("future", NOW.plusSeconds(60).plusNanos(1)))));
+
+        assertThat(result.results()).containsExactly(new AlertAcceptanceResult(
+                "future", AlertAcceptanceStatus.REJECTED, null, AlertRejectionReason.OCCURRED_IN_FUTURE));
+        verify(alertRepository, never()).insertIfAbsent(any());
+    }
+
+    @Test
+    void acceptsFirstValidOccurrenceAfterFutureOccurrenceWithSameKey() {
+        prepareService();
+        var valid = alertAt("same", NOW);
+        when(alertRepository.findIdsByKeys(any())).thenReturn(Map.of()).thenReturn(Map.of(valid.key(), 10L));
+        when(alertRepository.insertIfAbsent(any())).thenReturn(Map.of(valid.key(), 10L));
+
+        var result = service.accept(new AcceptAlertsCommand(List.of(
+                alertAt("same", NOW.plusSeconds(61)), valid)));
+
+        assertThat(result.results()).containsExactly(
+                new AlertAcceptanceResult("same", AlertAcceptanceStatus.REJECTED, null, AlertRejectionReason.OCCURRED_IN_FUTURE),
+                new AlertAcceptanceResult("same", AlertAcceptanceStatus.ACCEPTED, 10L, null));
+        verify(alertRepository).insertIfAbsent(List.of(new NewAlert(valid.key(), 7,
+                valid.signalType(), valid.severity(), valid.occurredAt(), NOW, valid.description())));
+    }
+
+    @Test
+    void acceptsValidItemsInMixedBatchAndChecksDuplicatesBeforeFutureTime() {
+        prepareService();
+        var valid = alertAt("new", NOW);
+        var existing = alertAt("existing", Instant.MAX);
+        when(alertRepository.findIdsByKeys(any())).thenReturn(Map.of(existing.key(), 9L))
+                .thenReturn(Map.of(valid.key(), 10L));
+        when(alertRepository.insertIfAbsent(any())).thenReturn(Map.of(valid.key(), 10L));
+
+        var result = service.accept(new AcceptAlertsCommand(List.of(
+                alertAt("future", NOW.plusSeconds(61)), valid, existing,
+                alertAt("new", Instant.MAX), alert("unknown", "UNKNOWN"))));
+
+        assertThat(result.results()).containsExactly(
+                new AlertAcceptanceResult("future", AlertAcceptanceStatus.REJECTED, null, AlertRejectionReason.OCCURRED_IN_FUTURE),
+                new AlertAcceptanceResult("new", AlertAcceptanceStatus.ACCEPTED, 10L, null),
+                new AlertAcceptanceResult("existing", AlertAcceptanceStatus.DUPLICATE, 9L, null),
+                new AlertAcceptanceResult("new", AlertAcceptanceStatus.DUPLICATE, 10L, null),
+                new AlertAcceptanceResult("unknown", AlertAcceptanceStatus.REJECTED, null, AlertRejectionReason.UNKNOWN_SERVICE));
+        verify(alertRepository).insertIfAbsent(argThat(alerts -> alerts.size() == 1));
+    }
+
+    @Test
+    void usesConfiguredClockSkewIncludingZero() {
+        prepareService();
+        service = new AcceptAlertsService(alertRepository, businessServiceRepository,
+                new AlertProperties(500, Duration.ZERO), Clock.fixed(NOW, ZoneOffset.UTC));
+        var valid = alertAt("now", NOW);
+        when(alertRepository.findIdsByKeys(any())).thenReturn(Map.of()).thenReturn(Map.of(valid.key(), 10L));
+        when(alertRepository.insertIfAbsent(any())).thenReturn(Map.of(valid.key(), 10L));
+
+        var result = service.accept(new AcceptAlertsCommand(List.of(
+                alertAt("future", NOW.plusNanos(1)), valid)));
+
+        assertThat(result.results()).containsExactly(
+                new AlertAcceptanceResult("future", AlertAcceptanceStatus.REJECTED, null, AlertRejectionReason.OCCURRED_IN_FUTURE),
+                new AlertAcceptanceResult("now", AlertAcceptanceStatus.ACCEPTED, 10L, null));
+    }
+
+    @Test
     void rejectsNullAndOversizedCommandsBeforeDatabaseAccess() {
         assertThatThrownBy(() -> service.accept(null)).isInstanceOf(NullPointerException.class);
         var smallService = new AcceptAlertsService(alertRepository, businessServiceRepository,
-                new AlertProperties(1), Clock.systemUTC());
+                new AlertProperties(1, Duration.ofMinutes(1)), Clock.systemUTC());
         assertThatThrownBy(() -> smallService.accept(new AcceptAlertsCommand(
                 List.of(alert("one", "SERVICE"), alert("two", "SERVICE")))))
                 .isInstanceOf(IllegalArgumentException.class);
@@ -148,5 +234,10 @@ class AcceptAlertsServiceTest {
     private IncomingAlert alert(String id, String code) {
         return new IncomingAlert("prometheus", id, code, AlertSignalType.LATENCY,
                 AlertSeverity.WARNING, NOW.minusSeconds(60), "Latency increased");
+    }
+
+    private IncomingAlert alertAt(String id, Instant occurredAt) {
+        return new IncomingAlert("prometheus", id, "SERVICE", AlertSignalType.LATENCY,
+                AlertSeverity.WARNING, occurredAt, "Latency increased");
     }
 }

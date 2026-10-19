@@ -6,6 +6,8 @@ import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.context.annotation.Configuration;
 import ru.donskikh.incidenthub.alert.AlertProperties;
 
+import java.time.Duration;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -27,6 +29,7 @@ class IntegrationTokenPropertiesTest {
             assertThat(context).hasNotFailed();
             assertThat(context.getBean(IntegrationTokenProperties.class).matches("configured-token")).isTrue();
             assertThat(context.getBean(AlertProperties.class).maxBatchSize()).isEqualTo(500);
+            assertThat(context.getBean(AlertProperties.class).maxClockSkew()).isEqualTo(Duration.ofMinutes(1));
         });
     }
 
@@ -49,12 +52,31 @@ class IntegrationTokenPropertiesTest {
 
     @Test
     void validatesAndBindsBatchSize() {
-        assertThatThrownBy(() -> new AlertProperties(0)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> new AlertProperties(0, Duration.ofMinutes(1))).isInstanceOf(IllegalArgumentException.class);
         runner.withPropertyValues("app.security.integration.token=configured-token", "app.alerts.max-batch-size=17")
                 .run(context -> {
                     assertThat(context).hasNotFailed();
                     assertThat(context.getBean(AlertProperties.class).maxBatchSize()).isEqualTo(17);
                 });
+    }
+
+    @Test
+    void validatesAndBindsClockSkew() {
+        assertThatThrownBy(() -> new AlertProperties(500, Duration.ofNanos(-1)))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> new AlertProperties(500, null)).isInstanceOf(NullPointerException.class);
+        runner.withPropertyValues("app.security.integration.token=configured-token", "app.alerts.max-clock-skew=PT2M")
+                .run(context -> {
+                    assertThat(context).hasNotFailed();
+                    assertThat(context.getBean(AlertProperties.class).maxClockSkew()).isEqualTo(Duration.ofMinutes(2));
+                });
+        runner.withPropertyValues("app.security.integration.token=configured-token", "app.alerts.max-clock-skew=PT0S")
+                .run(context -> {
+                    assertThat(context).hasNotFailed();
+                    assertThat(context.getBean(AlertProperties.class).maxClockSkew()).isEqualTo(Duration.ZERO);
+                });
+        runner.withPropertyValues("app.security.integration.token=configured-token", "app.alerts.max-clock-skew=-PT1S")
+                .run(context -> assertThat(context).hasFailed());
     }
 
     @Configuration(proxyBeanMethods = false)

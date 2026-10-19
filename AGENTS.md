@@ -47,6 +47,10 @@ npm run test
 npm run build
 ```
 
+Run frontend checks sequentially, never in parallel: `api:check` regenerates
+the client and temporarily removes `src/api/generated`, which breaks tests
+running at the same time.
+
 A task is done only when all of the above pass.
 
 ## Workflow
