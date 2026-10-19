@@ -37,14 +37,18 @@ function assertClear(nodes: GraphNode[], edges: GraphEdge[]) {
   for (const edge of layout.edges) {
     const source = layout.nodes.find((node) => node.id === edge.from)!,
       target = layout.nodes.find((node) => node.id === edge.to)!
-    expect(edge.points[0]).toEqual({
-      x: source.x + source.width,
-      y: source.y + source.height / 2,
-    })
-    expect(edge.points.at(-1)).toEqual({
-      x: target.x,
-      y: target.y + target.height / 2,
-    })
+    const start = edge.points[0],
+      end = edge.points.at(-1)!
+    expect(start.x).toBe(source.x + source.width)
+    expect(end.x).toBe(target.x)
+    expect(start.y).toBeGreaterThan(source.y)
+    expect(start.y).toBeLessThan(source.y + source.height)
+    expect(end.y).toBeGreaterThan(target.y)
+    expect(end.y).toBeLessThan(target.y + target.height)
+    expect(edge.points[1].x).toBeGreaterThan(start.x)
+    expect(edge.points[1].y).toBe(start.y)
+    expect(edge.points.at(-2)!.x).toBeLessThan(end.x)
+    expect(edge.points.at(-2)!.y).toBe(end.y)
     for (let i = 1; i < edge.points.length; i++) {
       const a = edge.points[i - 1],
         b = edge.points[i]
@@ -56,6 +60,40 @@ function assertClear(nodes: GraphNode[], edges: GraphEdge[]) {
           hits(a, b, node),
           `${edge.from} -> ${edge.to} intersects node ${node.id}`,
         ).toBe(false)
+      }
+    }
+  }
+  for (let i = 0; i < layout.edges.length; i++) {
+    const first = layout.edges[i]
+    for (const second of layout.edges.slice(i + 1)) {
+      if (first.from === second.from)
+        expect(
+          Math.abs(first.points[0].y - second.points[0].y),
+        ).toBeGreaterThanOrEqual(8)
+      if (first.to === second.to)
+        expect(
+          Math.abs(first.points.at(-1)!.y - second.points.at(-1)!.y),
+        ).toBeGreaterThanOrEqual(8)
+      for (let a = 1; a < first.points.length; a++) {
+        for (let b = 1; b < second.points.length; b++) {
+          const p = first.points[a - 1],
+            q = first.points[a]
+          const r = second.points[b - 1],
+            s = second.points[b]
+          const overlap = (v: number, w: number, x: number, y: number) =>
+            Math.min(Math.max(v, w), Math.max(x, y)) -
+            Math.max(Math.min(v, w), Math.min(x, y))
+          if (p.x === q.x && r.x === s.x && overlap(p.y, q.y, r.y, s.y) > 0)
+            expect(
+              Math.abs(p.x - r.x),
+              'vertical lanes must be separated',
+            ).toBeGreaterThanOrEqual(8)
+          if (p.y === q.y && r.y === s.y && p.y === r.y)
+            expect(
+              overlap(p.x, q.x, r.x, s.x),
+              'horizontal edges must not merge',
+            ).toBeLessThanOrEqual(4)
+        }
       }
     }
   }
@@ -102,7 +140,10 @@ describe('group graph geometry', () => {
         to: ((i * 3) % 8) + 20,
       })),
     ]
-    assertClear(nodes, edges)
+    const layout = assertClear(nodes, edges)
+    const root = layout.nodes.find((node) => node.id === 1)!
+    const next = layout.nodes.find((node) => node.id === 2)!
+    expect(next.x - root.x - root.width).toBeGreaterThanOrEqual(12 * 8)
   })
   it('routes four consecutive diamonds', () => {
     const nodes = [{ id: 1, depth: 0 }],

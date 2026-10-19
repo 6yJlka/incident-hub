@@ -23,7 +23,8 @@ const NODE_WIDTH = 140
 const NODE_HEIGHT = 44
 const COLUMN_GAP = 38
 const ROW_GAP = 24
-const CLEARANCE = 6
+export const EDGE_LANE_SPACING = 8
+const CHANNEL_MARGIN = 12
 
 // Edges and node rectangles use the same coordinates; SVG rendering does not smooth corners.
 export function layoutGroupGraph(input: GraphNode[], edges: GraphEdge[]) {
@@ -71,213 +72,128 @@ export function layoutGroupGraph(input: GraphNode[], edges: GraphEdge[]) {
       rank()
     }
   }
-  const rows = Math.max(
-    1,
-    ...[...columns.values()].map((column) => column.length),
+  const columnIndex = new Map(
+    depths.flatMap((depth, index) =>
+      columns.get(depth)!.map((node) => [node.id, index] as const),
+    ),
   )
-  const nodes: PlacedNode[] = depths.flatMap((depth) => {
-    const column = columns.get(depth)!
-    return column.map((node, index) => ({
-      ...node,
-      width: NODE_WIDTH,
-      height: NODE_HEIGHT,
-      x: 24 + depth * (NODE_WIDTH + COLUMN_GAP),
-      y: 36 + ((rows - column.length) / 2 + index) * (NODE_HEIGHT + ROW_GAP),
-    }))
+  const validEdges = edges.filter(
+    (edge) => byId.has(edge.from) && byId.has(edge.to),
+  )
+  const incoming = new Map<number, number[]>(),
+    outgoing = new Map<number, number[]>()
+  const channels = new Map<number, number[]>()
+  const bypasses: number[] = []
+  validEdges.forEach((edge, index) => {
+    incoming.set(edge.to, [...(incoming.get(edge.to) ?? []), index])
+    outgoing.set(edge.from, [...(outgoing.get(edge.from) ?? []), index])
+    const exit = columnIndex.get(edge.from)!,
+      entry = columnIndex.get(edge.to)! - 1
+    for (const channel of new Set([exit, entry]))
+      channels.set(channel, [...(channels.get(channel) ?? []), index])
+    if (entry !== exit) bypasses.push(index)
   })
-  const width = Math.max(240, ...nodes.map((node) => node.x + node.width + 24))
-  const height = rows * (NODE_HEIGHT + ROW_GAP) + 48
+  const nodeHeight = (node: GraphNode) =>
+    Math.max(
+      NODE_HEIGHT,
+      (Math.max(
+        incoming.get(node.id)?.length ?? 0,
+        outgoing.get(node.id)?.length ?? 0,
+      ) +
+        2) *
+        EDGE_LANE_SPACING,
+    )
+  // Keep node tops and heights on an eight-pixel grid. Outgoing ports use phase 0,
+  // incoming ports phase 4, so opposing horizontal stubs cannot merge in a channel.
+  const roundedHeight = (node: GraphNode) =>
+    Math.ceil(nodeHeight(node) / EDGE_LANE_SPACING) * EDGE_LANE_SPACING
+  const columnHeights = depths.map((depth) =>
+    columns
+      .get(depth)!
+      .reduce((sum, node) => sum + roundedHeight(node) + ROW_GAP, -ROW_GAP),
+  )
+  const tallest = Math.max(0, ...columnHeights)
+  const gap = (channel: number) =>
+    Math.max(
+      COLUMN_GAP,
+      CHANNEL_MARGIN * 2 +
+        ((channels.get(channel)?.length ?? 1) - 1) * EDGE_LANE_SPACING,
+    )
+  const columnX: number[] = []
+  let nextX = 24 + (channels.has(-1) ? gap(-1) : 0)
+  depths.forEach((_, index) => {
+    columnX.push(nextX)
+    nextX += NODE_WIDTH + gap(index)
+  })
+  const top = bypasses.length ? 64 + bypasses.length * EDGE_LANE_SPACING : 40
+  const nodes: PlacedNode[] = depths.flatMap((depth, index) => {
+    let y =
+      top +
+      Math.floor((tallest - columnHeights[index]) / (2 * EDGE_LANE_SPACING)) *
+        EDGE_LANE_SPACING
+    return columns.get(depth)!.map((node) => {
+      const placed = {
+        ...node,
+        x: columnX[index],
+        y,
+        width: NODE_WIDTH,
+        height: roundedHeight(node),
+      }
+      y += placed.height + ROW_GAP
+      return placed
+    })
+  })
   const placed = new Map(nodes.map((node) => [node.id, node]))
-  const obstacles = nodes.map((node) => ({
-    x: node.x - CLEARANCE,
-    y: node.y - CLEARANCE,
-    width: node.width + CLEARANCE * 2,
-    height: node.height + CLEARANCE * 2,
-  }))
-  const xs = [
-    ...new Set([
-      8,
-      width - 8,
-      ...nodes.flatMap((node) => [
-        node.x - CLEARANCE - 2,
-        node.x + node.width + CLEARANCE + 2,
-      ]),
-    ]),
-  ].sort((a, b) => a - b)
-  const ys = [
-    ...new Set([
-      8,
-      height - 8,
-      ...nodes.flatMap((node) => [
-        node.y - CLEARANCE - 2,
-        node.y + node.height / 2,
-        node.y + node.height + CLEARANCE + 2,
-      ]),
-    ]),
-  ].sort((a, b) => a - b)
-  const points = ys.flatMap((y) => xs.map((x) => ({ x, y })))
-  const valid = points.map(
-    (point) =>
-      !obstacles.some(
-        (rect) =>
-          point.x > rect.x &&
-          point.x < rect.x + rect.width &&
-          point.y > rect.y &&
-          point.y < rect.y + rect.height,
-      ),
-  )
-  const adjacency: Array<
-    Array<{ to: number; length: number; direction: number }>
-  > = points.map(() => [])
-  for (let index = 0; index < points.length; index++) {
-    if (!valid[index]) continue
-    for (const other of [
-      (index % xs.length) + 1 < xs.length ? index + 1 : -1,
-      index + xs.length < points.length ? index + xs.length : -1,
-    ]) {
-      if (
-        other < 0 ||
-        !valid[other] ||
-        obstacles.some((rect) =>
-          segmentIntersectsRectangle(points[index], points[other], rect),
-        )
-      )
-        continue
-      const direction = points[index].y === points[other].y ? 0 : 1
-      const length =
-        Math.abs(points[index].x - points[other].x) +
-        Math.abs(points[index].y - points[other].y)
-      adjacency[index].push({ to: other, length, direction })
-      adjacency[other].push({ to: index, length, direction })
+  const port = (
+    node: PlacedNode,
+    list: number[],
+    edgeIndex: number,
+    entry: boolean,
+  ): Point => {
+    const offset =
+      Math.floor(
+        (node.height - (list.length - 1) * EDGE_LANE_SPACING) /
+          (2 * EDGE_LANE_SPACING),
+      ) * EDGE_LANE_SPACING
+    return {
+      x: entry ? node.x : node.x + node.width,
+      y:
+        node.y +
+        offset +
+        list.indexOf(edgeIndex) * EDGE_LANE_SPACING +
+        (entry ? 4 : 0),
     }
   }
-  const routes: RoutedEdge[] = edges.flatMap((edge) => {
-    const from = placed.get(edge.from),
-      to = placed.get(edge.to)
-    if (!from || !to) return []
-    const start = {
-      x: from.x + from.width + CLEARANCE + 2,
-      y: from.y + from.height / 2,
-    }
-    const end = { x: to.x - CLEARANCE - 2, y: to.y + to.height / 2 }
-    const startIndex = ys.indexOf(start.y) * xs.length + xs.indexOf(start.x)
-    const endIndex = ys.indexOf(end.y) * xs.length + xs.indexOf(end.x)
-    const distance = new Map<number, number>([[startIndex * 2, 0]])
-    const previous = new Map<number, number>()
-    const heap = new MinHeap()
-    heap.push(startIndex * 2, 0)
-    let finish: number | undefined
-    while (heap.size) {
-      const { state, cost } = heap.pop()!
-      if (cost !== distance.get(state)) continue
-      const current = Math.floor(state / 2)
-      if (current === endIndex) {
-        finish = state
-        break
-      }
-      for (const step of adjacency[current]) {
-        const next = step.to * 2 + step.direction
-        const candidate =
-          cost + step.length + (state % 2 === step.direction ? 0 : 16)
-        if (candidate >= (distance.get(next) ?? Infinity)) continue
-        distance.set(next, candidate)
-        previous.set(next, state)
-        heap.push(next, candidate)
-      }
-    }
-    if (finish === undefined)
-      throw new Error(`No obstacle-free route for ${edge.from} -> ${edge.to}`)
-    const path: Point[] = []
-    for (
-      let state: number | undefined = finish;
-      state !== undefined;
-      state = previous.get(state)
+  const lane = (channel: number, edgeIndex: number) => {
+    const left = channel < 0 ? 24 : columnX[channel] + NODE_WIDTH
+    return (
+      left +
+      CHANNEL_MARGIN +
+      channels.get(channel)!.indexOf(edgeIndex) * EDGE_LANE_SPACING
     )
-      path.push(points[Math.floor(state / 2)])
-    path.reverse()
-    path.unshift({ x: from.x + from.width, y: start.y })
-    path.push({ x: to.x, y: end.y })
-    return [
-      {
-        ...edge,
-        points: path.filter((point, index) => {
-          const before = path[index - 1],
-            after = path[index + 1]
-          return (
-            !before ||
-            !after ||
-            !(
-              (before.x === point.x && point.x === after.x) ||
-              (before.y === point.y && point.y === after.y)
-            )
-          )
-        }),
-      },
-    ]
+  }
+  const routes: RoutedEdge[] = validEdges.map((edge, index) => {
+    const from = placed.get(edge.from)!,
+      to = placed.get(edge.to)!
+    const start = port(from, outgoing.get(edge.from)!, index, false)
+    const end = port(to, incoming.get(edge.to)!, index, true)
+    const exitChannel = columnIndex.get(edge.from)!,
+      entryChannel = columnIndex.get(edge.to)! - 1
+    const exitX = lane(exitChannel, index),
+      entryX = lane(entryChannel, index)
+    const points: Point[] = [start, { x: exitX, y: start.y }]
+    if (exitChannel !== entryChannel) {
+      // Long, same-column and returning edges each have a private corridor above all nodes.
+      const bridgeY = 40 + bypasses.indexOf(index) * EDGE_LANE_SPACING
+      points.push({ x: exitX, y: bridgeY }, { x: entryX, y: bridgeY })
+    }
+    points.push({ x: entryX, y: end.y }, end)
+    return { ...edge, points }
   })
-  return { nodes, edges: routes, width, height }
-}
-
-export function segmentIntersectsRectangle(
-  a: Point,
-  b: Point,
-  rect: Point & { width: number; height: number },
-) {
-  if (a.x === b.x)
-    return (
-      a.x > rect.x &&
-      a.x < rect.x + rect.width &&
-      Math.max(a.y, b.y) > rect.y &&
-      Math.min(a.y, b.y) < rect.y + rect.height
-    )
-  if (a.y === b.y)
-    return (
-      a.y > rect.y &&
-      a.y < rect.y + rect.height &&
-      Math.max(a.x, b.x) > rect.x &&
-      Math.min(a.x, b.x) < rect.x + rect.width
-    )
-  throw new Error('Graph routes must use axis-aligned segments')
-}
-
-class MinHeap {
-  private items: Array<{ state: number; cost: number }> = []
-  get size() {
-    return this.items.length
-  }
-  push(state: number, cost: number) {
-    this.items.push({ state, cost })
-    let index = this.items.length - 1
-    while (index > 0) {
-      const parent = Math.floor((index - 1) / 2)
-      if (this.items[parent].cost <= cost) break
-      ;[this.items[parent], this.items[index]] = [
-        this.items[index],
-        this.items[parent],
-      ]
-      index = parent
-    }
-  }
-  pop() {
-    const result = this.items[0],
-      last = this.items.pop()!
-    if (!this.items.length) return result
-    this.items[0] = last
-    let index = 0
-    while (index * 2 + 1 < this.items.length) {
-      let child = index * 2 + 1
-      if (
-        child + 1 < this.items.length &&
-        this.items[child + 1].cost < this.items[child].cost
-      )
-        child++
-      if (this.items[index].cost <= this.items[child].cost) break
-      ;[this.items[index], this.items[child]] = [
-        this.items[child],
-        this.items[index],
-      ]
-      index = child
-    }
-    return result
-  }
+  const last = depths.length - 1
+  const width =
+    last < 0
+      ? 240
+      : columnX[last] + NODE_WIDTH + (channels.has(last) ? gap(last) : 24)
+  return { nodes, edges: routes, width, height: top + tallest + 24 }
 }

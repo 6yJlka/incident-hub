@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import type {
@@ -23,6 +23,7 @@ export function GroupRootPanel({
   failed: boolean
 }) {
   const { t } = useTranslation()
+  const arrowId = `group-arrow-${useId().replace(/[^a-zA-Z0-9_-]/g, '')}`
   const [view, setView] = useState<'graph' | 'label'>('graph')
   const services = groupServices(group)
   const reached = reachedServiceIds(
@@ -113,6 +114,20 @@ export function GroupRootPanel({
             role="img"
             aria-label={t('groups.graphTitle')}
           >
+            <defs>
+              <marker
+                id={arrowId}
+                viewBox="0 0 8 8"
+                refX="8"
+                refY="4"
+                markerWidth="8"
+                markerHeight="8"
+                markerUnits="userSpaceOnUse"
+                orient="auto"
+              >
+                <path d="M0,0 L8,4 L0,8 Z" fill="#69757b" />
+              </marker>
+            </defs>
             {[...new Set(nodes.map((node) => node.depth))].map((depth) => {
               const node = nodes.find((item) => item.depth === depth)!
               return (
@@ -144,6 +159,7 @@ export function GroupRootPanel({
                 fill="none"
                 stroke="#69757b"
                 strokeLinejoin="round"
+                markerEnd={`url(#${arrowId})`}
                 strokeDasharray={
                   edge.type === 'ASYNC'
                     ? '5 4'

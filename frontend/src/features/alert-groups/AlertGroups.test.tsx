@@ -384,6 +384,13 @@ describe('alert groups', () => {
     })
     expect(graph.querySelector('[data-edge="2-6"]')).toBeInTheDocument()
     expect(graph.querySelector('[data-edge="5-6"]')).toBeInTheDocument()
+    for (const edge of graph.querySelectorAll('[data-edge]')) {
+      const marker = edge.getAttribute('marker-end')!
+      expect(marker).toMatch(/^url\(#.+\)$/)
+      expect(
+        graph.querySelector(`[id="${marker.slice(5, -1)}"]`),
+      ).toHaveAttribute('orient', 'auto')
+    }
     const noise = screen.getByRole('row', { name: /ANALYTICS.*Noise signal/ })
     expect(within(noise).getByText('Вне пути')).toBeInTheDocument()
     expect(
