@@ -156,6 +156,107 @@ beforeEach(() => {
 })
 
 describe('alert groups', () => {
+  it('focuses the first empty text field before missing choice fields', async () => {
+    const user = userEvent.setup()
+    detail()
+    await user.click(await screen.findByRole('button', { name: 'Подтвердить' }))
+    const modal = screen.getByRole('dialog')
+    const title = within(modal).getByRole('textbox', { name: 'Заголовок' })
+    await user.clear(title)
+    await user.click(
+      within(modal).getByRole('button', { name: 'Создать инцидент' }),
+    )
+    expect(title).toHaveFocus()
+    expect(title).toHaveAttribute('aria-invalid', 'true')
+    expect(title).toHaveAccessibleDescription(
+      'Введите заголовок длиной до 255 символов',
+    )
+    expect(api.confirmAlertGroup).not.toHaveBeenCalled()
+  })
+  it('shows labelled group statistics and decision details', async () => {
+    api.getAlertGroup.mockResolvedValue({
+      ...group,
+      firstAlertAt: '2026-10-19T12:00:00Z',
+      lastAlertAt: '2026-10-19T12:02:05Z',
+      status: 'CONFIRMED',
+      availableActions: [],
+      decidedByDisplayName: 'Engineer',
+      decidedAt: '2026-10-19T12:03:00Z',
+      incidentId: 42,
+    })
+    detail()
+    await screen.findByRole('img', { name: 'Схема распространения отказа' })
+    const sidebar = screen.getByRole('complementary')
+    for (const [label, value] of [
+      ['Алерты', '3'],
+      ['Услуги в группе', '3'],
+      ['На пути', '2'],
+      ['Вне пути', '1'],
+      ['Длительность', '2 мин 5 с'],
+    ]) {
+      expect(
+        within(sidebar).getByText(label).nextElementSibling,
+      ).toHaveTextContent(value)
+    }
+    expect(
+      within(sidebar).getByText('Кто подтвердил').nextElementSibling,
+    ).toHaveTextContent('Engineer')
+    expect(
+      within(sidebar).getByText('Когда').nextElementSibling,
+    ).not.toHaveTextContent('—')
+    expect(
+      within(sidebar).getByText('Созданный инцидент').nextElementSibling,
+    ).toHaveTextContent('INC-42')
+    expect(screen.getByText('Макс. сигнал').parentElement).toHaveTextContent(
+      'CRITICAL',
+    )
+  })
+
+  it('labels the author and optional reason after dismissal', async () => {
+    api.getAlertGroup.mockResolvedValue({
+      ...group,
+      status: 'DISMISSED',
+      availableActions: [],
+      decidedByDisplayName: 'Engineer',
+    })
+    detail()
+    await screen.findByText('Кто отклонил')
+    expect(
+      screen.getByText('Причина отклонения').nextElementSibling,
+    ).toHaveTextContent('Не указана')
+  })
+
+  it('supports keyboard choice and focuses the next invalid field', async () => {
+    const user = userEvent.setup()
+    detail()
+    await user.click(await screen.findByRole('button', { name: 'Подтвердить' }))
+    const modal = screen.getByRole('dialog')
+    await user.click(
+      within(modal).getByRole('button', { name: 'Создать инцидент' }),
+    )
+    expect(
+      within(modal).getByRole('radiogroup', { name: 'Severity инцидента' }),
+    ).toHaveAccessibleDescription('Выберите severity')
+    await user.keyboard('{ArrowRight}')
+    expect(within(modal).getByRole('radio', { name: 'SEV2' })).toHaveAttribute(
+      'aria-checked',
+      'true',
+    )
+    expect(
+      within(modal).queryByText('Выберите severity'),
+    ).not.toBeInTheDocument()
+    await user.click(
+      within(modal).getByRole('button', { name: 'Создать инцидент' }),
+    )
+    expect(within(modal).getByRole('radio', { name: 'CRITICAL' })).toHaveFocus()
+    expect(
+      within(modal).getByRole('radiogroup', { name: 'Приоритет' }),
+    ).toHaveAccessibleDescription('Выберите priority')
+    expect(within(modal).getByText(/Макс\. сигнал группы/)).toHaveTextContent(
+      'CRITICAL',
+    )
+    expect(api.confirmAlertGroup).not.toHaveBeenCalled()
+  })
   it('uses only availableActions even for an engineer', async () => {
     api.getAlertGroup.mockResolvedValue({
       ...group,
@@ -314,8 +415,11 @@ describe('alert groups', () => {
     detail()
     await user.click(await screen.findByRole('button', { name: 'Подтвердить' }))
     const modal = screen.getByRole('dialog')
-    expect(within(modal).getByLabelText('Severity инцидента')).toHaveValue('')
-    expect(within(modal).getByLabelText('Приоритет')).toHaveValue('')
+    expect(
+      within(modal)
+        .getAllByRole('radio')
+        .every((button) => button.getAttribute('aria-checked') === 'false'),
+    ).toBe(true)
     expect(
       within(within(modal).getByLabelText('Услуга инцидента'))
         .getAllByRole('option')
@@ -331,18 +435,19 @@ describe('alert groups', () => {
       within(modal).getByRole('button', { name: 'Создать инцидент' }),
     )
     expect(api.confirmAlertGroup).not.toHaveBeenCalled()
-    expect(within(modal).getByRole('alert')).toHaveTextContent(
-      'Выберите severity',
-    )
-    await user.selectOptions(
-      within(modal).getByLabelText('Severity инцидента'),
-      'SEV2',
-    )
+    expect(within(modal).getByText('Выберите severity')).toBeInTheDocument()
+    expect(within(modal).getByText('Выберите priority')).toBeInTheDocument()
+    expect(within(modal).getByRole('radio', { name: 'SEV1' })).toHaveFocus()
+    expect(
+      within(modal).getByRole('radiogroup', { name: 'Severity инцидента' }),
+    ).toHaveAttribute('aria-invalid', 'true')
+    await user.click(within(modal).getByRole('radio', { name: 'SEV2' }))
     await user.click(
       within(modal).getByRole('button', { name: 'Создать инцидент' }),
     )
     expect(api.confirmAlertGroup).not.toHaveBeenCalled()
-    await user.selectOptions(within(modal).getByLabelText('Приоритет'), 'HIGH')
+    expect(within(modal).getByRole('radio', { name: 'CRITICAL' })).toHaveFocus()
+    await user.click(within(modal).getByRole('radio', { name: 'HIGH' }))
     await user.click(
       within(modal).getByRole('button', { name: 'Создать инцидент' }),
     )
@@ -357,10 +462,9 @@ describe('alert groups', () => {
           'Группа GRP-7: 3 алертов. Вероятный корень — CORE_DATABASE. Услуги группы: CORE_DATABASE, API_GATEWAY, ANALYTICS.',
       }),
     )
-    expect(await screen.findByRole('link', { name: 'INC-42' })).toHaveAttribute(
-      'href',
-      '/incidents/42',
-    )
+    expect(
+      await screen.findByRole('link', { name: /^INC-42/ }),
+    ).toHaveAttribute('href', '/incidents/42')
     expect(screen.getByText('Engineer')).toBeInTheDocument()
   })
 

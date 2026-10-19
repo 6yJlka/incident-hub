@@ -9,7 +9,12 @@ import type {
 } from '../../api/generated/model'
 import { Pagination } from '../../components/Pagination'
 import { getAllServices } from '../incidents/api/incidentsApi'
-import { formatGroupTime } from './groupPresentation'
+import { formatGroupDuration, formatGroupTime } from './groupPresentation'
+import { SignalSeverity } from './SignalSeverity'
+import { ServiceCode } from './ServiceCode'
+import { StatusBadge } from '../incidents/shared/StatusBadge'
+import { FilterSelect } from '../incidents/feed/IncidentFilters'
+import feedStyles from '../incidents/feed/IncidentFeedPage.module.css'
 import styles from './AlertGroups.module.css'
 
 export function AlertGroupFeedPage() {
@@ -70,40 +75,33 @@ export function AlertGroupFeedPage() {
     })
   }
   return (
-    <article className={styles.page}>
+    <article className={`${styles.page} ${styles.feedPage}`}>
       <header className={styles.header}>
         <h1>{t('groups.title')}</h1>
         <p>{t('groups.subtitle')}</p>
-      </header>
-      <div className={styles.filters}>
-        <label>
-          {t('groups.status')}
-          <select
+        <div className={`${feedStyles.filters} ${styles.feedFilters}`}>
+          <FilterSelect
+            label={t('groups.status')}
             value={status}
-            onChange={(event) => filter('status', event.target.value)}
-          >
-            <option value="">{t('groups.all')}</option>
-            {['OPEN', 'CONFIRMED', 'DISMISSED'].map((value) => (
-              <option key={value}>{value}</option>
-            ))}
-          </select>
-        </label>
-        <label>
-          {t('groups.root')}
-          <select
+            options={['OPEN', 'CONFIRMED', 'DISMISSED']}
+            onChange={(value) => filter('status', value)}
+          />
+          <FilterSelect
+            label={t('groups.root')}
             value={root}
-            onChange={(event) => filter('rootServiceId', event.target.value)}
-          >
-            <option value="">{t('groups.all')}</option>
-            {services.map((service) => (
-              <option key={service.id} value={service.id}>
-                {service.code}
-              </option>
-            ))}
-          </select>
-        </label>
-        <button onClick={() => setParams({})}>{t('groups.reset')}</button>
-      </div>
+            options={services.map((service) => ({
+              value: String(service.id),
+              label: service.code ?? '',
+            }))}
+            onChange={(value) => filter('rootServiceId', value)}
+          />
+          {(status || root) && (
+            <button className={feedStyles.reset} onClick={() => setParams({})}>
+              {t('groups.reset')}
+            </button>
+          )}
+        </div>
+      </header>
       {loading ? (
         <p>{t('common.loading')}</p>
       ) : error ? (
@@ -111,17 +109,19 @@ export function AlertGroupFeedPage() {
       ) : (
         <>
           <div className={styles.tableWrap}>
-            <table className={styles.table}>
+            <table className={`${styles.table} ${styles.groupFeedTable}`}>
               <thead>
                 <tr>
                   {[
-                    'group',
+                    'id',
                     'status',
-                    'root',
-                    'services',
+                    'probableRoot',
                     'alerts',
-                    'signalSeverity',
-                    'lastAlert',
+                    'servicesInGroup',
+                    'maxSignal',
+                    'first',
+                    'last',
+                    'shortDuration',
                     'incident',
                   ].map((key) => (
                     <th key={key}>{t(`groups.${key}`)}</th>
@@ -136,23 +136,42 @@ export function AlertGroupFeedPage() {
                         GRP-{group.id}
                       </Link>
                     </td>
-                    <td>{group.status}</td>
-                    <td className={styles.code}>
-                      {group.probableRootServiceCode}
+                    <td>
+                      <StatusBadge value={group.status} />
                     </td>
                     <td className={styles.code}>
+                      <ServiceCode
+                        code={group.probableRootServiceCode}
+                        tier={
+                          services.find(
+                            (service) =>
+                              service.id === group.probableRootServiceId,
+                          )?.tier
+                        }
+                      />
+                    </td>
+                    <td>{group.alertCount}</td>
+                    <td className={styles.code}>
+                      <span className={styles.serviceCount}>
+                        {group.serviceCount}
+                      </span>
                       {group.servicePreviewCodes?.join(', ')}
                       {(group.serviceCount ?? 0) >
                         (group.servicePreviewCodes?.length ?? 0) &&
                         ` +${(group.serviceCount ?? 0) - (group.servicePreviewCodes?.length ?? 0)}`}
                     </td>
-                    <td>{group.alertCount}</td>
                     <td>
-                      <span className={styles[group.worstSeverity ?? 'INFO']}>
-                        {group.worstSeverity ?? '—'}
-                      </span>
+                      <SignalSeverity value={group.worstSeverity} />
                     </td>
+                    <td>{formatGroupTime(group.firstAlertAt)}</td>
                     <td>{formatGroupTime(group.lastAlertAt)}</td>
+                    <td>
+                      {formatGroupDuration(
+                        group.firstAlertAt,
+                        group.lastAlertAt,
+                        t,
+                      )}
+                    </td>
                     <td>
                       {group.incidentId ? (
                         <Link to={`/incidents/${group.incidentId}`}>
@@ -168,7 +187,10 @@ export function AlertGroupFeedPage() {
             </table>
           </div>
           {!page?.items?.length && (
-            <p className={styles.empty}>{t('groups.empty')}</p>
+            <div className={styles.empty}>
+              <p>{t('groups.empty')}</p>
+              <button onClick={() => setParams({})}>{t('groups.reset')}</button>
+            </div>
           )}
           {page && (
             <Pagination

@@ -118,11 +118,6 @@ export function IncidentDetailPage() {
         </Link>
       </div>
       <IncidentHeader incident={data.incident} />
-      {data.incident.alertGroupId && (
-        <Link to={`/alert-groups/${data.incident.alertGroupId}`}>
-          {t('groups.incidentOrigin', { id: data.incident.alertGroupId })}
-        </Link>
-      )}
       <div className={styles.detailGrid}>
         <main className={styles.mainColumn}>
           <section>

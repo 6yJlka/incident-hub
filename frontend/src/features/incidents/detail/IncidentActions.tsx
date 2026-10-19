@@ -132,7 +132,7 @@ export function IncidentActions({
           {user.role === 'REPORTER'
             ? t('incidents.actions.reporterReason')
             : incident.status === 'CLOSED' || incident.status === 'CANCELLED'
-              ? t('incidents.actions.terminalReason')
+              ? t('incidents.actions.terminalReason', { status: incident.status })
               : t('incidents.actions.none')}
         </div>
       )}

@@ -44,6 +44,7 @@ it.each([7, undefined])(
       affectedServiceId: 1,
       status: 'OPEN',
       severity: 'SEV2',
+      source: 'AUTOMATIC',
       priority: 'HIGH',
       availableActions: [],
       alertGroupId,
@@ -58,11 +59,14 @@ it.each([7, undefined])(
       </AuthContext.Provider>,
     )
     await screen.findByText('Database issue')
-    if (alertGroupId)
-      expect(
-        screen.getByRole('link', { name: 'Создан из группы GRP-7' }),
-      ).toHaveAttribute('href', '/alert-groups/7')
-    else
+    if (alertGroupId) {
+      const origin = screen.getByRole('link', {
+        name: /Создан из группы GRP-7/,
+      })
+      expect(origin).toHaveAttribute('href', '/alert-groups/7')
+      expect(origin.closest('header')).toBeInTheDocument()
+      expect(origin.previousElementSibling).toHaveTextContent('AUTOMATIC')
+    } else
       expect(
         screen.queryByRole('link', { name: /Создан из группы/ }),
       ).not.toBeInTheDocument()

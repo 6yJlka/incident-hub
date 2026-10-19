@@ -6,7 +6,9 @@ import type {
   BusinessServiceListItemResponse,
   ConfirmAlertGroupRequest,
 } from '../../api/generated/model'
-import { groupServices } from './groupPresentation'
+import { groupServices, maximumSignal } from './groupPresentation'
+import { DecisionChoices } from './DecisionChoices'
+import { SignalSeverity } from './SignalSeverity'
 import styles from './AlertGroups.module.css'
 
 export function GroupDecisionDialog({
@@ -52,7 +54,11 @@ export function GroupDecisionDialog({
     }),
   )
   const [reason, setReason] = useState('')
-  const [invalid, setInvalid] = useState(false)
+  type Field = 'severity' | 'priority' | 'serviceId' | 'title' | 'description'
+  const [errors, setErrors] = useState<Partial<Record<Field, string>>>({})
+  function clear(field: Field) {
+    setErrors((current) => ({ ...current, [field]: undefined }))
+  }
   const services = groupServices(group)
   const ids = new Set(services.map((service) => service.id))
   const remaining = catalog.filter((service) => !ids.has(service.id))
@@ -91,15 +97,20 @@ export function GroupDecisionDialog({
       onDismiss(reason.trim() || undefined)
       return
     }
-    if (
-      !severity ||
-      !priority ||
-      !serviceId ||
-      !title.trim() ||
-      !description.trim() ||
-      title.length > 255
-    ) {
-      setInvalid(true)
+    const invalid: Partial<Record<Field, string>> = {}
+    if (!title.trim() || title.length > 255)
+      invalid.title = t('groups.titleRequired')
+    if (!description.trim())
+      invalid.description = t('groups.descriptionRequired')
+    if (!serviceId) invalid.serviceId = t('groups.serviceRequired')
+    if (!severity) invalid.severity = t('groups.severityRequired')
+    if (!priority) invalid.priority = t('groups.priorityRequired')
+    setErrors(invalid)
+    const first = Object.keys(invalid)[0]
+    if (first) {
+      ref.current
+        ?.querySelector<HTMLElement>(`[data-field="${first}"]`)
+        ?.focus()
       return
     }
     onConfirm({
@@ -132,40 +143,69 @@ export function GroupDecisionDialog({
             {kind === 'confirm' ? (
               <>
                 <label>
-                  {t('groups.incidentSeverity')}
-                  <select
+                  {t('groups.incidentTitle')}
+                  <input
                     required
-                    aria-invalid={invalid && !severity}
-                    value={severity}
-                    onChange={(event) => setSeverity(event.target.value)}
-                  >
-                    <option value="">{t('groups.choose')}</option>
-                    {['SEV1', 'SEV2', 'SEV3', 'SEV4'].map((value) => (
-                      <option key={value}>{value}</option>
-                    ))}
-                  </select>
+                    data-field="title"
+                    aria-invalid={Boolean(errors.title)}
+                    aria-describedby={errors.title ? 'title-error' : undefined}
+                    maxLength={255}
+                    value={title}
+                    onChange={(event) => {
+                      setTitle(event.target.value)
+                      clear('title')
+                    }}
+                  />
+                  {errors.title && (
+                    <span
+                      id="title-error"
+                      role="alert"
+                      className={styles.fieldError}
+                    >
+                      {errors.title}
+                    </span>
+                  )}
                 </label>
                 <label>
-                  {t('groups.priority')}
-                  <select
+                  {t('groups.incidentDescription')}
+                  <textarea
                     required
-                    aria-invalid={invalid && !priority}
-                    value={priority}
-                    onChange={(event) => setPriority(event.target.value)}
-                  >
-                    <option value="">{t('groups.choose')}</option>
-                    {['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'].map((value) => (
-                      <option key={value}>{value}</option>
-                    ))}
-                  </select>
+                    data-field="description"
+                    aria-invalid={Boolean(errors.description)}
+                    aria-describedby={
+                      errors.description ? 'description-error' : undefined
+                    }
+                    rows={4}
+                    value={description}
+                    onChange={(event) => {
+                      setDescription(event.target.value)
+                      clear('description')
+                    }}
+                  />
+                  {errors.description && (
+                    <span
+                      id="description-error"
+                      role="alert"
+                      className={styles.fieldError}
+                    >
+                      {errors.description}
+                    </span>
+                  )}
                 </label>
-                <p className={styles.hint}>{t('groups.independentScales')}</p>
                 <label>
                   {t('groups.incidentService')}
                   <select
                     required
+                    data-field="serviceId"
+                    aria-invalid={Boolean(errors.serviceId)}
+                    aria-describedby={
+                      errors.serviceId ? 'serviceId-error' : undefined
+                    }
                     value={serviceId}
-                    onChange={(event) => setServiceId(event.target.value)}
+                    onChange={(event) => {
+                      setServiceId(event.target.value)
+                      clear('serviceId')
+                    }}
                   >
                     {services.map((service) => (
                       <option key={service.id} value={service.id}>
@@ -183,25 +223,45 @@ export function GroupDecisionDialog({
                       </option>
                     ))}
                   </select>
+                  {errors.serviceId && (
+                    <span
+                      id="serviceId-error"
+                      role="alert"
+                      className={styles.fieldError}
+                    >
+                      {errors.serviceId}
+                    </span>
+                  )}
                 </label>
-                <label>
-                  {t('groups.incidentTitle')}
-                  <input
-                    required
-                    maxLength={255}
-                    value={title}
-                    onChange={(event) => setTitle(event.target.value)}
+                <div className={styles.choiceColumns}>
+                  <DecisionChoices
+                    name="severity"
+                    label={t('groups.incidentSeverity')}
+                    options={['SEV1', 'SEV2', 'SEV3', 'SEV4']}
+                    value={severity}
+                    error={errors.severity}
+                    onChange={(value) => {
+                      setSeverity(value)
+                      clear('severity')
+                    }}
                   />
-                </label>
-                <label>
-                  {t('groups.incidentDescription')}
-                  <textarea
-                    required
-                    rows={4}
-                    value={description}
-                    onChange={(event) => setDescription(event.target.value)}
+                  <DecisionChoices
+                    name="priority"
+                    label={t('groups.priority')}
+                    options={['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']}
+                    value={priority}
+                    error={errors.priority}
+                    onChange={(value) => {
+                      setPriority(value)
+                      clear('priority')
+                    }}
                   />
-                </label>
+                </div>
+                <p className={styles.hint}>
+                  {t('groups.maxSignalHint')}{' '}
+                  <SignalSeverity value={maximumSignal(group.alerts)} />.{' '}
+                  {t('groups.signalNotIncident')}
+                </p>
               </>
             ) : (
               <label>
@@ -215,9 +275,7 @@ export function GroupDecisionDialog({
               </label>
             )}
           </fieldset>
-          {(invalid || error) && (
-            <p role="alert">{error ?? t('groups.validation')}</p>
-          )}
+          {error && <p role="alert">{error}</p>}
           <div className={styles.actions}>
             <button className={styles.primary} disabled={busy} type="submit">
               {t(

@@ -7,6 +7,8 @@ import type {
   BusinessServiceResponse,
 } from '../../api/generated/model'
 import { groupServices, reachedServiceIds } from './groupPresentation'
+import { layoutGroupGraph } from './groupGraphLayout'
+import { ServiceCode } from './ServiceCode'
 import styles from './AlertGroups.module.css'
 
 export function GroupRootPanel({
@@ -56,28 +58,17 @@ export function GroupRootPanel({
       off: true,
     })),
   ]
-  const positions = new Map(
-    nodes.map((node) => {
-      const column = nodes.filter((other) => other.depth === node.depth)
-      return [
-        node.id,
-        {
-          x: (node.depth ?? 0) * 184 + 12,
-          y: column.findIndex((other) => other.id === node.id) * 76 + 36,
-        },
-      ]
-    }),
+  const geometry = layoutGroupGraph(
+    nodes.map((node) => ({ id: node.id!, depth: node.depth ?? 0 })),
+    (affected ?? []).flatMap((service) =>
+      (service.dependencies ?? []).map((edge) => ({
+        from: edge.serviceId!,
+        to: service.id!,
+        type: edge.type,
+      })),
+    ),
   )
-  const width = (maxDepth + (outside.length ? 2 : 1)) * 184 + 12
-  const height =
-    Math.max(
-      1,
-      ...nodes.map(
-        (node) => nodes.filter((other) => other.depth === node.depth).length,
-      ),
-    ) *
-      76 +
-    40
+  const positions = new Map(geometry.nodes.map((node) => [node.id, node]))
   return (
     <section className={styles.panel}>
       <div className={styles.sectionHead}>
@@ -106,7 +97,7 @@ export function GroupRootPanel({
       </div>
       {view === 'label' ? (
         <div className={styles.rootLabel}>
-          <strong>{group.probableRootServiceCode}</strong>
+          <ServiceCode code={group.probableRootServiceCode} tier={root?.tier} />
           <span>{group.probableRootServiceName}</span>
           <span>{root?.tier}</span>
           <span>{root?.ownerTeamName}</span>
@@ -117,55 +108,73 @@ export function GroupRootPanel({
       ) : affected !== null ? (
         <div className={styles.graphWrap}>
           <svg
-            width={width}
-            height={height}
+            width={geometry.width}
+            height={geometry.height}
             role="img"
             aria-label={t('groups.graphTitle')}
           >
-            {(affected ?? []).flatMap((service) =>
-              (service.dependencies ?? []).map((edge) => {
-                const from = positions.get(edge.serviceId),
-                  to = positions.get(service.id)
-                return (
-                  from &&
-                  to && (
-                    <path
-                      key={`${edge.serviceId}-${service.id}`}
-                      data-edge={`${edge.serviceId}-${service.id}`}
-                      d={`M${from.x + 152},${from.y + 26} C${from.x + 170},${from.y + 26} ${to.x - 18},${to.y + 26} ${to.x},${to.y + 26}`}
-                      fill="none"
-                      stroke="#69757b"
-                      strokeDasharray={
-                        edge.type === 'ASYNC'
-                          ? '5 4'
-                          : edge.type === 'DATA'
-                            ? '2 3'
-                            : undefined
-                      }
-                    />
+            {[...new Set(nodes.map((node) => node.depth))].map((depth) => {
+              const node = nodes.find((item) => item.depth === depth)!
+              return (
+                <text
+                  key={depth}
+                  x={positions.get(node.id!)!.x}
+                  y={16}
+                  fill="#7d878b"
+                  fontSize="9"
+                >
+                  {node.off
+                    ? t('groups.offPath')
+                    : depth === 0
+                      ? t('groups.root')
+                      : t('groups.depth', { depth })}
+                </text>
+              )
+            })}
+            {geometry.edges.map((edge) => (
+              <path
+                key={`${edge.from}-${edge.to}`}
+                data-edge={`${edge.from}-${edge.to}`}
+                d={edge.points
+                  .map(
+                    (point, index) =>
+                      `${index === 0 ? 'M' : 'L'}${point.x},${point.y}`,
                   )
-                )
-              }),
-            )}
+                  .join(' ')}
+                fill="none"
+                stroke="#69757b"
+                strokeLinejoin="round"
+                strokeDasharray={
+                  edge.type === 'ASYNC'
+                    ? '5 4'
+                    : edge.type === 'DATA'
+                      ? '2 3'
+                      : undefined
+                }
+              />
+            ))}
             {nodes.map((node) => {
-              const position = positions.get(node.id)!
+              const position = positions.get(node.id!)!
               return (
                 <g
                   key={node.id}
                   transform={`translate(${position.x},${position.y})`}
                 >
                   <rect
-                    width="152"
-                    height="54"
+                    width={position.width}
+                    height={position.height}
                     rx="4"
                     fill={node.depth === 0 ? '#321b1e' : '#151a1d'}
                     stroke={node.depth === 0 ? '#ef4444' : '#556169'}
                     strokeDasharray={counts.has(node.id) ? undefined : '4 3'}
                   />
-                  <text x="10" y="21" fill="#e6e9ea" fontSize="11">
-                    {node.code}
+                  <title>{node.code}</title>
+                  <text x="10" y="18" fill="#e6e9ea" fontSize="10">
+                    {node.code && node.code.length > 19
+                      ? `${node.code.slice(0, 18)}…`
+                      : node.code}
                   </text>
-                  <text x="10" y="41" fill="#a9b3b7" fontSize="10">
+                  <text x="10" y="34" fill="#a9b3b7" fontSize="9">
                     {node.off
                       ? t('groups.offPath')
                       : node.depth === 0

@@ -1,6 +1,33 @@
 export const ru = {
   translation: {
     groups: {
+      id: 'ID',
+      first: 'Первый',
+      last: 'Последний',
+      shortDuration: 'Длит.',
+      suspectedGroup: 'Группа подозрений',
+      maxSignal: 'Макс. сигнал',
+      firstAlert: 'Первый алерт',
+      duration: 'Длительность',
+      durationValue: '{{minutes}} мин {{seconds}} с',
+      servicesInGroup: 'Услуги в группе',
+      onPath: 'На пути',
+      confirmedBy: 'Кто подтвердил',
+      dismissedBy: 'Кто отклонил',
+      decidedAt: 'Когда',
+      createdIncident: 'Созданный инцидент',
+      dismissReason: 'Причина отклонения',
+      noReason: 'Не указана',
+      signalScaleHint:
+        'Деления CRITICAL / WARNING / INFO показывают severity сигнала мониторинга. SEV1–SEV4 — severity инцидента, её задаёт инженер.',
+      maxSignalHint: 'Макс. сигнал группы —',
+      signalNotIncident:
+        'Это severity сигнала, на severity инцидента не переносится.',
+      severityRequired: 'Выберите severity',
+      priorityRequired: 'Выберите priority',
+      serviceRequired: 'Выберите услугу',
+      titleRequired: 'Введите заголовок длиной до 255 символов',
+      descriptionRequired: 'Введите описание',
       title: 'Подозрения',
       subtitle: 'Группы алертов мониторинга',
       group: 'Группа',
@@ -184,7 +211,7 @@ export const ru = {
           CANCEL: 'Отменить',
         },
         reporterReason: 'Ваша роль не меняет состояние инцидентов.',
-        terminalReason: 'Инцидент закрыт, действия недоступны.',
+        terminalReason: 'В статусе {{status}} действий нет.',
         none: 'Для текущего состояния доступных действий нет.',
       },
       errors: {

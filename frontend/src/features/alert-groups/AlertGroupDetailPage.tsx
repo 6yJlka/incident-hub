@@ -21,7 +21,16 @@ import { ApiError } from '../../api/http'
 import { getAllServices } from '../incidents/api/incidentsApi'
 import { GroupRootPanel } from './GroupRootPanel'
 import { GroupDecisionDialog } from './GroupDecisionDialog'
-import { formatGroupTime, reachedServiceIds } from './groupPresentation'
+import {
+  formatGroupDuration,
+  formatGroupTime,
+  groupServices,
+  maximumSignal,
+  reachedServiceIds,
+} from './groupPresentation'
+import { SignalSeverity } from './SignalSeverity'
+import { ServiceCode } from './ServiceCode'
+import { StatusBadge } from '../incidents/shared/StatusBadge'
 import { notifyGroupsChanged } from './groupEvents'
 import styles from './AlertGroups.module.css'
 
@@ -151,16 +160,32 @@ export function AlertGroupDetailPage() {
   return (
     <article className={styles.page}>
       <Link to="/alert-groups">← {t('groups.title')}</Link>
-      <header className={styles.header}>
-        <div className={styles.sectionHead}>
+      <header className={`${styles.header} ${styles.groupHeader}`}>
+        <div>
+          <div className={styles.groupHeading}>
+            <span>{t('groups.suspectedGroup')}</span>
+            <StatusBadge value={group.status} />
+          </div>
           <h1>GRP-{group.id}</h1>
-          <span>{group.status}</span>
+          <p>
+            {formatGroupTime(group.firstAlertAt)} —{' '}
+            {formatGroupTime(group.lastAlertAt)}
+          </p>
         </div>
-        <p>
-          {formatGroupTime(group.firstAlertAt)} —{' '}
-          {formatGroupTime(group.lastAlertAt)} ·{' '}
-          {t('groups.alertCount', { count: group.alerts?.length ?? 0 })}
-        </p>
+        <div className={styles.headerFacts}>
+          <div>
+            <span>{t('groups.probableRoot')}</span>
+            <ServiceCode
+              code={group.probableRootServiceCode}
+              tier={root?.tier}
+            />
+            <small>{root?.tier}</small>
+          </div>
+          <div>
+            <span>{t('groups.maxSignal')}</span>
+            <SignalSeverity value={maximumSignal(group.alerts)} />
+          </div>
+        </div>
       </header>
       {(stale || notice || loadError) && (
         <div role="alert" className={styles.banner}>
@@ -225,9 +250,7 @@ export function AlertGroupDetailPage() {
                       </td>
                       <td>{alert.signalType}</td>
                       <td>
-                        <span className={styles[alert.severity ?? 'INFO']}>
-                          {alert.severity}
-                        </span>
+                        <SignalSeverity value={alert.severity} />
                       </td>
                       <td>
                         {alert.source}
@@ -241,7 +264,7 @@ export function AlertGroupDetailPage() {
             </div>
           </section>
         </main>
-        <aside className={styles.panel}>
+        <aside className={`${styles.panel} ${styles.groupSidebar}`}>
           <h2>{t('groups.decision')}</h2>
           {(group.availableActions?.length ?? 0) > 0 ? (
             <>
@@ -277,17 +300,72 @@ export function AlertGroupDetailPage() {
           ) : group.status === 'OPEN' ? (
             <p>{t('groups.awaitingEngineer')}</p>
           ) : (
-            <>
-              <p>{group.decidedByDisplayName}</p>
-              <p>{formatGroupTime(group.decidedAt)}</p>
-              {group.dismissReason && <p>{group.dismissReason}</p>}
-              {group.incidentId && (
-                <Link to={`/incidents/${group.incidentId}`}>
-                  INC-{group.incidentId}
-                </Link>
+            <dl className={styles.decisionResult}>
+              <dt>
+                {t(
+                  group.status === 'CONFIRMED'
+                    ? 'groups.confirmedBy'
+                    : 'groups.dismissedBy',
+                )}
+              </dt>
+              <dd>{group.decidedByDisplayName ?? '—'}</dd>
+              <dt>{t('groups.decidedAt')}</dt>
+              <dd>{formatGroupTime(group.decidedAt)}</dd>
+              {group.status === 'DISMISSED' && (
+                <>
+                  <dt>{t('groups.dismissReason')}</dt>
+                  <dd>{group.dismissReason || t('groups.noReason')}</dd>
+                </>
               )}
-            </>
+              {group.incidentId && (
+                <>
+                  <dt>{t('groups.createdIncident')}</dt>
+                  <dd>
+                    <Link to={`/incidents/${group.incidentId}`}>
+                      INC-{group.incidentId} →
+                    </Link>
+                  </dd>
+                </>
+              )}
+            </dl>
           )}
+          <dl className={styles.groupStats}>
+            <div>
+              <dt>{t('groups.alerts')}</dt>
+              <dd>{group.alerts?.length ?? 0}</dd>
+            </div>
+            <div>
+              <dt>{t('groups.servicesInGroup')}</dt>
+              <dd>{groupServices(group).length}</dd>
+            </div>
+            <div>
+              <dt>{t('groups.onPath')}</dt>
+              <dd>
+                {reached
+                  ? groupServices(group).filter((service) =>
+                      reached.has(service.id!),
+                    ).length
+                  : '—'}
+              </dd>
+            </div>
+            <div>
+              <dt>{t('groups.offPath')}</dt>
+              <dd>
+                {reached
+                  ? groupServices(group).filter(
+                      (service) => !reached.has(service.id!),
+                    ).length
+                  : '—'}
+              </dd>
+            </div>
+            <div>
+              <dt>{t('groups.duration')}</dt>
+              <dd>
+                {formatGroupDuration(group.firstAlertAt, group.lastAlertAt, t)}
+              </dd>
+            </div>
+          </dl>
+          <p className={styles.hint}>{t('groups.signalScaleHint')}</p>
         </aside>
       </div>
       {modal && !stale && !loading && (
