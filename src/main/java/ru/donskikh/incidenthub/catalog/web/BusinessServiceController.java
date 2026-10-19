@@ -140,7 +140,8 @@ public class BusinessServiceController {
     @GetMapping("/{id}/affected")
     @Operation(operationId = "getAffectedServices",
             summary = "Find affected services",
-            description = "Traverses reverse dependencies and returns each affected service once at its minimum depth."
+            description = "Traverses reverse dependencies and returns each affected service once at its minimum depth, "
+                    + "with all direct dependencies within the root and affected service set."
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Affected services returned"),

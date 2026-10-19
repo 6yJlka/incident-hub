@@ -42,24 +42,24 @@ class AlertGroupControllerTest {
     void confirmsAndReturnsAvailableActions() throws Exception {
         when(confirmService.confirm(any())).thenReturn(new GetAlertGroupResult(item(), List.of()));
         mockMvc.perform(post("/api/v1/alert-groups/7/confirm").contentType("application/json")
-                        .content("{\"severity\":\"SEV2\",\"priority\":\"HIGH\"}"))
+                        .content("{\"expectedVersion\":0,\"severity\":\"SEV2\",\"priority\":\"HIGH\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.availableActions[0]").value("CONFIRM"));
     }
 
     @Test
-    void dismissAcceptsMissingBody() throws Exception {
+    void dismissAcceptsVersionWithoutReason() throws Exception {
         when(dismissService.dismiss(any())).thenReturn(new GetAlertGroupResult(item(), List.of()));
-        mockMvc.perform(post("/api/v1/alert-groups/7/dismiss"))
+        mockMvc.perform(post("/api/v1/alert-groups/7/dismiss").contentType("application/json").content("{\"expectedVersion\":0}"))
                 .andExpect(status().isOk());
         verify(dismissService).dismiss(org.mockito.ArgumentMatchers.argThat(command -> command.reason() == null));
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"{}", "{\"severity\":\"SEV2\"}", "{\"priority\":\"HIGH\"}",
-            "{\"severity\":\"CRITICAL\",\"priority\":\"HIGH\"}",
-            "{\"severity\":\"SEV2\",\"priority\":\"HIGH\",\"businessServiceId\":0}",
-            "{\"severity\":\"SEV2\",\"priority\":\"HIGH\",\"title\":\" \"}"})
+    @ValueSource(strings = {"{}", "{\"expectedVersion\":0,\"severity\":\"SEV2\"}", "{\"priority\":\"HIGH\"}",
+            "{\"expectedVersion\":0,\"severity\":\"CRITICAL\",\"priority\":\"HIGH\"}",
+            "{\"expectedVersion\":0,\"severity\":\"SEV2\",\"priority\":\"HIGH\",\"businessServiceId\":0}",
+            "{\"expectedVersion\":0,\"severity\":\"SEV2\",\"priority\":\"HIGH\",\"title\":\" \"}"})
     void rejectsInvalidConfirmation(String body) throws Exception {
         mockMvc.perform(post("/api/v1/alert-groups/7/confirm").contentType("application/json").content(body))
                 .andExpect(status().isBadRequest());
@@ -69,7 +69,7 @@ class AlertGroupControllerTest {
     @Test
     void rejectsLongDismissReason() throws Exception {
         mockMvc.perform(post("/api/v1/alert-groups/7/dismiss").contentType("application/json")
-                        .content("{\"reason\":\"" + "x".repeat(2001) + "\"}"))
+                        .content("{\"expectedVersion\":0,\"reason\":\"" + "x".repeat(2001) + "\"}"))
                 .andExpect(status().isBadRequest());
         verifyNoInteractions(dismissService);
     }
@@ -79,13 +79,13 @@ class AlertGroupControllerTest {
         when(confirmService.confirm(any())).thenThrow(new ru.donskikh.incidenthub.alertgroup.AlertGroupStateConflictException(
                 AlertGroupStatus.CONFIRMED));
         mockMvc.perform(post("/api/v1/alert-groups/7/confirm").contentType("application/json")
-                        .content("{\"severity\":\"SEV2\",\"priority\":\"HIGH\"}"))
+                        .content("{\"expectedVersion\":0,\"severity\":\"SEV2\",\"priority\":\"HIGH\"}"))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.type").value("urn:incident-hub:problem:conflict"))
                 .andExpect(jsonPath("$.currentStatus").value("CONFIRMED"));
         when(dismissService.dismiss(any())).thenThrow(
                 new ru.donskikh.incidenthub.alertgroup.AlertGroupConcurrentModificationException(7, new RuntimeException()));
-        mockMvc.perform(post("/api/v1/alert-groups/7/dismiss"))
+        mockMvc.perform(post("/api/v1/alert-groups/7/dismiss").contentType("application/json").content("{\"expectedVersion\":0}"))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.type").value("urn:incident-hub:problem:concurrent-modification"))
                 .andExpect(jsonPath("$.alertGroupId").value(7));
@@ -159,5 +159,23 @@ class AlertGroupControllerTest {
     private AlertGroupItem item() {
         return new AlertGroupItem(7L, AlertGroupStatus.OPEN, 42L, "CORE_DATABASE", "Database",
                 Instant.parse("2026-10-18T12:00:00Z"), Instant.parse("2026-10-18T12:05:00Z"), null);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"{}", "{\"expectedVersion\":null}", "{\"expectedVersion\":-1}"})
+    void requiresNonNegativeVersionForBothDecisions(String body) throws Exception {
+        mockMvc.perform(post("/api/v1/alert-groups/7/dismiss").contentType("application/json").content(body))
+                .andExpect(status().isBadRequest());
+        String confirmBody = body.substring(0, body.length() - 1)
+                + (body.length() > 2 ? "," : "") + "\"severity\":\"SEV2\",\"priority\":\"HIGH\"}";
+        mockMvc.perform(post("/api/v1/alert-groups/7/confirm").contentType("application/json").content(confirmBody))
+                .andExpect(status().isBadRequest());
+        verifyNoInteractions(confirmService, dismissService);
+    }
+
+    @Test
+    void dismissRequiresRequestBody() throws Exception {
+        mockMvc.perform(post("/api/v1/alert-groups/7/dismiss")).andExpect(status().isBadRequest());
+        verifyNoInteractions(dismissService);
     }
 }

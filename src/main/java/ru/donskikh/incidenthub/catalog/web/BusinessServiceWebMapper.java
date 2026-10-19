@@ -163,7 +163,8 @@ public class BusinessServiceWebMapper {
                 item.ownerTeamId(),
                 item.ownerTeamName(),
                 item.depth(),
-                item.dependencyType()
+                item.dependencyType(),
+                item.dependencies().stream().map(edge -> new AffectedDependencyResponse(edge.serviceId(), edge.type())).toList()
         );
     }
 }

@@ -45,6 +45,12 @@ class GetAffectedServicesServiceTest {
         when(businessServiceRepository.existsById(42L)).thenReturn(true);
         when(serviceDependencyRepository.findAffectedServices(42L, 3))
                 .thenReturn(List.of(depthTwo, depthOneSecond, depthOneFirst));
+        var edge = mock(ServiceDependencyRepository.AffectedDependencyProjection.class);
+        when(edge.getDependentId()).thenReturn(45L);
+        when(edge.getServiceId()).thenReturn(42L);
+        when(edge.getType()).thenReturn(DependencyType.DATA);
+        when(serviceDependencyRepository.findDependenciesWithin(List.of(44L, 43L, 45L, 42L)))
+                .thenReturn(List.of(edge));
 
         GetAffectedServicesResult result = service.get(new GetAffectedServicesQuery(42L, 3));
 
@@ -56,6 +62,8 @@ class GetAffectedServicesServiceTest {
                 .containsExactly(1, 1, 2);
         assertThat(result.items()).extracting(AffectedServiceItem::dependencyType)
                 .containsExactly(DependencyType.DATA, DependencyType.SYNC, DependencyType.ASYNC);
+        assertThat(result.items().getFirst().dependencies())
+                .containsExactly(new AffectedDependencyItem(42L, DependencyType.DATA));
         assertThat(result.items()).allSatisfy(item -> {
             assertThat(item.tier()).isEqualTo(ServiceTier.TIER_2);
             assertThat(item.active()).isTrue();

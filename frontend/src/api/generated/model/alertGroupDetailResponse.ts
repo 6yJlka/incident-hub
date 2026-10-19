@@ -11,6 +11,7 @@ import type { GroupAlertResponse } from './groupAlertResponse'
 
 export interface AlertGroupDetailResponse {
   id?: number
+  version?: number
   status?: AlertGroupDetailResponseStatus
   probableRootServiceId?: number
   probableRootServiceCode?: string

@@ -22,7 +22,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest
+@SpringBootTest(properties = "spring.jpa.properties.hibernate.generate_statistics=true")
 @Transactional
 class GetAffectedServicesServiceIntegrationTest extends PostgreSQLIntegrationTest {
 
@@ -43,6 +43,9 @@ class GetAffectedServicesServiceIntegrationTest extends PostgreSQLIntegrationTes
 
     @Autowired
     private EntityManager entityManager;
+
+    @Autowired
+    private jakarta.persistence.EntityManagerFactory entityManagerFactory;
 
     private Team ownerTeam;
 
@@ -76,6 +79,9 @@ class GetAffectedServicesServiceIntegrationTest extends PostgreSQLIntegrationTes
                 .containsExactly(1, 2, 3);
         assertThat(result.items()).extracting(AffectedServiceItem::dependencyType)
                 .containsExactly(DependencyType.SYNC, DependencyType.ASYNC, DependencyType.DATA);
+        assertThat(result.items().get(0).dependencies()).containsExactly(new AffectedDependencyItem(serviceA.getId(), DependencyType.SYNC));
+        assertThat(result.items().get(1).dependencies()).containsExactly(new AffectedDependencyItem(serviceB.getId(), DependencyType.ASYNC));
+        assertThat(result.items().get(2).dependencies()).containsExactly(new AffectedDependencyItem(serviceC.getId(), DependencyType.DATA));
         assertThat(result.items()).allSatisfy(item -> {
             assertThat(item.ownerTeamId()).isEqualTo(ownerTeam.getId());
             assertThat(item.ownerTeamName()).isEqualTo("Platform");
@@ -104,6 +110,9 @@ class GetAffectedServicesServiceIntegrationTest extends PostgreSQLIntegrationTes
                 .singleElement()
                 .extracting(AffectedServiceItem::depth)
                 .isEqualTo(2);
+        assertThat(result.items().get(2).dependencies()).containsExactlyInAnyOrder(
+                new AffectedDependencyItem(serviceB.getId(), DependencyType.DATA),
+                new AffectedDependencyItem(serviceC.getId(), DependencyType.SYNC));
     }
 
     @Test
@@ -122,6 +131,8 @@ class GetAffectedServicesServiceIntegrationTest extends PostgreSQLIntegrationTes
         assertThat(result.items()).extracting(AffectedServiceItem::code)
                 .containsExactly("B", "C")
                 .doesNotContain("A");
+        assertThat(result.items().get(0).dependencies()).containsExactly(new AffectedDependencyItem(serviceA.getId(), DependencyType.SYNC));
+        assertThat(result.items().get(1).dependencies()).containsExactly(new AffectedDependencyItem(serviceB.getId(), DependencyType.SYNC));
     }
 
     @Test
@@ -133,6 +144,7 @@ class GetAffectedServicesServiceIntegrationTest extends PostgreSQLIntegrationTes
         addDependency(serviceB, serviceA, DependencyType.SYNC);
         addDependency(serviceC, serviceB, DependencyType.SYNC);
         addDependency(serviceD, serviceC, DependencyType.SYNC);
+        addDependency(serviceB, serviceD, DependencyType.DATA);
         entityManager.clear();
 
         GetAffectedServicesResult result = getAffected(serviceA, 2);
@@ -142,6 +154,28 @@ class GetAffectedServicesServiceIntegrationTest extends PostgreSQLIntegrationTes
                 .doesNotContain("D");
         assertThat(result.items()).extracting(AffectedServiceItem::depth)
                 .containsExactly(1, 2);
+        assertThat(result.items()).flatExtracting(AffectedServiceItem::dependencies)
+                .extracting(AffectedDependencyItem::serviceId).doesNotContain(serviceD.getId());
+    }
+
+    @Test
+    void usesThreeQueriesRegardlessOfReachedServiceCount() {
+        var root = createService("ROOT");
+        var previous = root;
+        for (int index = 1; index <= 6; index++) {
+            var next = createService("NODE_" + index);
+            addDependency(next, previous, DependencyType.SYNC);
+            previous = next;
+        }
+        entityManager.flush();
+        entityManager.clear();
+        var statistics = entityManagerFactory.unwrap(org.hibernate.SessionFactory.class).getStatistics();
+        for (int depth : new int[]{1, 6}) {
+            statistics.clear();
+            var result = getAffected(root, depth);
+            assertThat(result.items()).hasSize(depth);
+            assertThat(statistics.getPrepareStatementCount()).isEqualTo(3);
+        }
     }
 
     @Test

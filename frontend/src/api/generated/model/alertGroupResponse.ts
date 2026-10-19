@@ -6,6 +6,7 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { AlertGroupResponseStatus } from './alertGroupResponseStatus'
+import type { AlertGroupResponseWorstSeverity } from './alertGroupResponseWorstSeverity'
 
 export interface AlertGroupResponse {
   id?: number
@@ -16,4 +17,8 @@ export interface AlertGroupResponse {
   firstAlertAt?: string
   lastAlertAt?: string
   incidentId?: number
+  alertCount?: number
+  serviceCount?: number
+  servicePreviewCodes?: string[]
+  worstSeverity?: AlertGroupResponseWorstSeverity
 }

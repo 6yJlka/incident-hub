@@ -5,6 +5,7 @@
  * REST API for managing service ownership, dependencies, and incident lifecycle
  * OpenAPI spec version: 1.0.0
  */
+import type { AffectedDependencyResponse } from './affectedDependencyResponse'
 import type { AffectedServiceResponseDependencyType } from './affectedServiceResponseDependencyType'
 import type { AffectedServiceResponseTier } from './affectedServiceResponseTier'
 
@@ -27,4 +28,6 @@ export interface AffectedServiceResponse {
   depth?: number
   /** Type of the edge used on the selected minimum-depth path */
   dependencyType?: AffectedServiceResponseDependencyType
+  /** All direct dependencies within the root and affected service set */
+  dependencies?: AffectedDependencyResponse[]
 }

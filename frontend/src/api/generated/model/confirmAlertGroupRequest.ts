@@ -9,6 +9,7 @@ import type { ConfirmAlertGroupRequestPriority } from './confirmAlertGroupReques
 import type { ConfirmAlertGroupRequestSeverity } from './confirmAlertGroupRequestSeverity'
 
 export interface ConfirmAlertGroupRequest {
+  expectedVersion: number
   severity: ConfirmAlertGroupRequestSeverity
   priority: ConfirmAlertGroupRequestPriority
   businessServiceId?: number

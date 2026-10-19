@@ -7,6 +7,8 @@ import { IncidentDetailPage } from '../features/incidents/detail/IncidentDetailP
 import { CreateIncidentPage } from '../features/incidents/create/CreateIncidentPage'
 import { ServiceCatalogPage } from '../features/services/catalog/ServiceCatalogPage'
 import { ServiceDetailPage } from '../features/services/detail/ServiceDetailPage'
+import { AlertGroupFeedPage } from '../features/alert-groups/AlertGroupFeedPage'
+import { AlertGroupDetailPage } from '../features/alert-groups/AlertGroupDetailPage'
 
 export const router = createBrowserRouter([
   {
@@ -19,6 +21,8 @@ export const router = createBrowserRouter([
       {
         element: <AppShell />,
         children: [
+          { path: '/alert-groups', element: <AlertGroupFeedPage /> },
+          { path: '/alert-groups/:id', element: <AlertGroupDetailPage /> },
           {
             index: true,
             element: <Navigate to="/incidents" replace />,

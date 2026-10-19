@@ -28,6 +28,7 @@ public class DismissAlertGroupService {
         Objects.requireNonNull(command, "command must not be null");
         var group = groups.findById(command.groupId())
                 .orElseThrow(() -> new AlertGroupNotFoundException(command.groupId()));
+        group.requireVersion(command.expectedVersion());
         group.requireOpen();
         var actor = users.findById(command.actorId())
                 .orElseThrow(() -> new UserNotFoundException(command.actorId()));

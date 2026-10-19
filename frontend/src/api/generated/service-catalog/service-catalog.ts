@@ -179,7 +179,7 @@ export const getGetAffectedServicesUrl = (
 }
 
 /**
- * Traverses reverse dependencies and returns each affected service once at its minimum depth.
+ * Traverses reverse dependencies and returns each affected service once at its minimum depth, with all direct dependencies within the root and affected service set.
  * @summary Find affected services
  */
 export const getAffectedServices = async (

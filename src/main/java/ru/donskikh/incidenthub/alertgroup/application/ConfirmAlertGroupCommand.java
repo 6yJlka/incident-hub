@@ -5,8 +5,11 @@ import ru.donskikh.incidenthub.incident.IncidentPriority;
 import java.util.Objects;
 
 public record ConfirmAlertGroupCommand(long groupId, IncidentSeverity severity, IncidentPriority priority,
-        Long businessServiceId, String title, String description, long actorId) {
+        Long businessServiceId, String title, String description, long actorId, long expectedVersion) {
     public ConfirmAlertGroupCommand {
+        if (expectedVersion < 0) {
+            throw new IllegalArgumentException("expectedVersion must not be negative");
+        }
         if (groupId <= 0 || actorId <= 0) {
             throw new IllegalArgumentException("groupId and actorId must be positive");
         }

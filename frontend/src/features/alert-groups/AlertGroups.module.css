@@ -1,0 +1,259 @@
+.page {
+  width: 100%;
+  max-width: var(--content-max-width);
+  margin: 0 auto;
+  padding: var(--space-5) var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.page a {
+  color: var(--color-focus);
+  text-decoration: none;
+}
+.page a:hover {
+  text-decoration: underline;
+}
+.header {
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 18px;
+}
+.header h1 {
+  font-size: 23px;
+  margin: 0 0 8px;
+  font-weight: 600;
+}
+.header p,
+.hint {
+  color: var(--color-text-muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+.filters,
+.actions,
+.tabs,
+.sectionHead,
+.rootLabel {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.filters {
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--color-border);
+}
+.filters label,
+.formFields label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.filters label {
+  min-width: 190px;
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+.page button,
+.dialog button {
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+  border-radius: 4px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+.page button:hover,
+.dialog button:hover {
+  border-color: var(--color-focus);
+}
+.page button:disabled,
+.dialog button:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+.page select,
+.dialog select,
+.dialog input,
+.dialog textarea {
+  padding: 9px 10px;
+  background: var(--color-bg);
+  color: var(--color-text);
+  border: 1px solid var(--color-border-strong);
+  border-radius: 4px;
+}
+.dialog textarea {
+  resize: vertical;
+}
+.tableWrap {
+  overflow-x: auto;
+}
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 12px;
+}
+.table th {
+  font-family: var(--font-mono);
+  color: var(--color-text-muted);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.table th,
+.table td {
+  padding: 13px 12px;
+  border-bottom: 1px solid var(--color-border);
+}
+.table td {
+  vertical-align: top;
+  line-height: 1.5;
+}
+.table tbody tr:hover {
+  background: var(--color-hover);
+}
+.table small {
+  display: block;
+  color: var(--color-text-muted);
+  margin-top: 5px;
+  font-size: 10px;
+}
+.code {
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+.CRITICAL {
+  color: var(--color-danger-soft);
+}
+.WARNING {
+  color: var(--color-warning);
+}
+.INFO {
+  color: var(--color-text-muted);
+}
+.empty {
+  padding: 50px;
+  text-align: center;
+  color: var(--color-text-muted);
+}
+.detailGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 270px;
+  gap: 20px;
+  align-items: start;
+}
+.mainColumn {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.panel {
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 18px;
+  background: var(--color-surface);
+}
+.panel h2 {
+  font-size: 14px;
+  margin: 0 0 12px;
+  font-weight: 500;
+}
+.panel p {
+  line-height: 1.6;
+}
+.sectionHead {
+  justify-content: space-between;
+}
+.sectionHead p {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin: 0;
+}
+.tabs {
+  gap: 0;
+}
+.tabs button {
+  font-size: 11px;
+}
+.tabs button[aria-pressed='true'] {
+  color: var(--color-focus);
+  border-color: var(--color-focus);
+}
+.graphWrap {
+  overflow-x: auto;
+  margin-top: 18px;
+}
+.graphWrap text {
+  font-family: var(--font-mono);
+}
+.rootLabel {
+  flex-wrap: wrap;
+  padding: 22px 0;
+}
+.rootLabel strong {
+  font-family: var(--font-mono);
+}
+.offPath {
+  background: var(--color-hover);
+}
+.banner {
+  border: 1px solid var(--color-warning);
+  padding: 15px;
+  border-radius: 4px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+}
+.actions {
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+.page .primary,
+.dialog .primary {
+  background: var(--color-primary);
+  border-color: var(--color-primary-border);
+  color: var(--color-on-accent);
+}
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(0, 0, 0, 0.7);
+  display: grid;
+  place-items: center;
+  padding: 30px;
+}
+.dialog {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: 7px;
+  padding: 24px;
+  width: min(580px, 100%);
+  max-height: 90vh;
+  overflow: auto;
+}
+.dialog h2 {
+  margin: 0 0 22px;
+  font-size: 17px;
+}
+.formFields {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.formFields label {
+  font-size: 12px;
+}
+@media (max-width: 1150px) {
+  .detailGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

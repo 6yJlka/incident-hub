@@ -8,9 +8,12 @@ import ru.donskikh.incidenthub.catalog.DependencyType;
 import ru.donskikh.incidenthub.catalog.ServiceDependencyRepository;
 import ru.donskikh.incidenthub.catalog.ServiceTier;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Service
 public class GetAffectedServicesService {
@@ -34,10 +37,15 @@ public class GetAffectedServicesService {
             throw new BusinessServiceNotFoundException(query.businessServiceId());
         }
 
-        List<AffectedServiceItem> affectedServices = serviceDependencyRepository
-                .findAffectedServices(query.businessServiceId(), query.maxDepth())
+        var reached = serviceDependencyRepository.findAffectedServices(query.businessServiceId(), query.maxDepth());
+        var serviceIds = new ArrayList<>(reached.stream().map(ServiceDependencyRepository.AffectedServiceProjection::getId).toList());
+        serviceIds.add(query.businessServiceId());
+        Map<Long, List<AffectedDependencyItem>> dependencies = serviceDependencyRepository.findDependenciesWithin(serviceIds)
+                .stream().collect(Collectors.groupingBy(ServiceDependencyRepository.AffectedDependencyProjection::getDependentId,
+                        Collectors.mapping(edge -> new AffectedDependencyItem(edge.getServiceId(), edge.getType()), Collectors.toList())));
+        List<AffectedServiceItem> affectedServices = reached
                 .stream()
-                .map(this::toItem)
+                .map(projection -> toItem(projection, dependencies.getOrDefault(projection.getId(), List.of())))
                 .sorted(Comparator.comparingInt(AffectedServiceItem::depth)
                         .thenComparing(AffectedServiceItem::code))
                 .toList();
@@ -49,7 +57,8 @@ public class GetAffectedServicesService {
         );
     }
 
-    private AffectedServiceItem toItem(ServiceDependencyRepository.AffectedServiceProjection projection) {
+    private AffectedServiceItem toItem(ServiceDependencyRepository.AffectedServiceProjection projection,
+            List<AffectedDependencyItem> dependencies) {
         return new AffectedServiceItem(
                 projection.getId(),
                 projection.getCode(),
@@ -59,7 +68,8 @@ public class GetAffectedServicesService {
                 projection.getOwnerTeamId(),
                 projection.getOwnerTeamName(),
                 projection.getDepth(),
-                DependencyType.valueOf(projection.getDependencyType())
+                DependencyType.valueOf(projection.getDependencyType()),
+                dependencies
         );
     }
 }

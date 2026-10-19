@@ -8,6 +8,9 @@ import ru.donskikh.incidenthub.alertgroup.AlertGroupRepository;
 import ru.donskikh.incidenthub.alertgroup.infrastructure.AlertGroupSpecifications;
 
 import java.util.Objects;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 public class ListAlertGroupsService {
@@ -24,7 +27,11 @@ public class ListAlertGroupsService {
         var page = repository.findAll(AlertGroupSpecifications.withFilters(query.status(), query.rootServiceId()),
                 PageRequest.of(query.page(), query.size(),
                         Sort.by(Sort.Order.desc("lastAlertAt"), Sort.Order.desc("id"))));
-        return new ListAlertGroupsResult(page.getContent().stream().map(AlertGroupItem::from).toList(),
+        Map<Long, AlertGroupRepository.SummaryProjection> summaries = page.isEmpty() ? Map.of()
+                : repository.findSummariesByGroupIds(page.getContent().stream().map(group -> group.getId()).toList())
+                    .stream().collect(Collectors.toMap(AlertGroupRepository.SummaryProjection::getGroupId, Function.identity()));
+        return new ListAlertGroupsResult(page.getContent().stream()
+                .map(group -> AlertGroupItem.from(group).withSummary(summaries.get(group.getId()))).toList(),
                 page.getNumber(), page.getSize(), page.getTotalElements(), page.getTotalPages(),
                 page.hasNext(), page.hasPrevious());
     }

@@ -42,7 +42,7 @@ class DismissAlertGroupServiceTest {
         var actor = new User("engineer@example.com", "Engineer");
         when(groups.findById(7L)).thenReturn(Optional.of(group));
         when(users.findById(20L)).thenReturn(Optional.of(actor));
-        service.dismiss(new DismissAlertGroupCommand(7, "False positive", 20));
+        service.dismiss(new DismissAlertGroupCommand(7, "False positive", 20, 0));
         assertThat(group.getStatus()).isEqualTo(AlertGroupStatus.DISMISSED);
         assertThat(group.getIncident()).isNull();
         assertThat(group.getDecidedBy()).isSameAs(actor);
@@ -54,7 +54,7 @@ class DismissAlertGroupServiceTest {
 
     @Test
     void missingGroupIsNotFound() {
-        assertThatThrownBy(() -> service.dismiss(new DismissAlertGroupCommand(7, null, 20)))
+        assertThatThrownBy(() -> service.dismiss(new DismissAlertGroupCommand(7, null, 20, 0)))
                 .isInstanceOf(AlertGroupNotFoundException.class);
     }
 
@@ -64,7 +64,7 @@ class DismissAlertGroupServiceTest {
         var group = group();
         ReflectionTestUtils.setField(group, "status", status);
         when(groups.findById(7L)).thenReturn(Optional.of(group));
-        assertThatThrownBy(() -> service.dismiss(new DismissAlertGroupCommand(7, null, 20)))
+        assertThatThrownBy(() -> service.dismiss(new DismissAlertGroupCommand(7, null, 20, 0)))
                 .isInstanceOf(AlertGroupStateConflictException.class);
         verifyNoInteractions(users, getGroup);
     }
@@ -74,7 +74,7 @@ class DismissAlertGroupServiceTest {
         when(groups.findById(7L)).thenReturn(Optional.of(group()));
         when(users.findById(20L)).thenReturn(Optional.of(new User("engineer@example.com", "Engineer")));
         doThrow(new ObjectOptimisticLockingFailureException(AlertGroup.class, 7L)).when(groups).flush();
-        assertThatThrownBy(() -> service.dismiss(new DismissAlertGroupCommand(7, null, 20)))
+        assertThatThrownBy(() -> service.dismiss(new DismissAlertGroupCommand(7, null, 20, 0)))
                 .isInstanceOf(AlertGroupConcurrentModificationException.class);
         verifyNoInteractions(getGroup);
     }
@@ -82,6 +82,16 @@ class DismissAlertGroupServiceTest {
     @Test
     void rejectsNullCommand() {
         assertThatNullPointerException().isThrownBy(() -> service.dismiss(null));
+    }
+
+    @Test
+    void refusesStaleVersionBeforeLoadingActor() {
+        var group = group();
+        ReflectionTestUtils.setField(group, "version", 2L);
+        when(groups.findById(7L)).thenReturn(Optional.of(group));
+        assertThatThrownBy(() -> service.dismiss(new DismissAlertGroupCommand(7, null, 20, 0)))
+                .isInstanceOf(AlertGroupConcurrentModificationException.class);
+        verifyNoInteractions(users, getGroup);
     }
 
     private AlertGroup group() {

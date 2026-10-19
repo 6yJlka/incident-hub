@@ -46,6 +46,7 @@ public class ConfirmAlertGroupService {
         Objects.requireNonNull(command, "command must not be null");
         var group = groups.findById(command.groupId())
                 .orElseThrow(() -> new AlertGroupNotFoundException(command.groupId()));
+        group.requireVersion(command.expectedVersion());
         group.requireOpen();
         var service = command.businessServiceId() == null ? group.getProbableRootService()
                 : services.findById(command.businessServiceId())

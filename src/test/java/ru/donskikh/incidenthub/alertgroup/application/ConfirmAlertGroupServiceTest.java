@@ -144,6 +144,15 @@ class ConfirmAlertGroupServiceTest {
         assertThatNullPointerException().isThrownBy(() -> service.confirm(null));
     }
 
+    @Test
+    void refusesStaleVersionBeforeLoadingActorOrCreatingIncident() {
+        when(groups.findById(7L)).thenReturn(Optional.of(group));
+        ReflectionTestUtils.setField(group, "version", 2L);
+        assertThatThrownBy(() -> service.confirm(command(null, null, null)))
+                .isInstanceOf(AlertGroupConcurrentModificationException.class);
+        org.mockito.Mockito.verifyNoInteractions(users, createIncident, getGroup, alerts, services, incidents);
+    }
+
     private void prepare() {
         prepareCreation();
         when(getGroup.get(new GetAlertGroupQuery(7))).thenReturn(new GetAlertGroupResult(
@@ -159,7 +168,7 @@ class ConfirmAlertGroupServiceTest {
 
     private ConfirmAlertGroupCommand command(Long serviceId, String title, String description) {
         return new ConfirmAlertGroupCommand(7, IncidentSeverity.SEV2, IncidentPriority.HIGH,
-                serviceId, title, description, 20);
+                serviceId, title, description, 20, 0);
     }
 
     private BusinessService businessService(long id, String name) {
