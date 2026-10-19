@@ -65,6 +65,11 @@ A task is done only when all of the above pass.
 7. Update README after each stage so it matches reality.
 8. At the end of a pass report: what changed, test count, anything left undone
    and why. If something was not found or could not be checked, say so.
+9. At the end of a pass that changes backend or frontend code, rebuild and restart
+   the local stand so it matches the branch: `docker compose up -d --build`, then
+   check `docker compose ps` shows all containers running. Never add `-v` and never
+   run `docker compose down -v` (see Commands). If the rebuild fails, report it
+   instead of working around it.
 
 ## Backend conventions
 
