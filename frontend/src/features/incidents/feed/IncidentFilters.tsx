@@ -106,7 +106,7 @@ interface FilterSelectProps {
   value: string
 }
 
-function FilterSelect({ label, onChange, options, value }: FilterSelectProps) {
+export function FilterSelect({ label, onChange, options, value }: FilterSelectProps) {
   const { t } = useTranslation()
   return (
     <label className={`${styles.filter} ${value ? styles.activeFilter : ''}`}>

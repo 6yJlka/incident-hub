@@ -294,7 +294,7 @@ class AlertGroupIntegrationTest extends PostgreSQLIntegrationTest {
             assertThat(page.items()).hasSize(size);
             assertThat(page.totalElements()).isEqualTo(12);
             assertThat(page.items().getFirst().id()).isEqualTo(ids.getLast());
-            assertThat(statistics.getPrepareStatementCount()).isEqualTo(2);
+            assertThat(statistics.getPrepareStatementCount()).isEqualTo(3);
         }
         long groupId = ids.getFirst();
         for (int target : new int[]{1, 10}) {
@@ -311,6 +311,37 @@ class AlertGroupIntegrationTest extends PostgreSQLIntegrationTest {
             assertThat(card.alerts()).allSatisfy(alert -> assertThat(alert.businessServiceCode()).startsWith("GROUP_SERVICE_"));
             assertThat(statistics.getPrepareStatementCount()).isEqualTo(2);
         }
+    }
+
+    @Test
+    void aggregatesCountsPreviewOrderAndWorstSignalSeverityForCurrentPage() {
+        long id = group(0, 4, 0, AlertGroupStatus.OPEN);
+        transactions.executeWithoutResult(status -> {
+            var extra = services.saveAndFlush(new BusinessService("GROUP_EXTRA", "Extra", "Description",
+                    services.getReferenceById(fixtureServices.getFirst().getId()).getOwnerTeam(),
+                    ru.donskikh.incidenthub.catalog.ServiceTier.TIER_2));
+            long[] serviceIds = {fixtureServices.get(2).getId(), fixtureServices.get(0).getId(),
+                    fixtureServices.get(1).getId(), extra.getId(), fixtureServices.get(2).getId()};
+            AlertSeverity[] severity = {AlertSeverity.INFO, AlertSeverity.INFO, AlertSeverity.WARNING,
+                    AlertSeverity.CRITICAL, AlertSeverity.INFO};
+            for (int index = 0; index < serviceIds.length; index++) {
+                var inserted = alerts.insertIfAbsent(List.of(new NewAlert(new AlertKey("summary", "item-" + index),
+                        serviceIds[index], AlertSignalType.LATENCY, severity[index],
+                        BASE.plusSeconds(index < 3 ? 0 : index * 60L), BASE, "Signal")));
+                alerts.attachToGroup(inserted.values().iterator().next(), id);
+            }
+        });
+        var statistics = entityManagerFactory.unwrap(SessionFactory.class).getStatistics();
+        statistics.clear();
+        var result = listService.execute(new ListAlertGroupsQuery(0, 1, null, null));
+        assertThat(result.items()).singleElement().satisfies(item -> {
+            assertThat(item.alertCount()).isEqualTo(5);
+            assertThat(item.serviceCount()).isEqualTo(4);
+            assertThat(item.servicePreviewCodes()).containsExactly(fixtureServices.get(2).getCode(),
+                    fixtureServices.get(0).getCode(), fixtureServices.get(1).getCode());
+            assertThat(item.worstSeverity()).isEqualTo(AlertSeverity.CRITICAL);
+        });
+        assertThat(statistics.getPrepareStatementCount()).isEqualTo(3);
     }
 
     @Test
@@ -362,10 +393,10 @@ class AlertGroupIntegrationTest extends PostgreSQLIntegrationTest {
             if (groupStatus == AlertGroupStatus.CONFIRMED) {
                 confirmService.confirm(new ru.donskikh.incidenthub.alertgroup.application.ConfirmAlertGroupCommand(
                         group.getId(), ru.donskikh.incidenthub.incident.IncidentSeverity.SEV2,
-                        ru.donskikh.incidenthub.incident.IncidentPriority.HIGH, null, null, null, actorId));
+                        ru.donskikh.incidenthub.incident.IncidentPriority.HIGH, null, null, null, actorId, group.getVersion()));
             } else if (groupStatus == AlertGroupStatus.DISMISSED) {
                 dismissService.dismiss(new ru.donskikh.incidenthub.alertgroup.application.DismissAlertGroupCommand(
-                        group.getId(), null, actorId));
+                        group.getId(), null, actorId, group.getVersion()));
             }
             return group.getId();
         });

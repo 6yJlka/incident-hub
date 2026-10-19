@@ -66,7 +66,7 @@ public class AlertGroupController {
 
     @GetMapping("/{id}")
     @Operation(operationId = "getAlertGroup", summary = "Get an alert group",
-            description = "Returns group details and alerts ordered by occurrence time and identifier.")
+            description = "Returns group details, the version required for decisions, and alerts ordered by occurrence time and identifier.")
     @ApiResponse(responseCode = "200", description = "Alert group details and alerts")
     @ApiResponse(responseCode = "404", description = "Alert group not found",
             content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class)))
@@ -80,7 +80,7 @@ public class AlertGroupController {
     @PreAuthorize("@incidentActionAuthorization.isAllowed(principal, T(ru.donskikh.incidenthub.alertgroup.AlertGroupAction).CONFIRM)")
     @Operation(operationId = "confirmAlertGroup", summary = "Confirm an alert group",
             description = "Creates an AUTOMATIC incident and confirms the OPEN group atomically. "
-                    + "Severity and priority are supplied by the engineer.")
+                    + "Severity and priority are supplied by the engineer. expectedVersion must match the viewed group version.")
     @ApiResponse(responseCode = "200", description = "Confirmed group with incident")
     @ApiResponse(responseCode = "400", description = "Invalid request", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     @ApiResponse(responseCode = "404", description = "Group or service not found", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
@@ -93,13 +93,13 @@ public class AlertGroupController {
     @PostMapping("/{id}/dismiss")
     @PreAuthorize("@incidentActionAuthorization.isAllowed(principal, T(ru.donskikh.incidenthub.alertgroup.AlertGroupAction).DISMISS)")
     @Operation(operationId = "dismissAlertGroup", summary = "Dismiss an alert group",
-            description = "Dismisses an OPEN group without creating an incident. A reason is optional.")
+            description = "Dismisses an OPEN group without creating an incident. A reason is optional; expectedVersion must match the viewed group version.")
     @ApiResponse(responseCode = "200", description = "Dismissed group")
     @ApiResponse(responseCode = "400", description = "Invalid request", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     @ApiResponse(responseCode = "404", description = "Group not found", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     @ApiResponse(responseCode = "409", description = "Group is not OPEN, or changed concurrently (distinct problem types)", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     public AlertGroupDetailResponse dismiss(@PathVariable long id,
-            @Valid @RequestBody(required = false) DismissAlertGroupRequest request,
+            @Valid @RequestBody DismissAlertGroupRequest request,
             @AuthenticationPrincipal AuthenticatedUser user) {
         return mapper.toResponse(dismissService.dismiss(mapper.toCommand(id, request, user.userId())), user);
     }

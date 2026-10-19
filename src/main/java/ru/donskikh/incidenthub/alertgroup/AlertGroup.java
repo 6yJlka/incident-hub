@@ -80,6 +80,12 @@ public class AlertGroup {
         this.probableRootService = probableRootService;
     }
 
+    public void requireVersion(long expectedVersion) {
+        if (version != expectedVersion) {
+            throw new AlertGroupConcurrentModificationException(id);
+        }
+    }
+
     public void requireOpen() {
         if (status != AlertGroupStatus.OPEN) {
             throw new AlertGroupStateConflictException(status);

@@ -68,7 +68,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 class AlertGroupActionsIntegrationTest extends PostgreSQLIntegrationTest {
     private static final Instant BASE = Instant.parse("2026-10-18T12:00:00Z");
-    private static final String CONFIRM = "{\"severity\":\"SEV2\",\"priority\":\"HIGH\"}";
+    private static final String CONFIRM = "{\"expectedVersion\":0,\"severity\":\"SEV2\",\"priority\":\"HIGH\"}";
 
     @Autowired private AlertRepository alerts;
     @Autowired private AlertGroupRepository groups;
@@ -117,7 +117,7 @@ class AlertGroupActionsIntegrationTest extends PostgreSQLIntegrationTest {
         processor.process(new CorrelateAlertsCommand(500));
         long id = groups.findAll().getFirst().getId();
         mvc.perform(post("/api/v1/alert-groups/{id}/confirm", id).header("Authorization", bearer())
-                        .contentType("application/json").content(CONFIRM))
+                        .contentType("application/json").content(confirmBody(id)))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.status").value("CONFIRMED"))
                 .andExpect(jsonPath("$.decidedById").value(actor.getId()))
                 .andExpect(jsonPath("$.decidedAt").isNotEmpty())
@@ -135,7 +135,7 @@ class AlertGroupActionsIntegrationTest extends PostgreSQLIntegrationTest {
         assertThat(jdbc.queryForObject("select actor_id from incident_audit_events where incident_id = ? and event_type = 'CREATED'",
                 Long.class, incidentId)).isEqualTo(actor.getId());
         mvc.perform(post("/api/v1/alert-groups/{id}/confirm", id).header("Authorization", bearer())
-                        .contentType("application/json").content(CONFIRM))
+                        .contentType("application/json").content(confirmBody(id)))
                 .andExpect(status().isConflict()).andExpect(jsonPath("$.type").value("urn:incident-hub:problem:conflict"));
         assertThat(jdbc.queryForObject("select count(*) from incidents", Long.class)).isEqualTo(1);
     }
@@ -144,7 +144,7 @@ class AlertGroupActionsIntegrationTest extends PostgreSQLIntegrationTest {
     void overrideUsesSelectedServiceTeam() throws Exception {
         long id = group();
         mvc.perform(post("/api/v1/alert-groups/{id}/confirm", id).header("Authorization", bearer())
-                        .contentType("application/json").content("{\"severity\":\"SEV1\",\"priority\":\"LOW\",\"businessServiceId\":"
+                        .contentType("application/json").content("{\"expectedVersion\":0,\"severity\":\"SEV1\",\"priority\":\"LOW\",\"businessServiceId\":"
                                 + override.getId() + "}"))
                 .andExpect(status().isOk());
         assertThat(jdbc.queryForObject("select affected_service_id from incidents", Long.class)).isEqualTo(override.getId());
@@ -156,13 +156,14 @@ class AlertGroupActionsIntegrationTest extends PostgreSQLIntegrationTest {
     void dismissesWithoutIncidentAndReturnsStateConflictOnRepeat() throws Exception {
         long id = group();
         mvc.perform(post("/api/v1/alert-groups/{id}/dismiss", id).header("Authorization", bearer())
-                        .contentType("application/json").content("{\"reason\":\"Maintenance\"}"))
+                        .contentType("application/json").content("{\"expectedVersion\":0,\"reason\":\"Maintenance\"}"))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.status").value("DISMISSED"))
                 .andExpect(jsonPath("$.dismissReason").value("Maintenance"))
                 .andExpect(jsonPath("$.decidedById").value(actor.getId()))
                 .andExpect(jsonPath("$.availableActions").isEmpty());
         assertThat(jdbc.queryForObject("select count(*) from incidents", Long.class)).isZero();
-        mvc.perform(post("/api/v1/alert-groups/{id}/dismiss", id).header("Authorization", bearer()))
+        mvc.perform(post("/api/v1/alert-groups/{id}/dismiss", id).header("Authorization", bearer())
+                        .contentType("application/json").content("{\"expectedVersion\":" + version(id) + "}"))
                 .andExpect(status().isConflict()).andExpect(jsonPath("$.type").value("urn:incident-hub:problem:conflict"));
     }
 
@@ -179,18 +180,19 @@ class AlertGroupActionsIntegrationTest extends PostgreSQLIntegrationTest {
         for (String action : List.of("confirm", "dismiss")) {
             mvc.perform(post("/api/v1/alert-groups/{id}/" + action, id)
                             .header("X-Integration-Token", "test-integration-token")
-                            .contentType("application/json").content(action.equals("confirm") ? CONFIRM : "{}"))
+                            .contentType("application/json").content(action.equals("confirm") ? CONFIRM : "{\"expectedVersion\":0}"))
                     .andExpect(status().isUnauthorized());
         }
         if (role == UserRole.REPORTER) {
             for (String action : List.of("confirm", "dismiss")) {
                 mvc.perform(post("/api/v1/alert-groups/{id}/" + action, id).header("Authorization", token)
-                                .contentType("application/json").content(action.equals("confirm") ? CONFIRM : "{}"))
+                                .contentType("application/json").content(action.equals("confirm") ? CONFIRM : "{\"expectedVersion\":0}"))
                         .andExpect(status().isForbidden())
                         .andExpect(jsonPath("$.type").value("urn:incident-hub:problem:access-denied"));
             }
         } else {
-            mvc.perform(post("/api/v1/alert-groups/{id}/dismiss", id).header("Authorization", token))
+            mvc.perform(post("/api/v1/alert-groups/{id}/dismiss", id).header("Authorization", token)
+                        .contentType("application/json").content("{\"expectedVersion\":0}"))
                     .andExpect(status().isOk());
         }
     }
@@ -228,7 +230,7 @@ class AlertGroupActionsIntegrationTest extends PostgreSQLIntegrationTest {
         long openId = group();
         long confirmedId = group();
         confirm.confirm(new ConfirmAlertGroupCommand(confirmedId, IncidentSeverity.SEV2, IncidentPriority.HIGH,
-                null, null, null, actor.getId()));
+                null, null, null, actor.getId(), version(confirmedId)));
         long incidentId = jdbc.queryForObject("select incident_id from alert_groups where id = ?", Long.class, confirmedId);
         assertThatThrownBy(() -> transactions.executeWithoutResult(status -> jdbc.update(
                 "update alert_groups set status = 'CONFIRMED', decided_by_id = ?, decided_at = now() where id = ?",
@@ -283,7 +285,7 @@ class AlertGroupActionsIntegrationTest extends PostgreSQLIntegrationTest {
             try {
                 assertThat(loaded.await(10, TimeUnit.SECONDS)).isTrue();
                 confirm.confirm(new ConfirmAlertGroupCommand(id, IncidentSeverity.SEV2, IncidentPriority.HIGH,
-                        null, null, null, actor.getId()));
+                        null, null, null, actor.getId(), version(id)));
             } finally {
                 release.countDown();
             }
@@ -307,10 +309,52 @@ class AlertGroupActionsIntegrationTest extends PostgreSQLIntegrationTest {
 
     private org.springframework.test.web.servlet.MvcResult confirmRequest(long id) throws Exception {
         return mvc.perform(post("/api/v1/alert-groups/{id}/confirm", id).header("Authorization", bearer())
-                .contentType("application/json").content(CONFIRM)).andReturn();
+                .contentType("application/json").content(confirmBody(id))).andReturn();
+    }
+
+    private long version(long id) { return groups.findById(id).orElseThrow().getVersion(); }
+
+    private String confirmBody(long id) {
+        return CONFIRM.replace("\"expectedVersion\":0", "\"expectedVersion\":" + version(id));
     }
 
     private String bearer() { return "Bearer " + tokens.issue(actor).value(); }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings = {"confirm", "dismiss"})
+    void rejectsViewedVersionAfterTickAndAcceptsRefreshedVersion(String action) throws Exception {
+        add("initial", 0);
+        processor.process(new CorrelateAlertsCommand(500));
+        long id = groups.findAll().getFirst().getId();
+        long viewed = version(id);
+        mvc.perform(get("/api/v1/alert-groups/{id}", id).header("Authorization", bearer()))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.version").value(viewed));
+        add("late", 1);
+        processor.process(new CorrelateAlertsCommand(500));
+        assertThat(version(id)).isGreaterThan(viewed);
+        decision(id, action, viewed).andExpect(status().isConflict())
+                .andExpect(jsonPath("$.type").value("urn:incident-hub:problem:concurrent-modification"));
+        assertThat(jdbc.queryForObject("select count(*) from incidents", Long.class)).isZero();
+        decision(id, action, version(id)).andExpect(status().isOk());
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings = {"confirm", "dismiss"})
+    void staleVersionAfterAnotherDecisionIsConcurrentModification(String action) throws Exception {
+        long id = group();
+        long viewed = version(id);
+        decision(id, "dismiss", viewed).andExpect(status().isOk());
+        decision(id, action, viewed).andExpect(status().isConflict())
+                .andExpect(jsonPath("$.type").value("urn:incident-hub:problem:concurrent-modification"));
+        decision(id, action, version(id)).andExpect(status().isConflict())
+                .andExpect(jsonPath("$.type").value("urn:incident-hub:problem:conflict"));
+    }
+
+    private org.springframework.test.web.servlet.ResultActions decision(long id, String action, long expectedVersion) throws Exception {
+        return mvc.perform(post("/api/v1/alert-groups/{id}/" + action, id).header("Authorization", bearer())
+                .contentType("application/json").content("{\"expectedVersion\":" + expectedVersion
+                        + ",\"severity\":\"SEV2\",\"priority\":\"HIGH\"}"));
+    }
 
     private long group() {
         return transactions.execute(status -> groups.saveAndFlush(new AlertGroup(

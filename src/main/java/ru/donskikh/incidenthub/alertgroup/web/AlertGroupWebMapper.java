@@ -23,11 +23,11 @@ public class AlertGroupWebMapper {
 
     public ConfirmAlertGroupCommand toCommand(long id, ConfirmAlertGroupRequest request, long actorId) {
         return new ConfirmAlertGroupCommand(id, request.severity(), request.priority(), request.businessServiceId(),
-                request.title(), request.description(), actorId);
+                request.title(), request.description(), actorId, request.expectedVersion());
     }
 
     public DismissAlertGroupCommand toCommand(long id, DismissAlertGroupRequest request, long actorId) {
-        return new DismissAlertGroupCommand(id, request == null ? null : request.reason(), actorId);
+        return new DismissAlertGroupCommand(id, request.reason(), actorId, request.expectedVersion());
     }
 
     public ListAlertGroupsQuery toQuery(int page, int size, AlertGroupStatus status, Long rootServiceId) {
@@ -48,6 +48,7 @@ public class AlertGroupWebMapper {
         AlertGroupItem item = result.group();
         return new AlertGroupDetailResponse(
                 item.id(),
+                result.version(),
                 item.status(),
                 item.probableRootServiceId(),
                 item.probableRootServiceCode(),
@@ -69,7 +70,7 @@ public class AlertGroupWebMapper {
                 item.probableRootServiceName(),
                 item.firstAlertAt(),
                 item.lastAlertAt(),
-                item.incidentId());
+                item.incidentId(), item.alertCount(), item.serviceCount(), item.servicePreviewCodes(), item.worstSeverity());
     }
 
     private GroupAlertResponse toResponse(GroupAlertItem item) {

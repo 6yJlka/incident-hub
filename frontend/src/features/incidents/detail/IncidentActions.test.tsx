@@ -55,6 +55,39 @@ function ActionHarness({
 }
 
 describe('IncidentActions', () => {
+  it.each(['CLOSED', 'CANCELLED'] as const)(
+    'names the actual terminal status %s',
+    (status) => {
+      render(
+        <IncidentActions
+          incident={{ ...baseIncident, status, availableActions: [] }}
+          user={engineer}
+          onUpdated={vi.fn()}
+        />,
+      )
+      expect(
+        screen.getByText(`В статусе ${status} действий нет.`),
+      ).toBeInTheDocument()
+      expect(screen.queryByRole('button')).not.toBeInTheDocument()
+    },
+  )
+
+  it('explains the role for a reporter even in a terminal status', () => {
+    render(
+      <IncidentActions
+        incident={{
+          ...baseIncident,
+          status: 'CANCELLED',
+          availableActions: [],
+        }}
+        user={reporter}
+        onUpdated={vi.fn()}
+      />,
+    )
+    expect(
+      screen.getByText('Ваша роль не меняет состояние инцидентов.'),
+    ).toBeInTheDocument()
+  })
   beforeEach(() => {
     api.getAllUsers.mockResolvedValue([])
   })
@@ -95,7 +128,7 @@ describe('IncidentActions', () => {
       />,
     )
     expect(
-      screen.getByText('Инцидент закрыт, действия недоступны.'),
+      screen.getByText('В статусе CLOSED действий нет.'),
     ).toBeInTheDocument()
   })
 

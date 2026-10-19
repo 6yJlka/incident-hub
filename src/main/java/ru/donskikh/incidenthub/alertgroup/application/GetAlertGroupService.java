@@ -29,6 +29,6 @@ public class GetAlertGroupService {
                         .stream().map(GroupAlertItem::from).toList(),
                 group.getDecidedBy() == null ? null : group.getDecidedBy().getId(),
                 group.getDecidedBy() == null ? null : group.getDecidedBy().getDisplayName(),
-                group.getDecidedAt(), group.getDismissReason());
+                group.getDecidedAt(), group.getDismissReason(), group.getVersion());
     }
 }

@@ -65,6 +65,13 @@
   background: var(--color-success);
 }
 
+.confirmed::before {
+  background: var(--color-success);
+}
+.dismissed::before {
+  background: var(--color-neutral);
+}
+
 .tier {
   gap: var(--space-1-5);
   color: var(--color-text-soft);

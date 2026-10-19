@@ -74,6 +74,20 @@ public interface ServiceDependencyRepository extends JpaRepository<ServiceDepend
             @Param("maxDepth") int maxDepth
     );
 
+    @Query("""
+            select d.dependent.id as dependentId, d.dependency.id as serviceId, d.type as type
+            from ServiceDependency d
+            where d.dependent.id in :serviceIds and d.dependency.id in :serviceIds
+            order by d.dependent.id, d.dependency.id, d.type
+            """)
+    List<AffectedDependencyProjection> findDependenciesWithin(@Param("serviceIds") List<Long> serviceIds);
+
+    interface AffectedDependencyProjection {
+        Long getDependentId();
+        Long getServiceId();
+        DependencyType getType();
+    }
+
     interface AffectedServiceProjection {
 
         Long getId();

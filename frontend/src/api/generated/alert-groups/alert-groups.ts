@@ -20,12 +20,12 @@ export const getDismissAlertGroupUrl = (id: number) => {
 }
 
 /**
- * Dismisses an OPEN group without creating an incident. A reason is optional.
+ * Dismisses an OPEN group without creating an incident. A reason is optional; expectedVersion must match the viewed group version.
  * @summary Dismiss an alert group
  */
 export const dismissAlertGroup = async (
   id: number,
-  dismissAlertGroupRequest?: DismissAlertGroupRequest,
+  dismissAlertGroupRequest: DismissAlertGroupRequest,
   options?: Parameters<typeof apiFetch>[1],
 ): Promise<AlertGroupDetailResponse> => {
   const getHeaders = (
@@ -65,7 +65,7 @@ export const getConfirmAlertGroupUrl = (id: number) => {
 }
 
 /**
- * Creates an AUTOMATIC incident and confirms the OPEN group atomically. Severity and priority are supplied by the engineer.
+ * Creates an AUTOMATIC incident and confirms the OPEN group atomically. Severity and priority are supplied by the engineer. expectedVersion must match the viewed group version.
  * @summary Confirm an alert group
  */
 export const confirmAlertGroup = async (
@@ -140,7 +140,7 @@ export const getGetAlertGroupUrl = (id: number) => {
 }
 
 /**
- * Returns group details and alerts ordered by occurrence time and identifier.
+ * Returns group details, the version required for decisions, and alerts ordered by occurrence time and identifier.
  * @summary Get an alert group
  */
 export const getAlertGroup = async (

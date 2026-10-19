@@ -31,11 +31,13 @@ class GetAlertGroupServiceTest {
         when(root.getName()).thenReturn("Root");
         var group = new AlertGroup(root, Instant.parse("2026-10-18T12:00:00Z"));
         org.springframework.test.util.ReflectionTestUtils.setField(group, "id", 7L);
+        org.springframework.test.util.ReflectionTestUtils.setField(group, "version", 12L);
         when(groups.findById(7L)).thenReturn(Optional.of(group));
 
         var result = service.get(new GetAlertGroupQuery(7));
 
         assertThat(result.group().probableRootServiceId()).isEqualTo(42);
+        assertThat(result.version()).isEqualTo(12);
         assertThat(result.alerts()).isEmpty();
         verify(alerts).findAllByGroup_IdOrderByOccurredAtAscIdAsc(7);
     }

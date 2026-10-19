@@ -1539,7 +1539,7 @@
           "Alert groups"
         ],
         "summary": "Dismiss an alert group",
-        "description": "Dismisses an OPEN group without creating an incident. A reason is optional.",
+        "description": "Dismisses an OPEN group without creating an incident. A reason is optional; expectedVersion must match the viewed group version.",
         "operationId": "dismissAlertGroup",
         "parameters": [
           {
@@ -1559,7 +1559,8 @@
                 "$ref": "#/components/schemas/DismissAlertGroupRequest"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "200": {
@@ -1631,7 +1632,7 @@
           "Alert groups"
         ],
         "summary": "Confirm an alert group",
-        "description": "Creates an AUTOMATIC incident and confirms the OPEN group atomically. Severity and priority are supplied by the engineer.",
+        "description": "Creates an AUTOMATIC incident and confirms the OPEN group atomically. Severity and priority are supplied by the engineer. expectedVersion must match the viewed group version.",
         "operationId": "confirmAlertGroup",
         "parameters": [
           {
@@ -1831,7 +1832,7 @@
           "Service catalog"
         ],
         "summary": "Find affected services",
-        "description": "Traverses reverse dependencies and returns each affected service once at its minimum depth.",
+        "description": "Traverses reverse dependencies and returns each affected service once at its minimum depth, with all direct dependencies within the root and affected service set.",
         "operationId": "getAffectedServices",
         "parameters": [
           {
@@ -2124,7 +2125,7 @@
           "Alert groups"
         ],
         "summary": "Get an alert group",
-        "description": "Returns group details and alerts ordered by occurrence time and identifier.",
+        "description": "Returns group details, the version required for decisions, and alerts ordered by occurrence time and identifier.",
         "operationId": "getAlertGroup",
         "parameters": [
           {
@@ -3030,17 +3031,28 @@
       "DismissAlertGroupRequest": {
         "type": "object",
         "properties": {
+          "expectedVersion": {
+            "type": "integer",
+            "format": "int64"
+          },
           "reason": {
             "type": "string",
             "maxLength": 2000,
             "minLength": 0
           }
-        }
+        },
+        "required": [
+          "expectedVersion"
+        ]
       },
       "AlertGroupDetailResponse": {
         "type": "object",
         "properties": {
           "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "version": {
             "type": "integer",
             "format": "int64"
           },
@@ -3162,6 +3174,10 @@
       "ConfirmAlertGroupRequest": {
         "type": "object",
         "properties": {
+          "expectedVersion": {
+            "type": "integer",
+            "format": "int64"
+          },
           "severity": {
             "type": "string",
             "enum": [
@@ -3196,6 +3212,7 @@
           }
         },
         "required": [
+          "expectedVersion",
           "priority",
           "severity"
         ]
@@ -3680,6 +3697,24 @@
           }
         }
       },
+      "AffectedDependencyResponse": {
+        "type": "object",
+        "properties": {
+          "serviceId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Direct dependency within the root and affected service set"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "SYNC",
+              "ASYNC",
+              "DATA"
+            ]
+          }
+        }
+      },
       "AffectedServiceResponse": {
         "type": "object",
         "properties": {
@@ -3740,6 +3775,13 @@
               "DATA"
             ],
             "example": "SYNC"
+          },
+          "dependencies": {
+            "type": "array",
+            "description": "All direct dependencies within the root and affected service set",
+            "items": {
+              "$ref": "#/components/schemas/AffectedDependencyResponse"
+            }
           }
         }
       },
@@ -4064,6 +4106,28 @@
           "incidentId": {
             "type": "integer",
             "format": "int64"
+          },
+          "alertCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "serviceCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "servicePreviewCodes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "worstSeverity": {
+            "type": "string",
+            "enum": [
+              "CRITICAL",
+              "WARNING",
+              "INFO"
+            ]
           }
         }
       },

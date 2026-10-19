@@ -7,6 +7,7 @@
  */
 
 export interface DismissAlertGroupRequest {
+  expectedVersion: number
   /**
    * @minLength 0
    * @maxLength 2000

@@ -8,6 +8,7 @@ import java.util.List;
 
 public record AlertGroupDetailResponse(
         Long id,
+        long version,
         AlertGroupStatus status,
         Long probableRootServiceId,
         String probableRootServiceCode,

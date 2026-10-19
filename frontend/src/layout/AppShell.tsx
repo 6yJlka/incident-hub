@@ -1,10 +1,14 @@
 import { useTranslation } from 'react-i18next'
+import { useEffect, useState } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth'
 import styles from './AppShell.module.css'
+import { listAlertGroups } from '../api/generated/alert-groups/alert-groups'
+import { GROUPS_CHANGED } from '../features/alert-groups/groupEvents'
 
 const navigation = [
   { to: '/incidents', key: 'navigation.incidents', end: true },
+  { to: '/alert-groups', key: 'groups.title', end: false },
   { to: '/services', key: 'navigation.services', end: false },
   { to: '/incidents/new', key: 'navigation.createIncident', end: false },
 ] as const
@@ -22,6 +26,26 @@ export function AppShell() {
   const { t } = useTranslation()
   const { logout, user } = useAuth()
   const location = useLocation()
+  const [openGroups, setOpenGroups] = useState<number | null>(null)
+  useEffect(() => {
+    let active = true
+    const refresh = () => {
+      if (!user) return
+      void listAlertGroups({ status: 'OPEN', page: 0, size: 1 })
+        .then((page) => {
+          if (active) setOpenGroups(page.totalElements ?? 0)
+        })
+        .catch(() => {
+          if (active) setOpenGroups(null)
+        })
+    }
+    refresh()
+    window.addEventListener(GROUPS_CHANGED, refresh)
+    return () => {
+      active = false
+      window.removeEventListener(GROUPS_CHANGED, refresh)
+    }
+  }, [location.pathname, user])
 
   if (!user) {
     return null
@@ -52,6 +76,15 @@ export function AppShell() {
               }}
             >
               {t(item.key)}
+              {item.to === '/alert-groups' && openGroups !== null && (
+                <span
+                  className={styles.counter}
+                  aria-label={t('groups.openCount', { count: openGroups })}
+                >
+                  {' '}
+                  {openGroups}
+                </span>
+              )}
             </NavLink>
           ))}
         </nav>

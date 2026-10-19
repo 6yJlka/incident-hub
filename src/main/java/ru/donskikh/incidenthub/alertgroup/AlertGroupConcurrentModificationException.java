@@ -5,6 +5,10 @@ import ru.donskikh.incidenthub.common.DomainConflictException;
 public class AlertGroupConcurrentModificationException extends DomainConflictException {
     private final long groupId;
 
+    public AlertGroupConcurrentModificationException(long groupId) {
+        this(groupId, null);
+    }
+
     public AlertGroupConcurrentModificationException(long groupId, Throwable cause) {
         super("Alert group " + groupId + " changed; refresh it before retrying", cause);
         this.groupId = groupId;

@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 import ru.donskikh.incidenthub.catalog.DependencyType;
 import ru.donskikh.incidenthub.catalog.ServiceTier;
+import java.util.List;
 
 public record AffectedServiceResponse(
         @Schema(description = "Affected service identifier", example = "44") Long id,
@@ -15,6 +16,11 @@ public record AffectedServiceResponse(
         @Schema(description = "Owner team name", example = "Customer Operations") String ownerTeamName,
         @Schema(description = "Minimum number of dependency edges from the failed service", example = "2") int depth,
         @Schema(description = "Type of the edge used on the selected minimum-depth path", example = "SYNC")
-        DependencyType dependencyType
+        DependencyType dependencyType,
+        @Schema(description = "All direct dependencies within the root and affected service set")
+        List<AffectedDependencyResponse> dependencies
 ) {
+    public AffectedServiceResponse {
+        dependencies = List.copyOf(dependencies);
+    }
 }
