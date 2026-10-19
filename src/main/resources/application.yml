@@ -33,6 +33,7 @@ management:
 app:
   alerts:
     max-batch-size: ${ALERT_MAX_BATCH_SIZE:500}
+    max-clock-skew: ${ALERT_MAX_CLOCK_SKEW:PT1M}
     correlation:
       enabled: ${ALERT_CORRELATION_ENABLED:true}
       interval: ${ALERT_CORRELATION_INTERVAL:PT5S}

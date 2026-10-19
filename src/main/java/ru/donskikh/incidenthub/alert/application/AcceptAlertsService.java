@@ -12,6 +12,7 @@ import ru.donskikh.incidenthub.catalog.BusinessService;
 import ru.donskikh.incidenthub.catalog.BusinessServiceRepository;
 
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -59,7 +60,8 @@ public class AcceptAlertsService {
         Map<AlertKey, NewAlert> candidates = new LinkedHashMap<>();
         Instant receivedAt = clock.instant();
         for (IncomingAlert alert : command.alerts()) {
-            if (!existing.containsKey(alert.key()) && services.containsKey(alert.serviceCode())) {
+            if (!existing.containsKey(alert.key()) && services.containsKey(alert.serviceCode())
+                    && !isInFuture(alert, receivedAt)) {
                 candidates.putIfAbsent(alert.key(), new NewAlert(
                         alert.key(), services.get(alert.serviceCode()).getId(), alert.signalType(),
                         alert.severity(), alert.occurredAt(), receivedAt, alert.description()
@@ -82,6 +84,9 @@ public class AcceptAlertsService {
             } else if (!services.containsKey(alert.serviceCode())) {
                 results.add(new AlertAcceptanceResult(alert.externalId(), AlertAcceptanceStatus.REJECTED,
                         null, AlertRejectionReason.UNKNOWN_SERVICE));
+            } else if (isInFuture(alert, receivedAt)) {
+                results.add(new AlertAcceptanceResult(alert.externalId(), AlertAcceptanceStatus.REJECTED,
+                        null, AlertRejectionReason.OCCURRED_IN_FUTURE));
             } else {
                 Objects.requireNonNull(id, "inserted or concurrent alert must exist");
                 results.add(new AlertAcceptanceResult(alert.externalId(),
@@ -91,5 +96,9 @@ public class AcceptAlertsService {
             }
         }
         return new AcceptAlertsResult(results);
+    }
+
+    private boolean isInFuture(IncomingAlert alert, Instant receivedAt) {
+        return Duration.between(receivedAt, alert.occurredAt()).compareTo(properties.maxClockSkew()) > 0;
     }
 }

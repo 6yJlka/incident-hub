@@ -11,4 +11,5 @@ export type AlertAcceptanceResponseReason =
 
 export const AlertAcceptanceResponseReason = {
   UNKNOWN_SERVICE: 'UNKNOWN_SERVICE',
+  OCCURRED_IN_FUTURE: 'OCCURRED_IN_FUTURE',
 } as const

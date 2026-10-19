@@ -27,6 +27,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Instant;
 import java.time.Duration;
+import java.time.Clock;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CyclicBarrier;
@@ -36,6 +37,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doReturn;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class AlertIngestionIntegrationTest extends PostgreSQLIntegrationTest {
@@ -47,6 +49,9 @@ class AlertIngestionIntegrationTest extends PostgreSQLIntegrationTest {
 
     @MockitoSpyBean
     private BusinessServiceRepository businessServiceRepository;
+
+    @MockitoSpyBean
+    private Clock clock;
 
     @Autowired
     private TeamRepository teamRepository;
@@ -151,6 +156,43 @@ class AlertIngestionIntegrationTest extends PostgreSQLIntegrationTest {
     void returnsEmptyResultsForEmptyRepositoryBatches() {
         assertThat(alertRepository.findIdsByKeys(List.of())).isEmpty();
         assertThat(alertRepository.insertIfAbsent(List.of())).isEmpty();
+    }
+
+    @Test
+    void rejectsFutureOccurrenceWithoutReservingKeyAndPersistsFirstValidOccurrence() throws Exception {
+        Instant receivedAt = Instant.parse("2026-10-19T12:00:00Z");
+        doReturn(receivedAt).when(clock).instant();
+        String item = """
+                {"source":"prometheus","externalId":"%s","serviceCode":"%s",
+                "signalType":"LATENCY","severity":"WARNING","occurredAt":"%s","description":"Signal"}
+                """;
+        String body = "{\"alerts\":[" + String.join(",",
+                item.formatted("same", businessService.getCode(), receivedAt.plusSeconds(60).plusNanos(1)),
+                item.formatted("same", businessService.getCode(), receivedAt.plusSeconds(60)),
+                item.formatted("same", "UNKNOWN", receivedAt.plusSeconds(3600)),
+                item.formatted("other", businessService.getCode(), receivedAt.minusSeconds(60))) + "]}";
+        try (HttpClient client = HttpClient.newHttpClient()) {
+            HttpRequest request = HttpRequest.newBuilder(URI.create("http://localhost:" + port + "/api/v1/alerts"))
+                    .timeout(Duration.ofSeconds(20)).header("Content-Type", "application/json")
+                    .header("X-Integration-Token", "test-integration-token")
+                    .POST(HttpRequest.BodyPublishers.ofString(body)).build();
+            var response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+            assertThat(response.statusCode()).isEqualTo(200);
+            assertThat(JsonPath.<List<String>>read(response.body(), "$.results[*].status"))
+                    .containsExactly("REJECTED", "ACCEPTED", "DUPLICATE", "ACCEPTED");
+            assertThat(JsonPath.<String>read(response.body(), "$.results[0].reason"))
+                    .isEqualTo("OCCURRED_IN_FUTURE");
+            long id = JsonPath.<Number>read(response.body(), "$.results[1].alertId").longValue();
+            assertThat(JsonPath.<Number>read(response.body(), "$.results[2].alertId").longValue()).isEqualTo(id);
+            transactions.executeWithoutResult(status -> {
+                Alert alert = alertRepository.findById(id).orElseThrow();
+                assertThat(alert.getOccurredAt()).isEqualTo(receivedAt.plusSeconds(60));
+                assertThat(alert.getReceivedAt()).isEqualTo(receivedAt);
+            });
+        }
+        assertThat(jdbcTemplate.queryForObject("select count(*) from alerts where business_service_id = ?",
+                Long.class, businessService.getId())).isEqualTo(2);
     }
 
     private IncomingAlert input(String source, String id) {
