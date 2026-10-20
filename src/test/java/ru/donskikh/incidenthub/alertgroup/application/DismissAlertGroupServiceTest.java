@@ -10,19 +10,23 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.test.util.ReflectionTestUtils;
 import ru.donskikh.incidenthub.alertgroup.AlertGroup;
-import ru.donskikh.incidenthub.alertgroup.AlertGroupRepository;
-import ru.donskikh.incidenthub.alertgroup.AlertGroupStatus;
-import ru.donskikh.incidenthub.alertgroup.AlertGroupNotFoundException;
-import ru.donskikh.incidenthub.alertgroup.AlertGroupStateConflictException;
 import ru.donskikh.incidenthub.alertgroup.AlertGroupConcurrentModificationException;
+import ru.donskikh.incidenthub.alertgroup.AlertGroupNotFoundException;
+import ru.donskikh.incidenthub.alertgroup.AlertGroupRepository;
+import ru.donskikh.incidenthub.alertgroup.AlertGroupStateConflictException;
+import ru.donskikh.incidenthub.alertgroup.AlertGroupStatus;
 import ru.donskikh.incidenthub.catalog.BusinessService;
+import ru.donskikh.incidenthub.catalog.ServiceTier;
 import ru.donskikh.incidenthub.identity.User;
 import ru.donskikh.incidenthub.identity.UserRepository;
+import ru.donskikh.incidenthub.team.Team;
+
 import java.time.Instant;
 import java.util.Optional;
+
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.assertThatNullPointerException;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -95,7 +99,7 @@ class DismissAlertGroupServiceTest {
     }
 
     private AlertGroup group() {
-        var group = new AlertGroup(mock(BusinessService.class), Instant.now());
+        var group = ru.donskikh.incidenthub.CorrelationTestData.group(new BusinessService("ROOT", "Root", "Description", new Team("Team", "TEAM"), ServiceTier.TIER_1), Instant.now());
         ReflectionTestUtils.setField(group, "id", 7L);
         return group;
     }

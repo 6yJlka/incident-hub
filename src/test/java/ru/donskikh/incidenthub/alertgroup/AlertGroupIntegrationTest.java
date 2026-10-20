@@ -14,14 +14,22 @@ import org.springframework.transaction.support.TransactionTemplate;
 import ru.donskikh.incidenthub.PostgreSQLIntegrationTest;
 import ru.donskikh.incidenthub.alert.AlertKey;
 import ru.donskikh.incidenthub.alert.AlertRepository;
-import ru.donskikh.incidenthub.alert.AlertSignalType;
 import ru.donskikh.incidenthub.alert.AlertSeverity;
+import ru.donskikh.incidenthub.alert.AlertSignalType;
 import ru.donskikh.incidenthub.alert.NewAlert;
+import ru.donskikh.incidenthub.alert.correlation.*;
 import ru.donskikh.incidenthub.alert.correlation.AlertCorrelator;
 import ru.donskikh.incidenthub.alert.correlation.CorrelationContext;
+import ru.donskikh.incidenthub.alert.correlation.Evidence;
+import ru.donskikh.incidenthub.alert.correlation.LinkStrength;
 import ru.donskikh.incidenthub.alert.correlation.TimeWindowCorrelator;
+import ru.donskikh.incidenthub.alert.infrastructure.CorrelationJsonCodec;
+import ru.donskikh.incidenthub.alertgroup.application.ConfirmAlertGroupCommand;
+import ru.donskikh.incidenthub.alertgroup.application.ConfirmAlertGroupService;
 import ru.donskikh.incidenthub.alertgroup.application.CorrelateAlertsCommand;
 import ru.donskikh.incidenthub.alertgroup.application.CorrelateAlertsService;
+import ru.donskikh.incidenthub.alertgroup.application.DismissAlertGroupCommand;
+import ru.donskikh.incidenthub.alertgroup.application.DismissAlertGroupService;
 import ru.donskikh.incidenthub.alertgroup.application.GetAlertGroupQuery;
 import ru.donskikh.incidenthub.alertgroup.application.GetAlertGroupService;
 import ru.donskikh.incidenthub.alertgroup.application.ListAlertGroupsQuery;
@@ -29,10 +37,14 @@ import ru.donskikh.incidenthub.alertgroup.application.ListAlertGroupsService;
 import ru.donskikh.incidenthub.catalog.BusinessService;
 import ru.donskikh.incidenthub.catalog.BusinessServiceRepository;
 import ru.donskikh.incidenthub.catalog.ServiceTier;
+import ru.donskikh.incidenthub.identity.User;
+import ru.donskikh.incidenthub.identity.UserRepository;
+import ru.donskikh.incidenthub.identity.UserRole;
+import ru.donskikh.incidenthub.incident.IncidentPriority;
+import ru.donskikh.incidenthub.incident.IncidentSeverity;
+import ru.donskikh.incidenthub.security.JwtTokenService;
 import ru.donskikh.incidenthub.team.Team;
 import ru.donskikh.incidenthub.team.TeamRepository;
-import ru.donskikh.incidenthub.security.JwtTokenService;
-import ru.donskikh.incidenthub.identity.UserRole;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -106,13 +118,13 @@ class AlertGroupIntegrationTest extends PostgreSQLIntegrationTest {
     private JwtTokenService tokens;
 
     @Autowired
-    private ru.donskikh.incidenthub.identity.UserRepository users;
+    private UserRepository users;
 
     @Autowired
-    private ru.donskikh.incidenthub.alertgroup.application.ConfirmAlertGroupService confirmService;
+    private ConfirmAlertGroupService confirmService;
 
     @Autowired
-    private ru.donskikh.incidenthub.alertgroup.application.DismissAlertGroupService dismissService;
+    private DismissAlertGroupService dismissService;
 
     private long actorId;
 
@@ -129,7 +141,7 @@ class AlertGroupIntegrationTest extends PostgreSQLIntegrationTest {
             jdbc.update("delete from business_services");
             jdbc.update("delete from teams");
             Team team = teams.save(new Team("Group tests", "GROUP_TESTS"));
-            actorId = users.save(new ru.donskikh.incidenthub.identity.User("groups@example.com", "Engineer")).getId();
+            actorId = users.save(new User("groups@example.com", "Engineer")).getId();
             fixtureServices = new ArrayList<>();
             for (int index = 0; index < 3; index++) {
                 fixtureServices.add(services.save(new BusinessService("GROUP_SERVICE_" + index,
@@ -192,7 +204,7 @@ class AlertGroupIntegrationTest extends PostgreSQLIntegrationTest {
         transactions.executeWithoutResult(status -> {
             var inserted = alerts.insertIfAbsent(List.of(
                     newAlert("overlapping-first", 9, 1), newAlert("overlapping-last", 11, 1)));
-            inserted.values().forEach(id -> alerts.attachToGroup(id, overlappingId));
+            inserted.values().forEach(id -> alerts.attachToGroup(id, overlappingId, LinkStrength.TENTATIVE, List.of(new Evidence.Migrated())));
         });
         var contexts = new ArrayList<CorrelationContext>();
         doAnswer(invocation -> {
@@ -302,14 +314,14 @@ class AlertGroupIntegrationTest extends PostgreSQLIntegrationTest {
                 final int member = index;
                 transactions.executeWithoutResult(status -> {
                     var inserted = alerts.insertIfAbsent(List.of(newAlert("card-" + member, member, member % 3)));
-                    alerts.attachToGroup(inserted.values().iterator().next(), groupId);
+                    alerts.attachToGroup(inserted.values().iterator().next(), groupId, null, List.of(new Evidence.Migrated()));
                 });
             }
             statistics.clear();
             var card = getService.get(new GetAlertGroupQuery(groupId));
             assertThat(card.alerts()).hasSize(target);
             assertThat(card.alerts()).allSatisfy(alert -> assertThat(alert.businessServiceCode()).startsWith("GROUP_SERVICE_"));
-            assertThat(statistics.getPrepareStatementCount()).isEqualTo(2);
+            assertThat(statistics.getPrepareStatementCount()).isEqualTo(3);
         }
     }
 
@@ -319,7 +331,7 @@ class AlertGroupIntegrationTest extends PostgreSQLIntegrationTest {
         transactions.executeWithoutResult(status -> {
             var extra = services.saveAndFlush(new BusinessService("GROUP_EXTRA", "Extra", "Description",
                     services.getReferenceById(fixtureServices.getFirst().getId()).getOwnerTeam(),
-                    ru.donskikh.incidenthub.catalog.ServiceTier.TIER_2));
+                    ServiceTier.TIER_2));
             long[] serviceIds = {fixtureServices.get(2).getId(), fixtureServices.get(0).getId(),
                     fixtureServices.get(1).getId(), extra.getId(), fixtureServices.get(2).getId()};
             AlertSeverity[] severity = {AlertSeverity.INFO, AlertSeverity.INFO, AlertSeverity.WARNING,
@@ -328,7 +340,7 @@ class AlertGroupIntegrationTest extends PostgreSQLIntegrationTest {
                 var inserted = alerts.insertIfAbsent(List.of(new NewAlert(new AlertKey("summary", "item-" + index),
                         serviceIds[index], AlertSignalType.LATENCY, severity[index],
                         BASE.plusSeconds(index < 3 ? 0 : index * 60L), BASE, "Signal")));
-                alerts.attachToGroup(inserted.values().iterator().next(), id);
+                alerts.attachToGroup(inserted.values().iterator().next(), id, null, List.of(new Evidence.Migrated()));
             }
         });
         var statistics = entityManagerFactory.unwrap(SessionFactory.class).getStatistics();
@@ -368,8 +380,73 @@ class AlertGroupIntegrationTest extends PostgreSQLIntegrationTest {
                 .andExpect(status().isNotFound());
     }
 
+
+    @Test
+    void persistsStubDecisionsWithMultipleCandidatesEvidenceAndFullReplacement() throws Exception {
+        long firstService = fixtureServices.get(0).getId();
+        long secondService = fixtureServices.get(1).getId();
+        var ranked = new RootAssessment.Ranked(List.of(new RootCandidate(firstService, .9), new RootCandidate(secondService, .4)),
+                List.of(new Evidence.DependencyPath(List.of(firstService, secondService))));
+        var unknown = new RootAssessment.Undetermined("INSUFFICIENT_EVIDENCE");
+        doAnswer(invocation -> {
+            CorrelationAlert alert = invocation.getArgument(0);
+            CorrelationContext context = invocation.getArgument(1);
+            if (context.groups().isEmpty()) return new CorrelationDecision.OpenGroup(ranked,
+                    List.of(new Evidence.EarliestAlert(alert.id(), firstService)));
+            assertThat(context.groups().getFirst().rootAssessment()).isEqualTo(ranked);
+            return new CorrelationDecision.JoinGroup(context.groups().getFirst().id(), unknown, LinkStrength.SUPPORTED,
+                    List.of(new Evidence.DependencyPath(List.of(firstService, secondService)),
+                            new Evidence.TemporalProximity(alert.id(), Duration.ofSeconds(60))));
+        }).when(correlator).correlate(any(), any());
+        add("first", 0, 0);
+        processor.process(new CorrelateAlertsCommand(500));
+        long id = groups.findAll().getFirst().getId();
+        var first = getService.get(new GetAlertGroupQuery(id));
+        assertThat(first.rootAssessment()).isEqualTo(ranked);
+        assertThat(first.alerts().getFirst().linkStrength()).isNull();
+        mockMvc.perform(get("/api/v1/alert-groups/{id}", id).header("Authorization", "Bearer " + jwt(UserRole.ENGINEER)))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.rootAssessment.status").value("RANKED"))
+                .andExpect(jsonPath("$.rootAssessment.candidates[1].serviceCode").value(fixtureServices.get(1).getCode()))
+                .andExpect(jsonPath("$.rootAssessment.candidates[1].score").value(.4));
+        long version = first.version();
+        add("second", 1, 1);
+        processor.process(new CorrelateAlertsCommand(500));
+        var updated = getService.get(new GetAlertGroupQuery(id));
+        assertThat(updated.rootAssessment()).isEqualTo(unknown);
+        assertThat(updated.group().probableRootServiceId()).isNull();
+        assertThat(updated.version()).isGreaterThan(version);
+        assertThat(updated.alerts().getLast().linkStrength()).isEqualTo(LinkStrength.SUPPORTED);
+        assertThat(updated.alerts().getLast().linkEvidence()).hasSize(2);
+        assertThat(CorrelationJsonCodec.readAssessment(jdbc.queryForObject(
+                "select root_assessment::text from alert_groups where id = ?", String.class, id))).isEqualTo(unknown);
+        mockMvc.perform(get("/api/v1/alert-groups/{id}", id).header("Authorization", "Bearer " + jwt(UserRole.ENGINEER)))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.rootAssessment.status").value("UNDETERMINED"))
+                .andExpect(jsonPath("$.rootAssessment.reason").value("INSUFFICIENT_EVIDENCE"))
+                .andExpect(jsonPath("$.tentativeLinkCount").value(0))
+                .andExpect(jsonPath("$.alerts[1].linkEvidence[0].type").value("DEPENDENCY_PATH"))
+                .andExpect(jsonPath("$.alerts[1].linkEvidence[1].distanceToGroup").value("PT1M"));
+        mockMvc.perform(get("/api/v1/alert-groups").header("Authorization", "Bearer " + jwt(UserRole.ENGINEER)))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.items[0].rootAssessmentStatus").value("UNDETERMINED"));
+        var replacement = new RootAssessment.Ranked(List.of(new RootCandidate(secondService, .7)),
+                List.of(new Evidence.Migrated()));
+        doAnswer(invocation -> {
+            CorrelationContext context = invocation.getArgument(1);
+            assertThat(context.groups().getFirst().rootAssessment()).isEqualTo(unknown);
+            CorrelationAlert incoming = invocation.getArgument(0);
+            return new CorrelationDecision.JoinGroup(id, replacement, LinkStrength.TENTATIVE,
+                    List.of(new Evidence.TemporalProximity(incoming.id(), Duration.ofSeconds(60))));
+        }).when(correlator).correlate(any(), any());
+        add("third", 2, 1);
+        processor.process(new CorrelateAlertsCommand(500));
+        assertThat(getService.get(new GetAlertGroupQuery(id)).rootAssessment()).isEqualTo(replacement);
+        mockMvc.perform(get("/api/v1/alert-groups/{id}", id).header("Authorization", "Bearer " + jwt(UserRole.ENGINEER)))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.tentativeLinkCount").value(1))
+                .andExpect(jsonPath("$.rootAssessment.candidates.length()").value(1))
+                .andExpect(jsonPath("$.rootAssessment.evidence[0].type").value("MIGRATED"));
+    }
+
     private String jwt(UserRole role) {
-        var user = org.mockito.Mockito.mock(ru.donskikh.incidenthub.identity.User.class);
+        var user = org.mockito.Mockito.mock(User.class);
         org.mockito.Mockito.when(user.getId()).thenReturn(42L);
         org.mockito.Mockito.when(user.getEmail()).thenReturn("reader@example.com");
         org.mockito.Mockito.when(user.getRole()).thenReturn(role);
@@ -387,15 +464,15 @@ class AlertGroupIntegrationTest extends PostgreSQLIntegrationTest {
 
     private long group(long first, long last, int service, AlertGroupStatus groupStatus) {
         return transactions.execute(status -> {
-            var group = new AlertGroup(services.getReferenceById(fixtureServices.get(service).getId()), BASE.plusSeconds(first * 60));
-            group.includeAlert(BASE.plusSeconds(last * 60), group.getProbableRootService());
+            var group = ru.donskikh.incidenthub.CorrelationTestData.group(services.getReferenceById(fixtureServices.get(service).getId()), BASE.plusSeconds(first * 60));
+            group.includeAlert(BASE.plusSeconds(last * 60), group.getProbableRootService(), ru.donskikh.incidenthub.CorrelationTestData.rankedFor(group.getProbableRootService()));
             groups.saveAndFlush(group);
             if (groupStatus == AlertGroupStatus.CONFIRMED) {
-                confirmService.confirm(new ru.donskikh.incidenthub.alertgroup.application.ConfirmAlertGroupCommand(
-                        group.getId(), ru.donskikh.incidenthub.incident.IncidentSeverity.SEV2,
-                        ru.donskikh.incidenthub.incident.IncidentPriority.HIGH, null, null, null, actorId, group.getVersion()));
+                confirmService.confirm(new ConfirmAlertGroupCommand(
+                        group.getId(), IncidentSeverity.SEV2,
+                        IncidentPriority.HIGH, null, null, null, actorId, group.getVersion()));
             } else if (groupStatus == AlertGroupStatus.DISMISSED) {
-                dismissService.dismiss(new ru.donskikh.incidenthub.alertgroup.application.DismissAlertGroupCommand(
+                dismissService.dismiss(new DismissAlertGroupCommand(
                         group.getId(), null, actorId, group.getVersion()));
             }
             return group.getId();

@@ -1,0 +1,7 @@
+Для проверки текущей ветки запусти из корня проекта:
+
+./scripts/demo/send-demo-alerts.ps1 -Scenario late
+
+Если PowerShell откажется запускать скрипт из-за политики выполнения, сначала выполни:
+
+Set-ExecutionPolicy -Scope Process Bypass

@@ -2,13 +2,16 @@ package ru.donskikh.incidenthub.alertgroup.infrastructure;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
+import ru.donskikh.incidenthub.alert.AlertSeverity;
+import ru.donskikh.incidenthub.alert.AlertSignalType;
 import ru.donskikh.incidenthub.alert.correlation.AlertCorrelator;
 import ru.donskikh.incidenthub.alert.correlation.CorrelationAlert;
 import ru.donskikh.incidenthub.alert.correlation.CorrelationContext;
 import ru.donskikh.incidenthub.alert.correlation.CorrelationDecision;
+import ru.donskikh.incidenthub.alert.correlation.Evidence;
+import ru.donskikh.incidenthub.alert.correlation.RootAssessment;
+import ru.donskikh.incidenthub.alert.correlation.RootCandidate;
 import ru.donskikh.incidenthub.alert.correlation.TimeWindowCorrelator;
-import ru.donskikh.incidenthub.alert.AlertSignalType;
-import ru.donskikh.incidenthub.alert.AlertSeverity;
 import ru.donskikh.incidenthub.alertgroup.application.CorrelateAlertsCommand;
 import ru.donskikh.incidenthub.alertgroup.application.CorrelateAlertsService;
 
@@ -33,7 +36,7 @@ class AlertCorrelationConfigurationTest {
             assertThat(context.getBean(AlertCorrelationProperties.class).window()).isEqualTo(Duration.ofMinutes(5));
             assertThat(context.getBean(AlertCorrelator.class).correlate(
                     new CorrelationAlert(1, 42, Instant.now(), AlertSignalType.LATENCY, AlertSeverity.INFO),
-                    new CorrelationContext(List.of()))).isEqualTo(new CorrelationDecision.OpenGroup(42));
+                    new CorrelationContext(List.of()))).isEqualTo(new CorrelationDecision.OpenGroup(new RootAssessment.Ranked(List.of(new RootCandidate(42, 1.0)), List.of(new Evidence.EarliestAlert(1, 42))), List.of(new Evidence.EarliestAlert(1, 42))));
         });
     }
 

@@ -9,9 +9,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
 import ru.donskikh.incidenthub.alert.Alert;
 import ru.donskikh.incidenthub.alert.AlertRepository;
-import ru.donskikh.incidenthub.alert.AlertSignalType;
 import ru.donskikh.incidenthub.alert.AlertSeverity;
+import ru.donskikh.incidenthub.alert.AlertSignalType;
+import ru.donskikh.incidenthub.alert.correlation.*;
 import ru.donskikh.incidenthub.alert.correlation.AlertCorrelator;
+import ru.donskikh.incidenthub.alert.correlation.CorrelationContext;
 import ru.donskikh.incidenthub.alert.correlation.CorrelationDecision;
 import ru.donskikh.incidenthub.alertgroup.AlertGroup;
 import ru.donskikh.incidenthub.alertgroup.AlertGroupRepository;
@@ -25,6 +27,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
@@ -32,6 +35,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static ru.donskikh.incidenthub.CorrelationTestData.ranked;
 
 @ExtendWith(MockitoExtension.class)
 class CorrelateAlertsServiceTest {
@@ -93,23 +97,23 @@ class CorrelateAlertsServiceTest {
             ReflectionTestUtils.setField(group, "id", 7L);
             return group;
         });
-        when(alerts.attachToGroup(anyLong(), anyLong())).thenReturn(1);
+        when(alerts.attachToGroup(anyLong(), anyLong(), nullable(LinkStrength.class), any())).thenReturn(1);
         when(correlator.correlate(any(), any())).thenAnswer(invocation -> {
-            ru.donskikh.incidenthub.alert.correlation.CorrelationContext context = invocation.getArgument(1);
+            CorrelationContext context = invocation.getArgument(1);
             if (context.groups().isEmpty()) {
-                return new CorrelationDecision.OpenGroup(99);
+                return new CorrelationDecision.OpenGroup(ranked(99), List.of(new Evidence.Migrated()));
             }
             assertThat(context.groups().getFirst().members()).hasSize(1);
             assertThat(context.groups().getFirst().members().getFirst().businessServiceId()).isEqualTo(11);
-            return new CorrelationDecision.JoinGroup(7, 99);
+            return new CorrelationDecision.JoinGroup(7, ranked(99), LinkStrength.TENTATIVE, List.of(new Evidence.Migrated()));
         });
 
         assertThat(processor.process(new CorrelateAlertsCommand(10)))
                 .isEqualTo(new CorrelationBatchResult(true, 2, 1));
 
         verify(groups).findCorrelationCandidates(time.minusSeconds(300), time.plusSeconds(360));
-        verify(alerts).attachToGroup(1, 7);
-        verify(alerts).attachToGroup(2, 7);
+        verify(alerts).attachToGroup(1, 7, null, List.of(new Evidence.Migrated()));
+        verify(alerts).attachToGroup(2, 7, LinkStrength.TENTATIVE, List.of(new Evidence.Migrated()));
         verify(alerts, never()).findCorrelationMembers(any());
     }
 

@@ -2,7 +2,6 @@ package ru.donskikh.incidenthub.alertgroup.application;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.LockModeType;
-
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -15,6 +14,7 @@ import ru.donskikh.incidenthub.alert.correlation.CorrelationContext;
 import ru.donskikh.incidenthub.alert.correlation.CorrelationDecision;
 import ru.donskikh.incidenthub.alert.correlation.CorrelationGroupMember;
 import ru.donskikh.incidenthub.alert.correlation.OpenAlertGroupSnapshot;
+import ru.donskikh.incidenthub.alert.correlation.RootAssessment;
 import ru.donskikh.incidenthub.alertgroup.AlertGroup;
 import ru.donskikh.incidenthub.alertgroup.AlertGroupRepository;
 import ru.donskikh.incidenthub.alertgroup.infrastructure.AlertCorrelationProperties;
@@ -23,11 +23,11 @@ import ru.donskikh.incidenthub.catalog.BusinessServiceRepository;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.HashSet;
 import java.util.Set;
 
 @Service
@@ -77,7 +77,7 @@ public class CorrelateAlertsService {
         if (!groups.isEmpty()) {
             alertRepository.findCorrelationMembers(groups.keySet()).forEach(member ->
                     members.computeIfAbsent(member.getGroupId(), ignored -> new ArrayList<>()).add(
-                            new CorrelationGroupMember(member.getBusinessServiceId(), member.getOccurredAt(),
+                            new CorrelationGroupMember(member.getAlertId(), member.getBusinessServiceId(), member.getOccurredAt(),
                                     member.getSignalType(), member.getSeverity())
                     ));
         }
@@ -92,10 +92,11 @@ public class CorrelateAlertsService {
                             alert.getSignalType(), alert.getSeverity()),
                     new CorrelationContext(List.copyOf(snapshots.values()))
             ), "Correlation decision must not be null");
-            var rootService = serviceRepository.getReferenceById(decision.probableRootServiceId());
+            var rootService = decision.rootAssessment() instanceof RootAssessment.Ranked ranked
+                    ? serviceRepository.getReferenceById(ranked.candidates().getFirst().serviceId()) : null;
             AlertGroup group;
             if (decision instanceof CorrelationDecision.OpenGroup) {
-                group = groupRepository.save(new AlertGroup(rootService, alert.getOccurredAt()));
+                group = groupRepository.save(new AlertGroup(rootService, alert.getOccurredAt(), decision.rootAssessment()));
                 versionedGroups.add(group.getId());
                 groups.put(group.getId(), group);
                 createdGroups++;
@@ -105,17 +106,19 @@ public class CorrelateAlertsService {
                 if (group == null) {
                     throw new IllegalStateException("Correlator selected a group outside the context");
                 }
-                group.includeAlert(alert.getOccurredAt(), rootService);
+                group.includeAlert(alert.getOccurredAt(), rootService, decision.rootAssessment());
                 if (versionedGroups.add(groupId)) {
                     // Membership changes must conflict even when bounds and root stay unchanged.
                     entityManager.lock(group, LockModeType.OPTIMISTIC_FORCE_INCREMENT);
                 }
             }
-            if (alertRepository.attachToGroup(alert.getId(), group.getId()) != 1) {
+            if (alertRepository.attachToGroup(alert.getId(), group.getId(),
+                    decision instanceof CorrelationDecision.JoinGroup join ? join.linkStrength() : null,
+                    decision.linkEvidence()) != 1) {
                 throw new IllegalStateException("Alert was already assigned by another processor");
             }
             var groupMembers = members.computeIfAbsent(group.getId(), ignored -> new ArrayList<>());
-            groupMembers.add(new CorrelationGroupMember(alert.getBusinessService().getId(), alert.getOccurredAt(),
+            groupMembers.add(new CorrelationGroupMember(alert.getId(), alert.getBusinessService().getId(), alert.getOccurredAt(),
                     alert.getSignalType(), alert.getSeverity()));
             snapshots.put(group.getId(), snapshot(group, groupMembers));
         }
@@ -123,7 +126,7 @@ public class CorrelateAlertsService {
     }
 
     private OpenAlertGroupSnapshot snapshot(AlertGroup group, List<CorrelationGroupMember> members) {
-        return new OpenAlertGroupSnapshot(group.getId(), group.getProbableRootService().getId(),
+        return new OpenAlertGroupSnapshot(group.getId(), group.getRootAssessment(),
                 group.getFirstAlertAt(), group.getLastAlertAt(), members);
     }
 }

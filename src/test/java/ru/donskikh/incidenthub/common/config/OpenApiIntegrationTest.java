@@ -2,22 +2,39 @@ package ru.donskikh.incidenthub.common.config;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.jayway.jsonpath.JsonPath;
+import com.networknt.schema.JsonSchema;
+import com.networknt.schema.JsonSchemaFactory;
+import com.networknt.schema.JsonMetaSchema;
+import com.networknt.schema.NonValidationKeyword;
+import com.networknt.schema.SpecVersion;
+import com.networknt.schema.ValidatorTypeCode;
+import io.swagger.v3.parser.OpenAPIV3Parser;
+import io.swagger.v3.parser.core.models.ParseOptions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import ru.donskikh.incidenthub.PostgreSQLIntegrationTest;
+import ru.donskikh.incidenthub.alert.correlation.RootAssessmentStatus;
+import ru.donskikh.incidenthub.alertgroup.web.EvidenceResponse;
+import ru.donskikh.incidenthub.alertgroup.web.RootAssessmentResponse;
+import ru.donskikh.incidenthub.alertgroup.web.RootCandidateResponse;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -34,6 +51,9 @@ class OpenApiIntegrationTest extends PostgreSQLIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private tools.jackson.databind.ObjectMapper applicationObjectMapper;
 
     @Test
     void exposesValidSpecificationForAllControllerOperations() throws Exception {
@@ -81,10 +101,10 @@ class OpenApiIntegrationTest extends PostgreSQLIntegrationTest {
         );
         assertThat(operationCount).isEqualTo(28);
         assertThat(JsonPath.<String>read(document,
-                "$.paths['/api/v1/alert-groups'].get.responses['200'].content['*/*'].schema['$ref']"))
+                "$.paths['/api/v1/alert-groups'].get.responses['200'].content['application/json'].schema['$ref']"))
                 .isEqualTo("#/components/schemas/ListAlertGroupsResponse");
         assertThat(JsonPath.<String>read(document,
-                "$.paths['/api/v1/alert-groups/{id}'].get.responses['200'].content['*/*'].schema['$ref']"))
+                "$.paths['/api/v1/alert-groups/{id}'].get.responses['200'].content['application/json'].schema['$ref']"))
                 .isEqualTo("#/components/schemas/AlertGroupDetailResponse");
         assertThat(tags).containsExactlyInAnyOrder(
                 "Authentication", "Incidents", "Service catalog", "Teams", "Users", "Alerts", "Alert groups"
@@ -182,5 +202,158 @@ class OpenApiIntegrationTest extends PostgreSQLIntegrationTest {
         JsonNode expected = OBJECT_MAPPER.readTree(snapshot);
 
         assertThat(actual).as("OpenAPI snapshot must match the backend contract").isEqualTo(expected);
+    }
+
+    @Test
+    void parsesAndResolvesGeneratedSpecificationWithoutDiagnostics() throws Exception {
+        var result = new OpenAPIV3Parser().readContents(generatedDocument(), null, resolveOptions());
+        assertThat(result.getOpenAPI()).isNotNull();
+        assertThat(result.getMessages()).as("OpenAPI parser/resolver errors and warnings").isEmpty();
+    }
+
+    @Test
+    void reportsBrokenReferencesInsteadOfSilentlyAcceptingThem() throws Exception {
+        var document = OBJECT_MAPPER.readTree(generatedDocument());
+        ((ObjectNode) document.at("/components/schemas/EvidenceResponse/oneOf/0"))
+                .put("$ref", "#/components/schemas/MissingEvidence");
+        var result = new OpenAPIV3Parser().readContents(document.toString(), null, resolveOptions());
+        assertThat(result.getMessages()).isNotEmpty();
+    }
+
+    @Test
+    void declaresConcreteEvidenceObjectsWithoutRecursiveInheritance() throws Exception {
+        assertThat(evidenceResponses().map(Object::getClass).toList())
+                .containsExactlyInAnyOrder(EvidenceResponse.class.getPermittedSubclasses());
+        assertThat(assessmentResponses().map(RootAssessmentResponse::status).toList())
+                .containsExactlyInAnyOrder(RootAssessmentStatus.values());
+        var schemas = OBJECT_MAPPER.readTree(generatedDocument()).at("/components/schemas");
+        var variants = Map.of(
+                "TEMPORAL_PROXIMITY", Map.entry("TemporalProximityEvidence", Set.of("type", "alertId", "distanceToGroup")),
+                "EARLIEST_ALERT", Map.entry("EarliestAlertEvidence", Set.of("type", "alertId", "serviceId")),
+                "DEPENDENCY_PATH", Map.entry("DependencyPathEvidence", Set.of("type", "serviceIds")),
+                "MIGRATED", Map.entry("MigratedEvidence", Set.of("type")));
+        var evidence = schemas.get("EvidenceResponse");
+        assertThat(evidence.get("oneOf")).hasSize(4);
+        assertThat(evidence.at("/discriminator/propertyName").asText()).isEqualTo("type");
+        variants.forEach((type, variant) -> {
+            String reference = "#/components/schemas/" + variant.getKey();
+            assertThat(evidence.at("/discriminator/mapping/" + type).asText()).isEqualTo(reference);
+            assertThat(evidence.get("oneOf")).anySatisfy(item -> assertThat(item.get("$ref").asText()).isEqualTo(reference));
+            var schema = schemas.get(variant.getKey());
+            assertConcreteVariant(schema);
+            assertThat(schema.at("/properties/type/enum")).singleElement().satisfies(value -> assertThat(value.asText()).isEqualTo(type));
+            Set<String> properties = new java.util.HashSet<>();
+            schema.get("properties").fieldNames().forEachRemaining(properties::add);
+            assertThat(properties).isEqualTo(variant.getValue());
+            assertThat(schema.get("required")).extracting(JsonNode::asText).containsExactlyInAnyOrderElementsOf(properties);
+            assertThat(schema.get("additionalProperties").asBoolean()).isFalse();
+        });
+    }
+
+    @Test
+    void declaresJsonForEverySuccessfulResponseBody() throws Exception {
+        var paths = OBJECT_MAPPER.readTree(generatedDocument()).get("paths");
+        for (JsonNode path : paths) {
+            for (String method : HTTP_METHODS) {
+                var responses = path.path(method).path("responses");
+                var entries = responses.fields();
+                while (entries.hasNext()) {
+                    var entry = entries.next();
+                    var body = entry.getValue().path("content");
+                    if (entry.getKey().equals("200")) {
+                        assertThat(body.isMissingNode()).as("200 responses describe their JSON body").isFalse();
+                    }
+                    if (entry.getKey().startsWith("2") && !body.isMissingNode()) {
+                        assertThat(body).hasSize(1);
+                        assertThat(body.has("*/*")).isFalse();
+                        assertThat(body.has("application/json")).isTrue();
+                    }
+                }
+            }
+        }
+    }
+
+    @Test
+    void rejectsThePreviousRecursiveEvidenceSchema() throws Exception {
+        var document = (ObjectNode) OBJECT_MAPPER.readTree(generatedDocument());
+        var variant = (ObjectNode) document.at("/components/schemas/TemporalProximityEvidence");
+        variant.removeAll();
+        variant.putArray("allOf").addObject().put("$ref", "#/components/schemas/EvidenceResponse");
+        assertThatThrownBy(() -> assertConcreteVariant(variant)).isInstanceOf(AssertionError.class);
+    }
+
+    private void assertConcreteVariant(JsonNode schema) {
+        assertThat(schema.path("type").asText()).isEqualTo("object");
+        assertThat(schema.has("allOf")).isFalse();
+        assertThat(schema.has("oneOf")).isFalse();
+    }
+
+    static Stream<EvidenceResponse> evidenceResponses() {
+        return Stream.of(new EvidenceResponse.TemporalProximity(101, "PT-20S"),
+                new EvidenceResponse.EarliestAlert(101, 42),
+                new EvidenceResponse.DependencyPath(List.of(42L, 43L)), new EvidenceResponse.Migrated());
+    }
+
+    static Stream<RootAssessmentResponse> assessmentResponses() {
+        return Stream.of(new RootAssessmentResponse(RootAssessmentStatus.RANKED,
+                        List.of(new RootCandidateResponse(42, 1.0, "ROOT", "Root service")), evidenceResponses().toList(), null),
+                new RootAssessmentResponse(RootAssessmentStatus.UNDETERMINED, List.of(), List.of(), "INSUFFICIENT_EVIDENCE"));
+    }
+
+    @ParameterizedTest
+    @MethodSource("evidenceResponses")
+    void serializedEvidenceMatchesGeneratedSchema(EvidenceResponse dto) throws Exception {
+        assertSerializedContract(dto, "EvidenceResponse");
+    }
+
+    @ParameterizedTest
+    @MethodSource("assessmentResponses")
+    void serializedAssessmentMatchesGeneratedSchema(RootAssessmentResponse dto) throws Exception {
+        assertSerializedContract(dto, "RootAssessmentResponse");
+    }
+
+    private void assertSerializedContract(Object dto, String schemaName) throws Exception {
+        var document = OBJECT_MAPPER.readTree(generatedDocument());
+        var validationDocument = OBJECT_MAPPER.createObjectNode();
+        validationDocument.put("$schema", "https://json-schema.org/draft/2020-12/schema");
+        validationDocument.put("$ref", "#/components/schemas/" + schemaName);
+        validationDocument.set("components", document.get("components"));
+        // Recognize OpenAPI's discriminator extension and its non-validating documentation keywords.
+        var dialect = JsonMetaSchema.builder(JsonMetaSchema.getV202012())
+                .keyword(new NonValidationKeyword("components"))
+                .keyword(ValidatorTypeCode.DISCRIMINATOR)
+                .keyword(new NonValidationKeyword("example")).build();
+        JsonSchema schema = JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V202012,
+                builder -> builder.metaSchema(dialect)).getSchema(validationDocument);
+        // Serialization deliberately uses the application's Jackson 3 mapper, not the validator's Jackson 2 mapper.
+        var json = (ObjectNode) OBJECT_MAPPER.readTree(applicationObjectMapper.writeValueAsString(dto));
+        assertThat(schema.validate(json)).as("Serialized %s must match generated %s", dto, schemaName).isEmpty();
+        var extra = json.deepCopy().put("unexpectedField", true);
+        assertThat(schema.validate(extra)).as("Undocumented JSON fields must be rejected").isNotEmpty();
+        var fields = json.fieldNames();
+        while (fields.hasNext()) {
+            String name = fields.next();
+            var missing = json.deepCopy();
+            missing.remove(name);
+            assertThat(schema.validate(missing)).as("Missing required field %s", name).isNotEmpty();
+        }
+        if (dto instanceof RootAssessmentResponse assessment && assessment.status() == RootAssessmentStatus.RANKED) {
+            var nestedExtra = json.deepCopy();
+            ((ObjectNode) nestedExtra.at("/candidates/0")).put("unexpectedField", true);
+            assertThat(schema.validate(nestedExtra)).as("Nested candidates must reject undocumented fields").isNotEmpty();
+        }
+    }
+
+    private ParseOptions resolveOptions() {
+        var options = new ParseOptions();
+        options.setResolve(true);
+        options.setResolveFully(true);
+        options.setResolveCombinators(false);
+        return options;
+    }
+
+    private String generatedDocument() throws Exception {
+        return mockMvc.perform(get("/v3/api-docs").header("Host", "localhost:8080"))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
     }
 }

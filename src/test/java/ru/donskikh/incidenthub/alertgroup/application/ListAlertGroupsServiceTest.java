@@ -1,11 +1,11 @@
 package ru.donskikh.incidenthub.alertgroup.application;
 
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.ArgumentMatchers;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
-import org.mockito.ArgumentCaptor;
-import org.mockito.ArgumentMatchers;
 import ru.donskikh.incidenthub.alertgroup.AlertGroup;
 import ru.donskikh.incidenthub.alertgroup.AlertGroupRepository;
 import ru.donskikh.incidenthub.catalog.BusinessService;
@@ -30,7 +30,7 @@ class ListAlertGroupsServiceTest {
         when(root.getId()).thenReturn(42L);
         when(root.getCode()).thenReturn("ROOT");
         when(root.getName()).thenReturn("Root");
-        AlertGroup group = new AlertGroup(root, Instant.parse("2026-10-18T12:00:00Z"));
+        AlertGroup group = ru.donskikh.incidenthub.CorrelationTestData.group(root, Instant.parse("2026-10-18T12:00:00Z"));
         org.springframework.test.util.ReflectionTestUtils.setField(group, "id", 7L);
         when(repository.findAll(ArgumentMatchers.<Specification<AlertGroup>>any(), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(group)));

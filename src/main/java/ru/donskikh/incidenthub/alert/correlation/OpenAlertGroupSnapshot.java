@@ -6,13 +6,14 @@ import java.util.Objects;
 
 public record OpenAlertGroupSnapshot(
         long id,
-        long probableRootServiceId,
+        RootAssessment rootAssessment,
         Instant firstAlertAt,
         Instant lastAlertAt,
         List<CorrelationGroupMember> members
 ) {
     public OpenAlertGroupSnapshot {
-        if (id <= 0 || probableRootServiceId <= 0) {
+        Objects.requireNonNull(rootAssessment, "rootAssessment must not be null");
+        if (id <= 0) {
             throw new IllegalArgumentException("Group and root service identifiers must be positive");
         }
         Objects.requireNonNull(firstAlertAt, "firstAlertAt must not be null");

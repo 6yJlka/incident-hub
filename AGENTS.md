@@ -51,6 +51,10 @@ Run frontend checks sequentially, never in parallel: `api:check` regenerates
 the client and temporarily removes `src/api/generated`, which breaks tests
 running at the same time.
 
+If you redirect command output to log files, write them under `build/`
+(for example `build/logs/`), never into the repository root, and do not
+leave temporary files behind at the end of a pass.
+
 A task is done only when all of the above pass.
 
 ## Workflow
@@ -154,7 +158,9 @@ New code must be indistinguishable from existing code.
    `npm run api:check` must show no diff.
 2. All UI text goes through react-i18next keys. Interface language is Russian.
    Codes, statuses and ids from the API (`CORE_DATABASE`, `SEV1`, `IN_PROGRESS`)
-   are not translated.
+   are not translated. Exception: reason codes meant for people (for example
+   the `Undetermined` reason of the correlator) are translated through i18n;
+   an unknown code is shown as is.
 3. Lifecycle buttons come strictly from `availableActions`. The frontend never
    duplicates status transition or role rules.
 4. Severity is a numeric colored badge, priority is a plain text label. Two
@@ -166,6 +172,10 @@ New code must be indistinguishable from existing code.
 
 The project is also the base for the author's master's research on incident
 correlation using the service dependency graph. Infrastructure for it (alerts,
-correlator interface, baseline, simulator, metrics) is regular work when a task asks
-for it. **The graph-based correlation method itself is the research result: do not
-implement or propose its algorithm unless a task explicitly asks for it.**
+correlator interface, both baselines — time window and the naive PageRank
+baseline from the Groot paper — simulator, metrics) is regular work when a task
+asks for it. **The graph-based correlation method itself is the research result.
+It is designed outside the code; never invent, propose or change its algorithm.
+Implement it only from a specification given in an explicit task. If the
+specification turns out to be incomplete or contradictory, stop and describe
+the problem instead of filling the gap yourself.**

@@ -12,6 +12,7 @@ import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import org.springdoc.core.customizers.OperationCustomizer;
+import org.springdoc.core.customizers.OpenApiCustomizer;
 import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.http.MediaType;
 import org.springframework.context.annotation.Bean;
@@ -21,6 +22,19 @@ import org.springframework.web.method.HandlerMethod;
 
 @Configuration
 public class OpenApiConfiguration {
+
+    @Bean
+    public OpenApiCustomizer jsonSuccessResponseCustomizer() {
+        return openApi -> openApi.getPaths().values().forEach(path -> path.readOperations().forEach(operation ->
+                operation.getResponses().forEach((status, response) -> {
+                    if (status.startsWith("2") && response.getContent() != null) {
+                        var wildcard = response.getContent().remove(MediaType.ALL_VALUE);
+                        if (wildcard != null) {
+                            response.getContent().putIfAbsent(MediaType.APPLICATION_JSON_VALUE, wildcard);
+                        }
+                    }
+                })));
+    }
 
     public static final String BEARER_AUTH = "bearerAuth";
 

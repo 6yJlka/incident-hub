@@ -7,14 +7,15 @@ import java.time.Instant;
 import java.util.Objects;
 
 public record CorrelationGroupMember(
+        long alertId,
         long businessServiceId,
         Instant occurredAt,
         AlertSignalType signalType,
         AlertSeverity severity
 ) {
     public CorrelationGroupMember {
-        if (businessServiceId <= 0) {
-            throw new IllegalArgumentException("businessServiceId must be positive");
+        if (alertId <= 0 || businessServiceId <= 0) {
+            throw new IllegalArgumentException("Alert and service identifiers must be positive");
         }
         Objects.requireNonNull(occurredAt, "occurredAt must not be null");
         Objects.requireNonNull(signalType, "signalType must not be null");

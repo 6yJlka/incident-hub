@@ -5,15 +5,19 @@
  * REST API for managing service ownership, dependencies, and incident lifecycle
  * OpenAPI spec version: 1.0.0
  */
+import type { AlertGroupResponseRootAssessmentStatus } from './alertGroupResponseRootAssessmentStatus'
 import type { AlertGroupResponseStatus } from './alertGroupResponseStatus'
 import type { AlertGroupResponseWorstSeverity } from './alertGroupResponseWorstSeverity'
 
 export interface AlertGroupResponse {
   id?: number
   status?: AlertGroupResponseStatus
-  probableRootServiceId?: number
-  probableRootServiceCode?: string
-  probableRootServiceName?: string
+  /** @nullable */
+  probableRootServiceId?: number | null
+  /** @nullable */
+  probableRootServiceCode?: string | null
+  /** @nullable */
+  probableRootServiceName?: string | null
   firstAlertAt?: string
   lastAlertAt?: string
   incidentId?: number
@@ -21,4 +25,5 @@ export interface AlertGroupResponse {
   serviceCount?: number
   servicePreviewCodes?: string[]
   worstSeverity?: AlertGroupResponseWorstSeverity
+  rootAssessmentStatus?: AlertGroupResponseRootAssessmentStatus
 }

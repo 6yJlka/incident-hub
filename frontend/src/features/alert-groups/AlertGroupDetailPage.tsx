@@ -28,6 +28,7 @@ import {
   maximumSignal,
   reachedServiceIds,
 } from './groupPresentation'
+import { CorrelationEvidence } from './CorrelationEvidence'
 import { SignalSeverity } from './SignalSeverity'
 import { ServiceCode } from './ServiceCode'
 import { StatusBadge } from '../incidents/shared/StatusBadge'
@@ -53,6 +54,7 @@ export function AlertGroupDetailPage() {
   const [notice, setNotice] = useState<string | null>(null)
   const [modal, setModal] = useState<'confirm' | 'dismiss' | null>(null)
   const [busy, setBusy] = useState(false)
+  const [serviceRequired, setServiceRequired] = useState(false)
   const [decisionError, setDecisionError] = useState<string | null>(null)
   useEffect(() => {
     let active = true
@@ -68,6 +70,7 @@ export function AlertGroupDetailPage() {
         if (!active) return
         setGroup(result)
         setStale(false)
+        if (result.rootAssessment?.status === 'UNDETERMINED') return
         void getService(result.probableRootServiceId!)
           .then((value) => {
             if (active) setRoot(value)
@@ -106,6 +109,7 @@ export function AlertGroupDetailPage() {
   async function decide(operation: () => Promise<AlertGroupDetailResponse>) {
     if (busy || stale || loading) return
     setBusy(true)
+    setServiceRequired(false)
     setDecisionError(null)
     try {
       const result = await operation()
@@ -133,18 +137,34 @@ export function AlertGroupDetailPage() {
         setStale(true)
         setRevision((value) => value + 1)
         notifyGroupsChanged()
+      } else if (
+        error instanceof ApiError &&
+        error.problem?.type === 'urn:incident-hub:problem:root-service-required'
+      ) {
+        setServiceRequired(true)
       } else setDecisionError(t('groups.decisionError'))
     } finally {
       setBusy(false)
     }
   }
   function open(kind: 'confirm' | 'dismiss') {
+    setServiceRequired(false)
     setDecisionError(null)
     setModal(kind)
   }
+  const serviceCode = (id: number) =>
+    catalog.find((service) => service.id === id)?.code ??
+    group?.rootAssessment?.candidates?.find(
+      (candidate) => candidate.serviceId === id,
+    )?.serviceCode ??
+    group?.alerts?.find((alert) => alert.businessServiceId === id)
+      ?.businessServiceCode ??
+    String(id)
   const blocked = stale || busy || loading || group?.version === undefined
   const reached =
-    group && affected !== null
+    group &&
+    group.rootAssessment?.status !== 'UNDETERMINED' &&
+    affected !== null
       ? reachedServiceIds(group.probableRootServiceId!, affected)
       : null
   if (loadError && group?.id !== groupId)
@@ -175,10 +195,14 @@ export function AlertGroupDetailPage() {
         <div className={styles.headerFacts}>
           <div>
             <span>{t('groups.probableRoot')}</span>
-            <ServiceCode
-              code={group.probableRootServiceCode}
-              tier={root?.tier}
-            />
+            {group.rootAssessment?.status === 'UNDETERMINED' ? (
+              <span>{t('groups.rootUndetermined')}</span>
+            ) : (
+              <ServiceCode
+                code={group.probableRootServiceCode}
+                tier={root?.tier}
+              />
+            )}
             <small>{root?.tier}</small>
           </div>
           <div>
@@ -210,6 +234,7 @@ export function AlertGroupDetailPage() {
             affected={affected}
             root={root}
             failed={graphFailed}
+            serviceCode={serviceCode}
           />
           <section className={styles.panel}>
             <h2>{t('groups.alerts')}</h2>
@@ -224,6 +249,7 @@ export function AlertGroupDetailPage() {
                       'signalSeverity',
                       'source',
                       'description',
+                      'linkEvidence',
                     ].map((key) => (
                       <th key={key}>{t(`groups.${key}`)}</th>
                     ))}
@@ -257,6 +283,17 @@ export function AlertGroupDetailPage() {
                         <small>{alert.externalId}</small>
                       </td>
                       <td>{alert.description}</td>
+                      <td>
+                        {alert.linkStrength === 'TENTATIVE' && (
+                          <strong className={styles.tentative}>
+                            {t('groups.tentativeLink')}
+                          </strong>
+                        )}
+                        <CorrelationEvidence
+                          evidence={alert.linkEvidence}
+                          serviceCode={serviceCode}
+                        />
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -331,6 +368,10 @@ export function AlertGroupDetailPage() {
           )}
           <dl className={styles.groupStats}>
             <div>
+              <dt>{t('groups.tentativeLinks')}</dt>
+              <dd>{group.tentativeLinkCount ?? 0}</dd>
+            </div>
+            <div>
               <dt>{t('groups.alerts')}</dt>
               <dd>{group.alerts?.length ?? 0}</dd>
             </div>
@@ -375,6 +416,7 @@ export function AlertGroupDetailPage() {
           catalog={catalog}
           busy={busy}
           error={decisionError}
+          serviceRequired={serviceRequired}
           onClose={() => setModal(null)}
           onConfirm={(body: ConfirmAlertGroupRequest) =>
             void decide(() => confirmAlertGroup(groupId, body))

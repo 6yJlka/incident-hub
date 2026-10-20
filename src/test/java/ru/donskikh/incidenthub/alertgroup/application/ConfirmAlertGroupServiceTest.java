@@ -12,23 +12,23 @@ import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.test.util.ReflectionTestUtils;
 import ru.donskikh.incidenthub.alert.AlertRepository;
 import ru.donskikh.incidenthub.alertgroup.AlertGroup;
-import ru.donskikh.incidenthub.alertgroup.AlertGroupRepository;
-import ru.donskikh.incidenthub.alertgroup.AlertGroupStatus;
-import ru.donskikh.incidenthub.alertgroup.AlertGroupNotFoundException;
-import ru.donskikh.incidenthub.alertgroup.AlertGroupStateConflictException;
 import ru.donskikh.incidenthub.alertgroup.AlertGroupConcurrentModificationException;
+import ru.donskikh.incidenthub.alertgroup.AlertGroupNotFoundException;
+import ru.donskikh.incidenthub.alertgroup.AlertGroupRepository;
+import ru.donskikh.incidenthub.alertgroup.AlertGroupStateConflictException;
+import ru.donskikh.incidenthub.alertgroup.AlertGroupStatus;
 import ru.donskikh.incidenthub.catalog.BusinessService;
-import ru.donskikh.incidenthub.catalog.BusinessServiceRepository;
 import ru.donskikh.incidenthub.catalog.BusinessServiceNotFoundException;
+import ru.donskikh.incidenthub.catalog.BusinessServiceRepository;
 import ru.donskikh.incidenthub.catalog.ServiceTier;
 import ru.donskikh.incidenthub.identity.User;
 import ru.donskikh.incidenthub.identity.UserRepository;
 import ru.donskikh.incidenthub.incident.Incident;
+import ru.donskikh.incidenthub.incident.IncidentPriority;
 import ru.donskikh.incidenthub.incident.IncidentRepository;
+import ru.donskikh.incidenthub.incident.IncidentSeverity;
 import ru.donskikh.incidenthub.incident.IncidentSource;
 import ru.donskikh.incidenthub.incident.IncidentStatus;
-import ru.donskikh.incidenthub.incident.IncidentSeverity;
-import ru.donskikh.incidenthub.incident.IncidentPriority;
 import ru.donskikh.incidenthub.incident.application.CreateIncidentCommand;
 import ru.donskikh.incidenthub.incident.application.CreateIncidentResult;
 import ru.donskikh.incidenthub.incident.application.CreateIncidentService;
@@ -39,8 +39,8 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.assertThatNullPointerException;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.doThrow;
@@ -67,7 +67,7 @@ class ConfirmAlertGroupServiceTest {
     @BeforeEach
     void setUp() {
         root = businessService(10L, "Root");
-        group = new AlertGroup(root, Instant.parse("2026-10-18T12:00:00Z"));
+        group = ru.donskikh.incidenthub.CorrelationTestData.group(root, Instant.parse("2026-10-18T12:00:00Z"));
         ReflectionTestUtils.setField(group, "id", 7L);
         actor = new User("engineer@example.com", "Engineer");
     }
@@ -156,7 +156,7 @@ class ConfirmAlertGroupServiceTest {
     private void prepare() {
         prepareCreation();
         when(getGroup.get(new GetAlertGroupQuery(7))).thenReturn(new GetAlertGroupResult(
-                AlertGroupItem.from(group), List.of()));
+                AlertGroupItem.from(group), List.of(), null, null, null, null, 0, group.getRootAssessment()));
     }
 
     private void prepareCreation() {

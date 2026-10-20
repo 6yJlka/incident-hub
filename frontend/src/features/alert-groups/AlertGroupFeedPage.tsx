@@ -140,15 +140,19 @@ export function AlertGroupFeedPage() {
                       <StatusBadge value={group.status} />
                     </td>
                     <td className={styles.code}>
-                      <ServiceCode
-                        code={group.probableRootServiceCode}
-                        tier={
-                          services.find(
-                            (service) =>
-                              service.id === group.probableRootServiceId,
-                          )?.tier
-                        }
-                      />
+                      {group.rootAssessmentStatus === 'UNDETERMINED' ? (
+                        <span>{t('groups.rootUndetermined')}</span>
+                      ) : (
+                        <ServiceCode
+                          code={group.probableRootServiceCode}
+                          tier={
+                            services.find(
+                              (service) =>
+                                service.id === group.probableRootServiceId,
+                            )?.tier
+                          }
+                        />
+                      )}
                     </td>
                     <td>{group.alertCount}</td>
                     <td className={styles.code}>

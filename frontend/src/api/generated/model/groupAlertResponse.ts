@@ -5,6 +5,8 @@
  * REST API for managing service ownership, dependencies, and incident lifecycle
  * OpenAPI spec version: 1.0.0
  */
+import type { EvidenceResponse } from './evidenceResponse'
+import type { GroupAlertResponseLinkStrength } from './groupAlertResponseLinkStrength'
 import type { GroupAlertResponseSeverity } from './groupAlertResponseSeverity'
 import type { GroupAlertResponseSignalType } from './groupAlertResponseSignalType'
 
@@ -20,4 +22,6 @@ export interface GroupAlertResponse {
   occurredAt?: string
   receivedAt?: string
   description?: string
+  linkStrength?: GroupAlertResponseLinkStrength
+  linkEvidence?: EvidenceResponse[]
 }

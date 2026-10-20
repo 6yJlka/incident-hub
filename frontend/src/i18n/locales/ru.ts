@@ -1,6 +1,29 @@
 export const ru = {
   translation: {
     groups: {
+      rootUndetermined: 'Предполагаемый корень не определён',
+      rootReasons: {
+        INSUFFICIENT_EVIDENCE:
+          'Недостаточно данных для оценки предполагаемого корня',
+      },
+      tentativeLink: 'Предположительная связь',
+      tentativeLinks: 'Предположительных связей',
+      linkEvidence: 'Обоснование связи',
+      candidateScore: 'score: {{score}}',
+      selectService: 'Выберите услугу',
+      neutralGraphHint:
+        'Услуги группы без выделенного предполагаемого корня. Связи распространения не показаны.',
+      undeterminedTitleTemplate: 'Алерты от {{count}} услуг',
+      undeterminedDescriptionTemplate:
+        'Группа GRP-{{id}}: {{count}} алертов. Предполагаемый корень не определён. Услуги группы: {{services}}.',
+      evidence: {
+        before: 'За {{seconds}} с до интервала группы',
+        after: 'Через {{seconds}} с после интервала группы',
+        within: 'Внутри интервала группы',
+        earliest: 'Самый ранний алерт #{{alertId}}: {{service}}',
+        path: 'Путь зависимостей: {{services}}',
+        migrated: 'Перенесено при миграции; исходное обоснование отсутствует',
+      },
       id: 'ID',
       first: 'Первый',
       last: 'Последний',
@@ -42,7 +65,7 @@ export const ru = {
       reset: 'Сбросить фильтры',
       empty: 'Группы не найдены',
       loadError: 'Не удалось загрузить группы',
-      probableRoot: 'Вероятный корень',
+      probableRoot: 'Предполагаемый корень',
       graph: 'Схема',
       label: 'Подпись',
       graphTitle: 'Схема распространения отказа',
@@ -83,7 +106,7 @@ export const ru = {
         'Severity — влияние на бизнес. Приоритет — очерёдность работы.',
       titleTemplate: '{{root}}: алерты от {{count}} услуг',
       descriptionTemplate:
-        'Группа GRP-{{id}}: {{count}} алертов. Вероятный корень — {{root}}. Услуги группы: {{services}}.',
+        'Группа GRP-{{id}}: {{count}} алертов. Предполагаемый корень — {{root}}. Услуги группы: {{services}}.',
       validation:
         'Выберите severity и приоритет, заполните услугу, заголовок и описание.',
       createIncident: 'Создать инцидент',
