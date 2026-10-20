@@ -1,10 +1,10 @@
 package ru.donskikh.incidenthub.alert;
 
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.springframework.data.domain.Pageable;
 
 import java.time.Instant;
 import java.util.Collection;
@@ -20,7 +20,7 @@ public interface AlertRepository extends JpaRepository<Alert, Long>, AlertBatchR
     List<Alert> findAllByGroup_IdOrderByOccurredAtAscIdAsc(long groupId);
 
     @Query("""
-            select alert.group.id as groupId, alert.businessService.id as businessServiceId,
+            select alert.id as alertId, alert.group.id as groupId, alert.businessService.id as businessServiceId,
                    alert.occurredAt as occurredAt, alert.signalType as signalType, alert.severity as severity
             from Alert alert
             where alert.group.id in (:groupIds)
@@ -29,6 +29,7 @@ public interface AlertRepository extends JpaRepository<Alert, Long>, AlertBatchR
     List<CorrelationMemberProjection> findCorrelationMembers(@Param("groupIds") Collection<Long> groupIds);
 
     interface CorrelationMemberProjection {
+        Long getAlertId();
         Long getGroupId();
         Long getBusinessServiceId();
         Instant getOccurredAt();

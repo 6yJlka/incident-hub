@@ -8,14 +8,18 @@
 import type { AlertGroupDetailResponseAvailableActionsItem } from './alertGroupDetailResponseAvailableActionsItem'
 import type { AlertGroupDetailResponseStatus } from './alertGroupDetailResponseStatus'
 import type { GroupAlertResponse } from './groupAlertResponse'
+import type { RootAssessmentResponse } from './rootAssessmentResponse'
 
 export interface AlertGroupDetailResponse {
   id?: number
   version?: number
   status?: AlertGroupDetailResponseStatus
-  probableRootServiceId?: number
-  probableRootServiceCode?: string
-  probableRootServiceName?: string
+  /** @nullable */
+  probableRootServiceId?: number | null
+  /** @nullable */
+  probableRootServiceCode?: string | null
+  /** @nullable */
+  probableRootServiceName?: string | null
   firstAlertAt?: string
   lastAlertAt?: string
   incidentId?: number
@@ -25,4 +29,6 @@ export interface AlertGroupDetailResponse {
   decidedAt?: string
   dismissReason?: string
   availableActions?: AlertGroupDetailResponseAvailableActionsItem[]
+  rootAssessment?: RootAssessmentResponse
+  tentativeLinkCount?: number
 }

@@ -166,6 +166,16 @@
               }
             }
           },
+          "409": {
+            "description": "Normalized email already exists",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Authentication credentials are missing or invalid",
             "content": {
@@ -180,16 +190,6 @@
             "description": "The authenticated user does not have the required role",
             "content": {
               "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Normalized email already exists",
-            "content": {
-              "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetail"
                 }
@@ -314,6 +314,16 @@
               }
             }
           },
+          "409": {
+            "description": "Normalized team code already exists",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Authentication credentials are missing or invalid",
             "content": {
@@ -328,16 +338,6 @@
             "description": "The authenticated user does not have the required role",
             "content": {
               "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Normalized team code already exists",
-            "content": {
-              "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetail"
                 }
@@ -488,26 +488,6 @@
               }
             }
           },
-          "401": {
-            "description": "Authentication credentials are missing or invalid",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "The authenticated user does not have the required role",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          },
           "404": {
             "description": "Owner team was not found",
             "content": {
@@ -522,6 +502,26 @@
             "description": "Normalized service code already exists",
             "content": {
               "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication credentials are missing or invalid",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The authenticated user does not have the required role",
+            "content": {
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetail"
                 }
@@ -583,26 +583,6 @@
               }
             }
           },
-          "401": {
-            "description": "Authentication credentials are missing or invalid",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "The authenticated user does not have the required role",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          },
           "404": {
             "description": "Dependent or required service was not found",
             "content": {
@@ -617,6 +597,26 @@
             "description": "Dependency already exists or points to the same service",
             "content": {
               "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication credentials are missing or invalid",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The authenticated user does not have the required role",
+            "content": {
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetail"
                 }
@@ -817,20 +817,20 @@
               }
             }
           },
-          "401": {
-            "description": "Authentication credentials are missing or invalid",
+          "404": {
+            "description": "Authenticated user, affected service, or responsible team was not found",
             "content": {
-              "application/problem+json": {
+              "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
           },
-          "404": {
-            "description": "Authenticated user, affected service, or responsible team was not found",
+          "401": {
+            "description": "Authentication credentials are missing or invalid",
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetail"
                 }
@@ -882,26 +882,6 @@
               }
             }
           },
-          "401": {
-            "description": "Authentication credentials are missing or invalid",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "The authenticated user does not have the required role",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          },
           "404": {
             "description": "Incident was not found",
             "content": {
@@ -916,6 +896,26 @@
             "description": "Incident is not ASSIGNED",
             "content": {
               "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication credentials are missing or invalid",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The authenticated user does not have the required role",
+            "content": {
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetail"
                 }
@@ -967,26 +967,6 @@
               }
             }
           },
-          "401": {
-            "description": "Authentication credentials are missing or invalid",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "The authenticated user does not have the required role",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          },
           "404": {
             "description": "Incident was not found",
             "content": {
@@ -1001,6 +981,26 @@
             "description": "Incident is not IN_PROGRESS",
             "content": {
               "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication credentials are missing or invalid",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The authenticated user does not have the required role",
+            "content": {
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetail"
                 }
@@ -1052,26 +1052,6 @@
               }
             }
           },
-          "401": {
-            "description": "Authentication credentials are missing or invalid",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "The authenticated user does not have the required role",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          },
           "404": {
             "description": "Incident was not found",
             "content": {
@@ -1086,6 +1066,26 @@
             "description": "Incident is not RESOLVED",
             "content": {
               "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication credentials are missing or invalid",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The authenticated user does not have the required role",
+            "content": {
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetail"
                 }
@@ -1137,26 +1137,6 @@
               }
             }
           },
-          "401": {
-            "description": "Authentication credentials are missing or invalid",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "The authenticated user does not have the required role",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          },
           "404": {
             "description": "Incident was not found",
             "content": {
@@ -1171,6 +1151,26 @@
             "description": "Incident is not RESOLVED",
             "content": {
               "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication credentials are missing or invalid",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The authenticated user does not have the required role",
+            "content": {
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetail"
                 }
@@ -1222,26 +1222,6 @@
               }
             }
           },
-          "401": {
-            "description": "Authentication credentials are missing or invalid",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "The authenticated user does not have the required role",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          },
           "404": {
             "description": "Incident was not found",
             "content": {
@@ -1256,6 +1236,26 @@
             "description": "Current incident status does not allow cancellation",
             "content": {
               "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication credentials are missing or invalid",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The authenticated user does not have the required role",
+            "content": {
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetail"
                 }
@@ -1317,26 +1317,6 @@
               }
             }
           },
-          "401": {
-            "description": "Authentication credentials are missing or invalid",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "The authenticated user does not have the required role",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          },
           "404": {
             "description": "Incident or assignee was not found",
             "content": {
@@ -1351,6 +1331,26 @@
             "description": "Current incident status does not allow assignment",
             "content": {
               "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication credentials are missing or invalid",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The authenticated user does not have the required role",
+            "content": {
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetail"
                 }
@@ -1583,26 +1583,6 @@
               }
             }
           },
-          "401": {
-            "description": "Authentication credentials are missing or invalid",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "The authenticated user does not have the required role",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          },
           "404": {
             "description": "Group not found",
             "content": {
@@ -1622,6 +1602,26 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Authentication credentials are missing or invalid",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The authenticated user does not have the required role",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         }
       }
@@ -1632,7 +1632,7 @@
           "Alert groups"
         ],
         "summary": "Confirm an alert group",
-        "description": "Creates an AUTOMATIC incident and confirms the OPEN group atomically. Severity and priority are supplied by the engineer. expectedVersion must match the viewed group version.",
+        "description": "Creates an AUTOMATIC incident and confirms the OPEN group atomically. Severity and priority are supplied by the engineer. expectedVersion must match the viewed group version. businessServiceId is required for UNDETERMINED assessments; otherwise returns urn:incident-hub:problem:root-service-required (400).",
         "operationId": "confirmAlertGroup",
         "parameters": [
           {
@@ -1676,26 +1676,6 @@
               }
             }
           },
-          "401": {
-            "description": "Authentication credentials are missing or invalid",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "The authenticated user does not have the required role",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          },
           "404": {
             "description": "Group or service not found",
             "content": {
@@ -1710,6 +1690,26 @@
             "description": "Group is not OPEN, or changed concurrently (distinct problem types)",
             "content": {
               "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication credentials are missing or invalid",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The authenticated user does not have the required role",
+            "content": {
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetail"
                 }
@@ -1738,8 +1738,8 @@
               }
             }
           },
-          "401": {
-            "description": "Authentication credentials are missing or invalid",
+          "404": {
+            "description": "Authenticated user no longer exists",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1748,8 +1748,8 @@
               }
             }
           },
-          "404": {
-            "description": "Authenticated user no longer exists",
+          "401": {
+            "description": "Authentication credentials are missing or invalid",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1803,20 +1803,20 @@
               }
             }
           },
-          "401": {
-            "description": "Authentication credentials are missing or invalid",
+          "404": {
+            "description": "Business service was not found",
             "content": {
-              "application/problem+json": {
+              "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
           },
-          "404": {
-            "description": "Business service was not found",
+          "401": {
+            "description": "Authentication credentials are missing or invalid",
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetail"
                 }
@@ -1880,20 +1880,20 @@
               }
             }
           },
-          "401": {
-            "description": "Authentication credentials are missing or invalid",
+          "404": {
+            "description": "Root business service was not found",
             "content": {
-              "application/problem+json": {
+              "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
           },
-          "404": {
-            "description": "Root business service was not found",
+          "401": {
+            "description": "Authentication credentials are missing or invalid",
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetail"
                 }
@@ -1945,20 +1945,20 @@
               }
             }
           },
-          "401": {
-            "description": "Authentication credentials are missing or invalid",
+          "404": {
+            "description": "Incident was not found",
             "content": {
-              "application/problem+json": {
+              "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
           },
-          "404": {
-            "description": "Incident was not found",
+          "401": {
+            "description": "Authentication credentials are missing or invalid",
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetail"
                 }
@@ -2010,20 +2010,20 @@
               }
             }
           },
-          "401": {
-            "description": "Authentication credentials are missing or invalid",
+          "404": {
+            "description": "Incident was not found",
             "content": {
-              "application/problem+json": {
+              "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
           },
-          "404": {
-            "description": "Incident was not found",
+          "401": {
+            "description": "Authentication credentials are missing or invalid",
             "content": {
-              "*/*": {
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetail"
                 }
@@ -2149,6 +2149,16 @@
               }
             }
           },
+          "404": {
+            "description": "Alert group not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
           "400": {
             "description": "Invalid group identifier",
             "content": {
@@ -2161,16 +2171,6 @@
           },
           "401": {
             "description": "Authentication credentials are missing or invalid",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Alert group not found",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2228,6 +2228,16 @@
               }
             }
           },
+          "404": {
+            "description": "Service or dependency relationship was not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Authentication credentials are missing or invalid",
             "content": {
@@ -2242,16 +2252,6 @@
             "description": "The authenticated user does not have the required role",
             "content": {
               "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Service or dependency relationship was not found",
-            "content": {
-              "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetail"
                 }
@@ -3065,14 +3065,23 @@
             ]
           },
           "probableRootServiceId": {
-            "type": "integer",
+            "type": [
+              "integer",
+              "null"
+            ],
             "format": "int64"
           },
           "probableRootServiceCode": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "probableRootServiceName": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "firstAlertAt": {
             "type": "string",
@@ -3115,8 +3124,87 @@
                 "DISMISS"
               ]
             }
+          },
+          "rootAssessment": {
+            "$ref": "#/components/schemas/RootAssessmentResponse"
+          },
+          "tentativeLinkCount": {
+            "type": "integer",
+            "format": "int64"
           }
         }
+      },
+      "DependencyPathEvidence": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/EvidenceResponse"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "serviceIds": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "EarliestAlertEvidence": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/EvidenceResponse"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "alertId": {
+                "type": "integer",
+                "format": "int64"
+              },
+              "serviceId": {
+                "type": "integer",
+                "format": "int64"
+              }
+            }
+          }
+        ]
+      },
+      "EvidenceResponse": {
+        "discriminator": {
+          "propertyName": "type",
+          "mapping": {
+            "TEMPORAL_PROXIMITY": "#/components/schemas/TemporalProximityEvidence",
+            "EARLIEST_ALERT": "#/components/schemas/EarliestAlertEvidence",
+            "DEPENDENCY_PATH": "#/components/schemas/DependencyPathEvidence",
+            "MIGRATED": "#/components/schemas/MigratedEvidence"
+          }
+        },
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/TemporalProximityEvidence"
+          },
+          {
+            "$ref": "#/components/schemas/EarliestAlertEvidence"
+          },
+          {
+            "$ref": "#/components/schemas/DependencyPathEvidence"
+          },
+          {
+            "$ref": "#/components/schemas/MigratedEvidence"
+          }
+        ],
+        "properties": {
+          "type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type"
+        ]
       },
       "GroupAlertResponse": {
         "type": "object",
@@ -3168,8 +3256,93 @@
           },
           "description": {
             "type": "string"
+          },
+          "linkStrength": {
+            "type": "string",
+            "enum": [
+              "SUPPORTED",
+              "TENTATIVE"
+            ]
+          },
+          "linkEvidence": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EvidenceResponse"
+            }
           }
         }
+      },
+      "MigratedEvidence": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/EvidenceResponse"
+          }
+        ]
+      },
+      "RootAssessmentResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "RANKED",
+              "UNDETERMINED"
+            ]
+          },
+          "candidates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RootCandidateResponse"
+            }
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EvidenceResponse"
+            }
+          },
+          "reason": {
+            "type": "string"
+          }
+        }
+      },
+      "RootCandidateResponse": {
+        "type": "object",
+        "properties": {
+          "serviceId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "score": {
+            "type": "number",
+            "format": "double"
+          },
+          "serviceCode": {
+            "type": "string"
+          },
+          "serviceName": {
+            "type": "string"
+          }
+        }
+      },
+      "TemporalProximityEvidence": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/EvidenceResponse"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "alertId": {
+                "type": "integer",
+                "format": "int64"
+              },
+              "distanceToGroup": {
+                "type": "string"
+              }
+            }
+          }
+        ]
       },
       "ConfirmAlertGroupRequest": {
         "type": "object",
@@ -4086,14 +4259,23 @@
             ]
           },
           "probableRootServiceId": {
-            "type": "integer",
+            "type": [
+              "integer",
+              "null"
+            ],
             "format": "int64"
           },
           "probableRootServiceCode": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "probableRootServiceName": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "firstAlertAt": {
             "type": "string",
@@ -4127,6 +4309,13 @@
               "CRITICAL",
               "WARNING",
               "INFO"
+            ]
+          },
+          "rootAssessmentStatus": {
+            "type": "string",
+            "enum": [
+              "RANKED",
+              "UNDETERMINED"
             ]
           }
         }

@@ -65,7 +65,7 @@ export const getConfirmAlertGroupUrl = (id: number) => {
 }
 
 /**
- * Creates an AUTOMATIC incident and confirms the OPEN group atomically. Severity and priority are supplied by the engineer. expectedVersion must match the viewed group version.
+ * Creates an AUTOMATIC incident and confirms the OPEN group atomically. Severity and priority are supplied by the engineer. expectedVersion must match the viewed group version. businessServiceId is required for UNDETERMINED assessments; otherwise returns urn:incident-hub:problem:root-service-required (400).
  * @summary Confirm an alert group
  */
 export const confirmAlertGroup = async (

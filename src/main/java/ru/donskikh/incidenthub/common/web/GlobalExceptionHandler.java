@@ -11,9 +11,10 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import ru.donskikh.incidenthub.alertgroup.AlertGroupConcurrentModificationException;
+import ru.donskikh.incidenthub.alertgroup.RootServiceRequiredException;
 import ru.donskikh.incidenthub.auth.InvalidCredentialsException;
 import ru.donskikh.incidenthub.common.DomainConflictException;
-import ru.donskikh.incidenthub.alertgroup.AlertGroupConcurrentModificationException;
 import ru.donskikh.incidenthub.common.DomainNotFoundException;
 
 import java.net.URI;
@@ -21,6 +22,13 @@ import java.util.List;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(RootServiceRequiredException.class)
+    public ProblemDetail handleRootServiceRequired(
+            RootServiceRequiredException exception, HttpServletRequest request) {
+        return problem(HttpStatus.BAD_REQUEST, "urn:incident-hub:problem:root-service-required",
+                "Root service required", exception.getMessage(), request);
+    }
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 

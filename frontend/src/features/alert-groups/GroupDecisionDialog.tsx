@@ -17,6 +17,7 @@ export function GroupDecisionDialog({
   catalog,
   busy,
   error,
+  serviceRequired,
   onClose,
   onConfirm,
   onDismiss,
@@ -26,32 +27,44 @@ export function GroupDecisionDialog({
   catalog: BusinessServiceListItemResponse[]
   busy: boolean
   error: string | null
+  serviceRequired: boolean
   onClose: () => void
   onConfirm: (body: ConfirmAlertGroupRequest) => void
   onDismiss: (reason?: string) => void
 }) {
   const { t } = useTranslation()
+  const undetermined = group.rootAssessment?.status === 'UNDETERMINED'
   const ref = useRef<HTMLDivElement>(null)
   const [severity, setSeverity] = useState('')
   const [priority, setPriority] = useState('')
   const [serviceId, setServiceId] = useState(
-    String(group.probableRootServiceId ?? ''),
+    undetermined ? '' : String(group.probableRootServiceId ?? ''),
   )
   const [title, setTitle] = useState(() =>
-    t('groups.titleTemplate', {
-      root: group.probableRootServiceCode,
-      count: groupServices(group).length,
-    }),
+    t(
+      undetermined
+        ? 'groups.undeterminedTitleTemplate'
+        : 'groups.titleTemplate',
+      {
+        root: group.probableRootServiceCode,
+        count: groupServices(group).length,
+      },
+    ),
   )
   const [description, setDescription] = useState(() =>
-    t('groups.descriptionTemplate', {
-      id: group.id,
-      count: group.alerts?.length ?? 0,
-      root: group.probableRootServiceCode,
-      services: groupServices(group)
-        .map((service) => service.code)
-        .join(', '),
-    }),
+    t(
+      undetermined
+        ? 'groups.undeterminedDescriptionTemplate'
+        : 'groups.descriptionTemplate',
+      {
+        id: group.id,
+        count: group.alerts?.length ?? 0,
+        root: group.probableRootServiceCode,
+        services: groupServices(group)
+          .map((service) => service.code)
+          .join(', '),
+      },
+    ),
   )
   const [reason, setReason] = useState('')
   type Field = 'severity' | 'priority' | 'serviceId' | 'title' | 'description'
@@ -71,6 +84,15 @@ export function GroupDecisionDialog({
       previous?.focus()
     }
   }, [])
+  useEffect(() => {
+    if (serviceRequired)
+      ref.current
+        ?.querySelector<HTMLElement>('[data-field="serviceId"]')
+        ?.focus()
+  }, [serviceRequired])
+  const serviceError =
+    errors.serviceId ||
+    (serviceRequired ? t('groups.serviceRequired') : undefined)
   function keyboard(event: KeyboardEvent) {
     if (event.key === 'Escape' && !busy) {
       event.preventDefault()
@@ -193,13 +215,16 @@ export function GroupDecisionDialog({
                   )}
                 </label>
                 <label>
-                  {t('groups.incidentService')}
+                  <span id="incident-service-label">
+                    {t('groups.incidentService')}
+                  </span>
                   <select
                     required
                     data-field="serviceId"
-                    aria-invalid={Boolean(errors.serviceId)}
+                    aria-labelledby="incident-service-label"
+                    aria-invalid={Boolean(serviceError)}
                     aria-describedby={
-                      errors.serviceId ? 'serviceId-error' : undefined
+                      serviceError ? 'serviceId-error' : undefined
                     }
                     value={serviceId}
                     onChange={(event) => {
@@ -207,13 +232,14 @@ export function GroupDecisionDialog({
                       clear('serviceId')
                     }}
                   >
+                    <option value="">{t('groups.selectService')}</option>
                     {services.map((service) => (
                       <option key={service.id} value={service.id}>
                         {service.code}
                       </option>
                     ))}
                     {remaining.length > 0 && (
-                      <option disabled value="">
+                      <option disabled value="catalog-divider">
                         {t('groups.catalogDivider')}
                       </option>
                     )}
@@ -223,13 +249,13 @@ export function GroupDecisionDialog({
                       </option>
                     ))}
                   </select>
-                  {errors.serviceId && (
+                  {serviceError && (
                     <span
                       id="serviceId-error"
                       role="alert"
                       className={styles.fieldError}
                     >
-                      {errors.serviceId}
+                      {serviceError}
                     </span>
                   )}
                 </label>

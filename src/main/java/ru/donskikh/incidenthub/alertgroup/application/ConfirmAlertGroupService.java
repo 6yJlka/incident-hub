@@ -1,16 +1,16 @@
 package ru.donskikh.incidenthub.alertgroup.application;
 
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import ru.donskikh.incidenthub.alert.AlertRepository;
-import ru.donskikh.incidenthub.alertgroup.AlertGroupRepository;
-import ru.donskikh.incidenthub.alertgroup.AlertGroupNotFoundException;
 import ru.donskikh.incidenthub.alertgroup.AlertGroupConcurrentModificationException;
-import ru.donskikh.incidenthub.catalog.BusinessServiceRepository;
+import ru.donskikh.incidenthub.alertgroup.AlertGroupNotFoundException;
+import ru.donskikh.incidenthub.alertgroup.AlertGroupRepository;
 import ru.donskikh.incidenthub.catalog.BusinessServiceNotFoundException;
-import ru.donskikh.incidenthub.identity.UserRepository;
+import ru.donskikh.incidenthub.catalog.BusinessServiceRepository;
 import ru.donskikh.incidenthub.identity.UserNotFoundException;
+import ru.donskikh.incidenthub.identity.UserRepository;
 import ru.donskikh.incidenthub.incident.IncidentRepository;
 import ru.donskikh.incidenthub.incident.IncidentSource;
 import ru.donskikh.incidenthub.incident.application.CreateIncidentCommand;
@@ -48,9 +48,9 @@ public class ConfirmAlertGroupService {
                 .orElseThrow(() -> new AlertGroupNotFoundException(command.groupId()));
         group.requireVersion(command.expectedVersion());
         group.requireOpen();
-        var service = command.businessServiceId() == null ? group.getProbableRootService()
+        var service = group.resolveIncidentService(command.businessServiceId() == null ? null
                 : services.findById(command.businessServiceId())
-                    .orElseThrow(() -> new BusinessServiceNotFoundException(command.businessServiceId()));
+                    .orElseThrow(() -> new BusinessServiceNotFoundException(command.businessServiceId())));
         var actor = users.findById(command.actorId())
                 .orElseThrow(() -> new UserNotFoundException(command.actorId()));
         long alertCount = alerts.countByGroup_Id(group.getId());

@@ -8,6 +8,7 @@ import type {
 } from '../../api/generated/model'
 import { groupServices, reachedServiceIds } from './groupPresentation'
 import { layoutGroupGraph } from './groupGraphLayout'
+import { CorrelationEvidence } from './CorrelationEvidence'
 import { ServiceCode } from './ServiceCode'
 import styles from './AlertGroups.module.css'
 
@@ -16,15 +17,18 @@ export function GroupRootPanel({
   affected,
   root,
   failed,
+  serviceCode,
 }: {
   group: AlertGroupDetailResponse
   affected: AffectedServiceResponse[] | null
   root: BusinessServiceResponse | null
   failed: boolean
+  serviceCode: (id: number) => string
 }) {
   const { t } = useTranslation()
   const arrowId = `group-arrow-${useId().replace(/[^a-zA-Z0-9_-]/g, '')}`
   const [view, setView] = useState<'graph' | 'label'>('graph')
+  const undetermined = group.rootAssessment?.status === 'UNDETERMINED'
   const services = groupServices(group)
   const reached = reachedServiceIds(
     group.probableRootServiceId!,
@@ -45,23 +49,25 @@ export function GroupRootPanel({
     0,
     ...(affected ?? []).map((service) => service.depth ?? 0),
   )
-  const nodes = [
-    {
-      id: group.probableRootServiceId,
-      code: group.probableRootServiceCode,
-      depth: 0,
-      off: false,
-    },
-    ...(affected ?? []).map((service) => ({ ...service, off: false })),
-    ...outside.map((service) => ({
-      ...service,
-      depth: maxDepth + 1,
-      off: true,
-    })),
-  ]
+  const nodes = undetermined
+    ? services.map((service) => ({ ...service, depth: 0, off: false }))
+    : [
+        {
+          id: group.probableRootServiceId!,
+          code: group.probableRootServiceCode,
+          depth: 0,
+          off: false,
+        },
+        ...(affected ?? []).map((service) => ({ ...service, off: false })),
+        ...outside.map((service) => ({
+          ...service,
+          depth: maxDepth + 1,
+          off: true,
+        })),
+      ]
   const geometry = layoutGroupGraph(
     nodes.map((node) => ({ id: node.id!, depth: node.depth ?? 0 })),
-    (affected ?? []).flatMap((service) =>
+    (undetermined ? [] : (affected ?? [])).flatMap((service) =>
       (service.dependencies ?? []).map((edge) => ({
         from: edge.serviceId!,
         to: service.id!,
@@ -76,12 +82,14 @@ export function GroupRootPanel({
         <div>
           <h2>{t('groups.probableRoot')}</h2>
           <p>
-            {affected !== null
-              ? t('groups.pathSummary', {
-                  on: services.length - outside.length,
-                  total: services.length,
-                })
-              : !failed && t('common.loading')}
+            {undetermined
+              ? t('groups.neutralGraphHint')
+              : affected !== null
+                ? t('groups.pathSummary', {
+                    on: services.length - outside.length,
+                    total: services.length,
+                  })
+                : !failed && t('common.loading')}
           </p>
         </div>
         <div className={styles.tabs}>
@@ -96,17 +104,52 @@ export function GroupRootPanel({
           ))}
         </div>
       </div>
-      {view === 'label' ? (
+      {undetermined ? (
         <div className={styles.rootLabel}>
-          <ServiceCode code={group.probableRootServiceCode} tier={root?.tier} />
-          <span>{group.probableRootServiceName}</span>
-          <span>{root?.tier}</span>
-          <span>{root?.ownerTeamName}</span>
-          <Link to={`/services/${group.probableRootServiceId}`}>
-            {t('groups.openService')}
-          </Link>
+          <strong>{t('groups.rootUndetermined')}</strong>
+          <p>
+            {t(`groups.rootReasons.${group.rootAssessment?.reason}`, {
+              defaultValue: group.rootAssessment?.reason ?? '',
+            })}
+          </p>
         </div>
-      ) : affected !== null ? (
+      ) : (
+        <div className={styles.candidates}>
+          <ol>
+            {group.rootAssessment?.candidates?.map((candidate) => (
+              <li key={candidate.serviceId}>
+                <Link to={`/services/${candidate.serviceId}`}>
+                  {candidate.serviceCode ?? serviceCode(candidate.serviceId!)}
+                </Link>
+                {' · '}
+                <span>
+                  {t('groups.candidateScore', { score: candidate.score })}
+                </span>
+              </li>
+            ))}
+          </ol>
+          <CorrelationEvidence
+            evidence={group.rootAssessment?.evidence}
+            serviceCode={serviceCode}
+          />
+        </div>
+      )}
+      {view === 'label' ? (
+        undetermined ? null : (
+          <div className={styles.rootLabel}>
+            <ServiceCode
+              code={group.probableRootServiceCode}
+              tier={root?.tier}
+            />
+            <span>{group.probableRootServiceName}</span>
+            <span>{root?.tier}</span>
+            <span>{root?.ownerTeamName}</span>
+            <Link to={`/services/${group.probableRootServiceId}`}>
+              {t('groups.openService')}
+            </Link>
+          </div>
+        )
+      ) : affected !== null || undetermined ? (
         <div className={styles.graphWrap}>
           <svg
             width={geometry.width}
@@ -138,11 +181,13 @@ export function GroupRootPanel({
                   fill="#7d878b"
                   fontSize="9"
                 >
-                  {node.off
-                    ? t('groups.offPath')
-                    : depth === 0
-                      ? t('groups.root')
-                      : t('groups.depth', { depth })}
+                  {undetermined
+                    ? t('groups.servicesInGroup')
+                    : node.off
+                      ? t('groups.offPath')
+                      : depth === 0
+                        ? t('groups.root')
+                        : t('groups.depth', { depth })}
                 </text>
               )
             })}
@@ -180,8 +225,12 @@ export function GroupRootPanel({
                     width={position.width}
                     height={position.height}
                     rx="4"
-                    fill={node.depth === 0 ? '#321b1e' : '#151a1d'}
-                    stroke={node.depth === 0 ? '#ef4444' : '#556169'}
+                    fill={
+                      !undetermined && node.depth === 0 ? '#321b1e' : '#151a1d'
+                    }
+                    stroke={
+                      !undetermined && node.depth === 0 ? '#ef4444' : '#556169'
+                    }
                     strokeDasharray={counts.has(node.id) ? undefined : '4 3'}
                   />
                   <title>{node.code}</title>
@@ -191,11 +240,13 @@ export function GroupRootPanel({
                       : node.code}
                   </text>
                   <text x="10" y="34" fill="#a9b3b7" fontSize="9">
-                    {node.off
-                      ? t('groups.offPath')
-                      : node.depth === 0
-                        ? t('groups.root')
-                        : t('groups.depth', { depth: node.depth })}{' '}
+                    {undetermined
+                      ? ''
+                      : node.off
+                        ? t('groups.offPath')
+                        : node.depth === 0
+                          ? t('groups.root')
+                          : t('groups.depth', { depth: node.depth })}{' '}
                     ·{' '}
                     {t('groups.alertCount', {
                       count: counts.get(node.id) ?? 0,
@@ -211,7 +262,7 @@ export function GroupRootPanel({
           {t(failed ? 'groups.graphError' : 'common.loading')}
         </p>
       )}
-      {affected !== null && (
+      {!undetermined && affected !== null && (
         <p className={styles.hint}>
           {t('groups.graphLimit')}
           {outside.length > 0 &&

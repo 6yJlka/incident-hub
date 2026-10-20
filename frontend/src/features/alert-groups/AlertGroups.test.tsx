@@ -156,6 +156,164 @@ beforeEach(() => {
 })
 
 describe('alert groups', () => {
+  it('shows ranked candidates with scores and all structured evidence', async () => {
+    api.getAlertGroup.mockResolvedValue({
+      ...group,
+      rootAssessment: {
+        status: 'RANKED',
+        candidates: [
+          { serviceId: 1, serviceCode: 'CORE_DATABASE', score: 0.9 },
+          { serviceId: 2, serviceCode: 'API_GATEWAY', score: 0.4 },
+        ],
+        evidence: [{ type: 'EARLIEST_ALERT', alertId: 1, serviceId: 1 }],
+      },
+      tentativeLinkCount: 1,
+      alerts: group.alerts!.map((alert, index) => ({
+        ...alert,
+        linkStrength:
+          index === 1 ? 'TENTATIVE' : index === 2 ? 'SUPPORTED' : undefined,
+        linkEvidence:
+          index === 1
+            ? [
+                {
+                  type: 'TEMPORAL_PROXIMITY',
+                  alertId: 2,
+                  distanceToGroup: 'PT20S',
+                },
+                { type: 'DEPENDENCY_PATH', serviceIds: [1, 2] },
+              ]
+            : [{ type: 'MIGRATED' }],
+      })),
+    })
+    detail()
+    expect(await screen.findByText('score: 0.9')).toBeInTheDocument()
+    expect(screen.getByText('score: 0.4')).toBeInTheDocument()
+    expect(
+      screen.getByText('Самый ранний алерт #1: CORE_DATABASE'),
+    ).toBeInTheDocument()
+    const row = screen.getByText('Dependent signal').closest('tr')!
+    expect(within(row).getByText('Предположительная связь')).toBeInTheDocument()
+    expect(
+      within(row).getByText('Через 20 с после интервала группы'),
+    ).toBeInTheDocument()
+    expect(
+      within(row).getByText('Путь зависимостей: CORE_DATABASE → API_GATEWAY'),
+    ).toBeInTheDocument()
+    expect(
+      within(screen.getByText('Noise signal').closest('tr')!).queryByText(
+        'Предположительная связь',
+      ),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.getByText('Предположительных связей').closest('div'),
+    ).toHaveTextContent('1')
+    expect(
+      screen.getAllByText(
+        'Перенесено при миграции; исходное обоснование отсутствует',
+      ),
+    ).toHaveLength(2)
+  })
+
+  it.each([
+    [
+      'INSUFFICIENT_EVIDENCE',
+      'Недостаточно данных для оценки предполагаемого корня',
+    ],
+    ['FUTURE_REASON', 'FUTURE_REASON'],
+  ])(
+    'shows undetermined reason %s and a neutral diagram without root requests',
+    async (reason, text) => {
+      api.getAlertGroup.mockResolvedValue({
+        ...group,
+        probableRootServiceId: null,
+        probableRootServiceCode: null,
+        probableRootServiceName: null,
+        rootAssessment: {
+          status: 'UNDETERMINED',
+          reason,
+          candidates: [],
+          evidence: [],
+        },
+        tentativeLinkCount: 0,
+      })
+      detail()
+      expect(await screen.findByText(text)).toBeInTheDocument()
+      expect(
+        screen.getAllByText('Предполагаемый корень не определён'),
+      ).toHaveLength(2)
+      const graph = screen.getByRole('img', {
+        name: 'Схема распространения отказа',
+      })
+      expect(graph.querySelectorAll('rect')).toHaveLength(3)
+      expect(graph.querySelectorAll('[data-edge]')).toHaveLength(0)
+      expect(graph.querySelector('[stroke="#ef4444"]')).toBeNull()
+      expect(api.getService).not.toHaveBeenCalled()
+      expect(api.getAffectedServices).not.toHaveBeenCalled()
+      expect(screen.getByText('На пути').closest('div')).toHaveTextContent('—')
+    },
+  )
+
+  it('requires an explicit service for an undetermined group and submits the chosen service', async () => {
+    api.getAlertGroup.mockResolvedValue({
+      ...group,
+      probableRootServiceId: null,
+      probableRootServiceCode: null,
+      rootAssessment: {
+        status: 'UNDETERMINED',
+        reason: 'INSUFFICIENT_EVIDENCE',
+      },
+    })
+    const user = userEvent.setup()
+    detail()
+    await user.click(await screen.findByRole('button', { name: 'Подтвердить' }))
+    const modal = screen.getByRole('dialog')
+    const service = within(modal).getByLabelText('Услуга инцидента')
+    expect(service).toHaveValue('')
+    expect(within(modal).getByLabelText('Заголовок')).toHaveValue(
+      'Алерты от 3 услуг',
+    )
+    await user.click(within(modal).getByRole('radio', { name: 'SEV2' }))
+    await user.click(within(modal).getByRole('radio', { name: 'HIGH' }))
+    await user.click(
+      within(modal).getByRole('button', { name: 'Создать инцидент' }),
+    )
+    expect(service).toHaveAttribute('aria-invalid', 'true')
+    expect(service).toHaveFocus()
+    expect(api.confirmAlertGroup).not.toHaveBeenCalled()
+    await user.selectOptions(service, '2')
+    await user.click(
+      within(modal).getByRole('button', { name: 'Создать инцидент' }),
+    )
+    await waitFor(() =>
+      expect(api.confirmAlertGroup).toHaveBeenCalledWith(
+        7,
+        expect.objectContaining({ businessServiceId: 2 }),
+      ),
+    )
+  })
+
+  it('highlights and focuses the service field for the root-service-required problem', async () => {
+    api.confirmAlertGroup.mockRejectedValue(
+      new ApiError(400, {
+        type: 'urn:incident-hub:problem:root-service-required',
+      }),
+    )
+    const user = userEvent.setup()
+    detail()
+    await user.click(await screen.findByRole('button', { name: 'Подтвердить' }))
+    const modal = screen.getByRole('dialog')
+    await user.click(within(modal).getByRole('radio', { name: 'SEV2' }))
+    await user.click(within(modal).getByRole('radio', { name: 'HIGH' }))
+    await user.click(
+      within(modal).getByRole('button', { name: 'Создать инцидент' }),
+    )
+    const service = within(modal).getByLabelText('Услуга инцидента')
+    await waitFor(() => expect(service).toHaveAttribute('aria-invalid', 'true'))
+    expect(service).toHaveFocus()
+    expect(service).toHaveAccessibleDescription('Выберите услугу')
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+  })
+
   it('focuses the first empty text field before missing choice fields', async () => {
     const user = userEvent.setup()
     detail()
@@ -432,6 +590,7 @@ describe('alert groups', () => {
         .getAllByRole('option')
         .map((option) => option.textContent),
     ).toEqual([
+      'Выберите услугу',
       'CORE_DATABASE',
       'API_GATEWAY',
       'ANALYTICS',
@@ -466,7 +625,7 @@ describe('alert groups', () => {
         priority: 'HIGH',
         title: 'CORE_DATABASE: алерты от 3 услуг',
         description:
-          'Группа GRP-7: 3 алертов. Вероятный корень — CORE_DATABASE. Услуги группы: CORE_DATABASE, API_GATEWAY, ANALYTICS.',
+          'Группа GRP-7: 3 алертов. Предполагаемый корень — CORE_DATABASE. Услуги группы: CORE_DATABASE, API_GATEWAY, ANALYTICS.',
       }),
     )
     expect(

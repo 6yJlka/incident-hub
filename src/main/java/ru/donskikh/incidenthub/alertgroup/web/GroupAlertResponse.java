@@ -2,8 +2,10 @@ package ru.donskikh.incidenthub.alertgroup.web;
 
 import ru.donskikh.incidenthub.alert.AlertSeverity;
 import ru.donskikh.incidenthub.alert.AlertSignalType;
+import ru.donskikh.incidenthub.alert.correlation.LinkStrength;
 
 import java.time.Instant;
+import java.util.List;
 
 public record GroupAlertResponse(
         Long id,
@@ -16,6 +18,11 @@ public record GroupAlertResponse(
         AlertSeverity severity,
         Instant occurredAt,
         Instant receivedAt,
-        String description
+        String description,
+        LinkStrength linkStrength,
+        List<EvidenceResponse> linkEvidence
 ) {
+    public GroupAlertResponse {
+        linkEvidence = List.copyOf(linkEvidence);
+    }
 }

@@ -1,15 +1,16 @@
 package ru.donskikh.incidenthub.alertgroup.web;
 
 import org.springframework.stereotype.Component;
+import ru.donskikh.incidenthub.alert.correlation.LinkStrength;
 import ru.donskikh.incidenthub.alertgroup.AlertGroupStatus;
 import ru.donskikh.incidenthub.alertgroup.application.AlertGroupItem;
-import ru.donskikh.incidenthub.alertgroup.application.ListAlertGroupsQuery;
-import ru.donskikh.incidenthub.alertgroup.application.ListAlertGroupsResult;
+import ru.donskikh.incidenthub.alertgroup.application.ConfirmAlertGroupCommand;
+import ru.donskikh.incidenthub.alertgroup.application.DismissAlertGroupCommand;
 import ru.donskikh.incidenthub.alertgroup.application.GetAlertGroupQuery;
 import ru.donskikh.incidenthub.alertgroup.application.GetAlertGroupResult;
 import ru.donskikh.incidenthub.alertgroup.application.GroupAlertItem;
-import ru.donskikh.incidenthub.alertgroup.application.ConfirmAlertGroupCommand;
-import ru.donskikh.incidenthub.alertgroup.application.DismissAlertGroupCommand;
+import ru.donskikh.incidenthub.alertgroup.application.ListAlertGroupsQuery;
+import ru.donskikh.incidenthub.alertgroup.application.ListAlertGroupsResult;
 import ru.donskikh.incidenthub.security.AuthenticatedUser;
 
 @Component
@@ -58,7 +59,9 @@ public class AlertGroupWebMapper {
                 item.incidentId(),
                 result.alerts().stream().map(this::toResponse).toList(),
                 result.decidedById(), result.decidedByDisplayName(), result.decidedAt(), result.dismissReason(),
-                availableActions.forGroup(item.status(), user));
+                availableActions.forGroup(item.status(), user), RootAssessmentResponse.from(result.rootAssessment(), result.rootCandidateServices()),
+                result.alerts().stream().filter(alert -> alert.linkStrength()
+                        == LinkStrength.TENTATIVE).count());
     }
 
     private AlertGroupResponse toResponse(AlertGroupItem item) {
@@ -70,7 +73,7 @@ public class AlertGroupWebMapper {
                 item.probableRootServiceName(),
                 item.firstAlertAt(),
                 item.lastAlertAt(),
-                item.incidentId(), item.alertCount(), item.serviceCount(), item.servicePreviewCodes(), item.worstSeverity());
+                item.incidentId(), item.alertCount(), item.serviceCount(), item.servicePreviewCodes(), item.worstSeverity(), item.rootAssessmentStatus());
     }
 
     private GroupAlertResponse toResponse(GroupAlertItem item) {
@@ -85,6 +88,6 @@ public class AlertGroupWebMapper {
                 item.severity(),
                 item.occurredAt(),
                 item.receivedAt(),
-                item.description());
+                item.description(), item.linkStrength(), item.linkEvidence().stream().map(EvidenceResponse::from).toList());
     }
 }

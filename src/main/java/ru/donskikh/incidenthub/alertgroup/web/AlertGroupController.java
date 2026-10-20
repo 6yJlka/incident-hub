@@ -4,24 +4,24 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.http.ProblemDetail;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import ru.donskikh.incidenthub.alertgroup.AlertGroupStatus;
-import ru.donskikh.incidenthub.alertgroup.application.ListAlertGroupsService;
-import ru.donskikh.incidenthub.alertgroup.application.GetAlertGroupService;
 import ru.donskikh.incidenthub.alertgroup.application.ConfirmAlertGroupService;
 import ru.donskikh.incidenthub.alertgroup.application.DismissAlertGroupService;
+import ru.donskikh.incidenthub.alertgroup.application.GetAlertGroupService;
+import ru.donskikh.incidenthub.alertgroup.application.ListAlertGroupsService;
 import ru.donskikh.incidenthub.security.AuthenticatedUser;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/v1/alert-groups")
@@ -80,7 +80,9 @@ public class AlertGroupController {
     @PreAuthorize("@incidentActionAuthorization.isAllowed(principal, T(ru.donskikh.incidenthub.alertgroup.AlertGroupAction).CONFIRM)")
     @Operation(operationId = "confirmAlertGroup", summary = "Confirm an alert group",
             description = "Creates an AUTOMATIC incident and confirms the OPEN group atomically. "
-                    + "Severity and priority are supplied by the engineer. expectedVersion must match the viewed group version.")
+                    + "Severity and priority are supplied by the engineer. expectedVersion must match the viewed group version. "
+                    + "businessServiceId is required for UNDETERMINED assessments; otherwise returns "
+                    + "urn:incident-hub:problem:root-service-required (400).")
     @ApiResponse(responseCode = "200", description = "Confirmed group with incident")
     @ApiResponse(responseCode = "400", description = "Invalid request", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     @ApiResponse(responseCode = "404", description = "Group or service not found", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))

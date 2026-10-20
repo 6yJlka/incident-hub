@@ -1,7 +1,7 @@
 package ru.donskikh.incidenthub.alertgroup;
 
-import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,6 +23,7 @@ import ru.donskikh.incidenthub.alert.AlertSeverity;
 import ru.donskikh.incidenthub.alert.AlertSignalType;
 import ru.donskikh.incidenthub.alert.NewAlert;
 import ru.donskikh.incidenthub.alert.correlation.AlertCorrelator;
+import ru.donskikh.incidenthub.alert.correlation.RootAssessment;
 import ru.donskikh.incidenthub.alert.correlation.TimeWindowCorrelator;
 import ru.donskikh.incidenthub.alertgroup.application.ConfirmAlertGroupCommand;
 import ru.donskikh.incidenthub.alertgroup.application.ConfirmAlertGroupService;
@@ -356,8 +357,26 @@ class AlertGroupActionsIntegrationTest extends PostgreSQLIntegrationTest {
                         + ",\"severity\":\"SEV2\",\"priority\":\"HIGH\"}"));
     }
 
+
+    @Test
+    void requiresExplicitServiceForUndeterminedAndReturnsDedicatedProblem() throws Exception {
+        long id = transactions.execute(status -> groups.saveAndFlush(new AlertGroup(null, BASE,
+                new RootAssessment.Undetermined("INSUFFICIENT_EVIDENCE"))).getId());
+        mvc.perform(post("/api/v1/alert-groups/{id}/confirm", id).header("Authorization", bearer())
+                .contentType("application/json").content(CONFIRM))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.type").value("urn:incident-hub:problem:root-service-required"))
+                .andExpect(jsonPath("$.detail").value("businessServiceId is required when the probable root is undetermined"));
+        assertThat(jdbc.queryForObject("select count(*) from incidents", Long.class)).isZero();
+        mvc.perform(post("/api/v1/alert-groups/{id}/confirm", id).header("Authorization", bearer())
+                .contentType("application/json").content(CONFIRM.replace("}", ",\"businessServiceId\":" + override.getId() + "}")))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.status").value("CONFIRMED"))
+                .andExpect(jsonPath("$.rootAssessment.status").value("UNDETERMINED"));
+        assertThat(jdbc.queryForObject("select affected_service_id from incidents", Long.class)).isEqualTo(override.getId());
+    }
+
     private long group() {
-        return transactions.execute(status -> groups.saveAndFlush(new AlertGroup(
+        return transactions.execute(status -> groups.saveAndFlush(ru.donskikh.incidenthub.CorrelationTestData.group(
                 services.getReferenceById(root.getId()), BASE)).getId());
     }
 

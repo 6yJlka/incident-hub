@@ -2,6 +2,10 @@ package ru.donskikh.incidenthub.alert.infrastructure;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 import ru.donskikh.incidenthub.alert.AlertCorrelationRepository;
+import ru.donskikh.incidenthub.alert.correlation.Evidence;
+import ru.donskikh.incidenthub.alert.correlation.LinkStrength;
+
+import java.util.List;
 
 public class AlertCorrelationRepositoryImpl implements AlertCorrelationRepository {
 
@@ -22,9 +26,10 @@ public class AlertCorrelationRepositoryImpl implements AlertCorrelationRepositor
     }
 
     @Override
-    public int attachToGroup(long alertId, long groupId) {
+    public int attachToGroup(long alertId, long groupId, LinkStrength linkStrength, List<Evidence> linkEvidence) {
         return jdbcTemplate.update(
-                "update alerts set group_id = ? where id = ? and group_id is null", groupId, alertId
+                "update alerts set group_id = ?, link_strength = ?, link_evidence = ?::jsonb where id = ? and group_id is null",
+                groupId, linkStrength == null ? null : linkStrength.name(), CorrelationJsonCodec.writeEvidence(linkEvidence), alertId
         );
     }
 }

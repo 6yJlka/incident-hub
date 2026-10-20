@@ -1,7 +1,8 @@
 package ru.donskikh.incidenthub.alertgroup.web;
 
-import ru.donskikh.incidenthub.alertgroup.AlertGroupStatus;
+import io.swagger.v3.oas.annotations.media.Schema;
 import ru.donskikh.incidenthub.alertgroup.AlertGroupAction;
+import ru.donskikh.incidenthub.alertgroup.AlertGroupStatus;
 
 import java.time.Instant;
 import java.util.List;
@@ -10,9 +11,9 @@ public record AlertGroupDetailResponse(
         Long id,
         long version,
         AlertGroupStatus status,
-        Long probableRootServiceId,
-        String probableRootServiceCode,
-        String probableRootServiceName,
+        @Schema(types = {"integer", "null"}, format = "int64") Long probableRootServiceId,
+        @Schema(types = {"string", "null"}) String probableRootServiceCode,
+        @Schema(types = {"string", "null"}) String probableRootServiceName,
         Instant firstAlertAt,
         Instant lastAlertAt,
         Long incidentId,
@@ -21,7 +22,9 @@ public record AlertGroupDetailResponse(
         String decidedByDisplayName,
         Instant decidedAt,
         String dismissReason,
-        List<AlertGroupAction> availableActions
+        List<AlertGroupAction> availableActions,
+        RootAssessmentResponse rootAssessment,
+        long tentativeLinkCount
 ) {
     public AlertGroupDetailResponse {
         alerts = List.copyOf(alerts);
