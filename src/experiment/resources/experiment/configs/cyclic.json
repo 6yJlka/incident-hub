@@ -1,0 +1,156 @@
+{
+  "distortion": {
+    "missingEdgeRate": 0.0,
+    "seed": 42,
+    "spuriousEdgeRate": 0.0
+  },
+  "graph": {
+    "edgeType": "SYNC",
+    "seed": 42,
+    "spec": {
+      "base": {
+        "density": 0.5,
+        "layers": 3,
+        "type": "LAYERED",
+        "width": 4
+      },
+      "reverseEdgeRate": 0.25,
+      "type": "CYCLIC"
+    },
+    "tier": "TIER_2"
+  },
+  "scenario": {
+    "detection": {
+      "defaultDistribution": {
+        "maximum": "PT30S",
+        "minimum": "PT0S",
+        "type": "UNIFORM"
+      },
+      "overrides": {}
+    },
+    "failures": {
+      "count": 2,
+      "firstStartOffset": "PT0S",
+      "mode": "PATH_CONNECTED_TO_FIRST",
+      "spacing": "PT10S",
+      "type": "SELECTED"
+    },
+    "injectionPeriod": "PT10M",
+    "noise": {
+      "ratePerMinute": 1.0
+    },
+    "propagationDelay": {
+      "maximum": "PT5S",
+      "minimum": "PT1S",
+      "type": "UNIFORM"
+    },
+    "propagationProbability": 0.8,
+    "signals": {
+      "noise": {
+        "severities": [
+          {
+            "value": "CRITICAL",
+            "weight": 1
+          },
+          {
+            "value": "INFO",
+            "weight": 1
+          },
+          {
+            "value": "WARNING",
+            "weight": 1
+          }
+        ],
+        "types": [
+          {
+            "value": "AVAILABILITY",
+            "weight": 1
+          },
+          {
+            "value": "ERROR_RATE",
+            "weight": 1
+          },
+          {
+            "value": "LATENCY",
+            "weight": 1
+          },
+          {
+            "value": "SATURATION",
+            "weight": 1
+          }
+        ]
+      },
+      "propagated": {
+        "severities": [
+          {
+            "value": "CRITICAL",
+            "weight": 1
+          },
+          {
+            "value": "INFO",
+            "weight": 1
+          },
+          {
+            "value": "WARNING",
+            "weight": 1
+          }
+        ],
+        "types": [
+          {
+            "value": "AVAILABILITY",
+            "weight": 1
+          },
+          {
+            "value": "ERROR_RATE",
+            "weight": 1
+          },
+          {
+            "value": "LATENCY",
+            "weight": 1
+          },
+          {
+            "value": "SATURATION",
+            "weight": 1
+          }
+        ]
+      },
+      "root": {
+        "severities": [
+          {
+            "value": "CRITICAL",
+            "weight": 1
+          },
+          {
+            "value": "INFO",
+            "weight": 1
+          },
+          {
+            "value": "WARNING",
+            "weight": 1
+          }
+        ],
+        "types": [
+          {
+            "value": "AVAILABILITY",
+            "weight": 1
+          },
+          {
+            "value": "ERROR_RATE",
+            "weight": 1
+          },
+          {
+            "value": "LATENCY",
+            "weight": 1
+          },
+          {
+            "value": "SATURATION",
+            "weight": 1
+          }
+        ]
+      }
+    },
+    "start": "2026-01-01T00:00:00Z"
+  },
+  "scenarioSeed": 42,
+  "spuriousEdgeType": "SYNC"
+}

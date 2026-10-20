@@ -367,3 +367,17 @@ erDiagram
 - SLA.
 - Постмортемы.
 - Аналитика.
+
+
+### Генератор эксперимента (7.1–7.4)
+
+`./gradlew.bat generateExperiment` создаёт воспроизводимый JSON в
+`build/experiments/scenario.json` без Spring, HTTP и БД. Source set `experiment`
+не входит в продуктовый jar. Для своих параметров:
+`./gradlew.bat generateExperiment --args="--config src/experiment/resources/experiment/configs/demo.json --output build/experiments/demo.json"`.
+Доступны дерево, слоистый граф, ромбы, циклы и копия демо-каталога V7;
+истинный и искажённый наблюдаемый графы разделены. Поток алертов не содержит
+разметки отказов; истина хранится отдельно в архиве. Прогона корреляторов
+и метрик пока нет. Формальная модель, все параметры и упрощения описаны в
+[docs/research/simulator.md](docs/research/simulator.md), примеры конфигураций —
+в [src/experiment/resources/experiment/configs](src/experiment/resources/experiment/configs).

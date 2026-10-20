@@ -18,7 +18,20 @@ repositories {
     mavenCentral()
 }
 
+sourceSets {
+    experiment {
+        compileClasspath += sourceSets.main.output
+        runtimeClasspath += sourceSets.main.output
+    }
+    test {
+        compileClasspath += sourceSets.experiment.output
+        runtimeClasspath += sourceSets.experiment.output + configurations.experimentRuntimeClasspath
+    }
+}
+
 dependencies {
+    experimentImplementation 'tools.jackson.core:jackson-databind'
+    testImplementation 'com.tngtech.archunit:archunit:1.4.1'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-flyway'
@@ -49,6 +62,30 @@ dependencies {
 
 tasks.named('test') {
     useJUnitPlatform()
+    dependsOn tasks.named('experimentClasses')
+}
+
+tasks.register('generateExperiment', JavaExec) {
+    group = 'experiment'
+    description = 'Generate a reproducible scenario without Spring, HTTP, or a database'
+    classpath = sourceSets.experiment.runtimeClasspath
+    mainClass = 'ru.donskikh.incidenthub.experiment.cli.ExperimentGeneratorMain'
+    dependsOn tasks.named('experimentClasses')
+}
+
+tasks.register('verifyExperimentIsolation') {
+    dependsOn tasks.named('bootJar')
+    doLast {
+        def archive = tasks.named('bootJar').get().archiveFile.get().asFile
+        def leaked = zipTree(archive).matching { include '**/experiment/**' }.files
+        if (!leaked.empty) {
+            throw new GradleException("Product archive contains experiment artifacts: ${leaked}")
+        }
+    }
+}
+
+tasks.named('check') {
+    dependsOn tasks.named('verifyExperimentIsolation')
 }
 
 tasks.withType(JavaCompile).configureEach {
