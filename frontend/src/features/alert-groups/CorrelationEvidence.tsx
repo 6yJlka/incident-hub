@@ -28,35 +28,37 @@ export function CorrelationEvidence({
     <ul>
       {evidence.map((item, index) => {
         let text: string
-        if (item.type === 'TEMPORAL_PROXIMITY' && 'distanceToGroup' in item) {
-          const seconds = durationSeconds(item.distanceToGroup ?? '')
-          text =
-            seconds === null
-              ? (item.distanceToGroup ?? '')
-              : t(
-                  seconds < 0
-                    ? 'groups.evidence.before'
-                    : seconds > 0
-                      ? 'groups.evidence.after'
-                      : 'groups.evidence.within',
-                  { seconds: Math.abs(seconds) },
-                )
-        } else if (
-          item.type === 'EARLIEST_ALERT' &&
-          'serviceId' in item &&
-          'alertId' in item
-        ) {
-          text = t('groups.evidence.earliest', {
-            alertId: item.alertId,
-            service: serviceCode(item.serviceId!),
-          })
-        } else if (item.type === 'DEPENDENCY_PATH' && 'serviceIds' in item) {
-          text = t('groups.evidence.path', {
-            services: item.serviceIds?.map(serviceCode).join(' → '),
-          })
-        } else if (item.type === 'MIGRATED') {
-          text = t('groups.evidence.migrated')
-        } else text = item.type
+        switch (item.type) {
+          case 'TEMPORAL_PROXIMITY': {
+            const seconds = durationSeconds(item.distanceToGroup)
+            text =
+              seconds === null
+                ? item.distanceToGroup
+                : t(
+                    seconds < 0
+                      ? 'groups.evidence.before'
+                      : seconds > 0
+                        ? 'groups.evidence.after'
+                        : 'groups.evidence.within',
+                    { seconds: Math.abs(seconds) },
+                  )
+            break
+          }
+          case 'EARLIEST_ALERT':
+            text = t('groups.evidence.earliest', {
+              alertId: item.alertId,
+              service: serviceCode(item.serviceId),
+            })
+            break
+          case 'DEPENDENCY_PATH':
+            text = t('groups.evidence.path', {
+              services: item.serviceIds.map(serviceCode).join(' → '),
+            })
+            break
+          case 'MIGRATED':
+            text = t('groups.evidence.migrated')
+            break
+        }
         return <li key={index}>{text}</li>
       })}
     </ul>

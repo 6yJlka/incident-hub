@@ -24,12 +24,16 @@ import java.util.List;
                 @DiscriminatorMapping(value = "MIGRATED", schema = EvidenceResponse.Migrated.class)
         })
 public sealed interface EvidenceResponse {
+    /** @see ru.donskikh.incidenthub.alertgroup.infrastructure.CorrelationOpenApiConfiguration#correlationEvidenceSchemas() */
     @Schema(name = "TemporalProximityEvidence")
     record TemporalProximity(long alertId, String distanceToGroup) implements EvidenceResponse {}
+    /** @see ru.donskikh.incidenthub.alertgroup.infrastructure.CorrelationOpenApiConfiguration#correlationEvidenceSchemas() */
     @Schema(name = "EarliestAlertEvidence")
     record EarliestAlert(long alertId, long serviceId) implements EvidenceResponse {}
+    /** @see ru.donskikh.incidenthub.alertgroup.infrastructure.CorrelationOpenApiConfiguration#correlationEvidenceSchemas() */
     @Schema(name = "DependencyPathEvidence")
     record DependencyPath(List<Long> serviceIds) implements EvidenceResponse {}
+    /** @see ru.donskikh.incidenthub.alertgroup.infrastructure.CorrelationOpenApiConfiguration#correlationEvidenceSchemas() */
     @Schema(name = "MigratedEvidence")
     record Migrated() implements EvidenceResponse {}
 

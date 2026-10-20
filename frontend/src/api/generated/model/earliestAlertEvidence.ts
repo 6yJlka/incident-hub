@@ -7,9 +7,10 @@
  */
 import type { EarliestAlertEvidenceType } from './earliestAlertEvidenceType'
 
-export type EarliestAlertEvidence = {
-  alertId?: number
-  serviceId?: number
-} & {
+export interface EarliestAlertEvidence {
   type: EarliestAlertEvidenceType
+  /** @minimum 1 */
+  alertId: number
+  /** @minimum 1 */
+  serviceId: number
 }

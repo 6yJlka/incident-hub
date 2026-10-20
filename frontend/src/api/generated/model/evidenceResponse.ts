@@ -11,15 +11,7 @@ import type { MigratedEvidence } from './migratedEvidence'
 import type { TemporalProximityEvidence } from './temporalProximityEvidence'
 
 export type EvidenceResponse =
-  | (TemporalProximityEvidence & {
-      type: string
-    })
-  | (EarliestAlertEvidence & {
-      type: string
-    })
-  | (DependencyPathEvidence & {
-      type: string
-    })
-  | (MigratedEvidence & {
-      type: string
-    })
+  | TemporalProximityEvidence
+  | EarliestAlertEvidence
+  | DependencyPathEvidence
+  | MigratedEvidence

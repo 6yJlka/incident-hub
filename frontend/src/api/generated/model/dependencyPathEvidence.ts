@@ -7,8 +7,11 @@
  */
 import type { DependencyPathEvidenceType } from './dependencyPathEvidenceType'
 
-export type DependencyPathEvidence = {
-  serviceIds?: number[]
-} & {
+export interface DependencyPathEvidence {
   type: DependencyPathEvidenceType
+  /**
+   * @minItems 2
+   * @items.minimum 1
+   */
+  serviceIds: number[]
 }

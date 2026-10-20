@@ -7,8 +7,10 @@
  */
 
 export interface RootCandidateResponse {
-  serviceId?: number
-  score?: number
-  serviceCode?: string
-  serviceName?: string
+  serviceId: number
+  score: number
+  /** @nullable */
+  serviceCode: string | null
+  /** @nullable */
+  serviceName: string | null
 }

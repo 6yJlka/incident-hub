@@ -7,9 +7,10 @@
  */
 import type { TemporalProximityEvidenceType } from './temporalProximityEvidenceType'
 
-export type TemporalProximityEvidence = {
-  alertId?: number
-  distanceToGroup?: string
-} & {
+export interface TemporalProximityEvidence {
   type: TemporalProximityEvidenceType
+  /** @minimum 1 */
+  alertId: number
+  /** Signed ISO-8601 duration: negative before the group interval, zero inside, positive after */
+  distanceToGroup: string
 }

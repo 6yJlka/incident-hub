@@ -9,9 +9,18 @@ import type { EvidenceResponse } from './evidenceResponse'
 import type { RootAssessmentResponseStatus } from './rootAssessmentResponseStatus'
 import type { RootCandidateResponse } from './rootCandidateResponse'
 
+/**
+ * Root assessment. RANKED has nonempty candidates and evidence and a null reason. UNDETERMINED has empty candidates and evidence and a stable reason code.
+ */
 export interface RootAssessmentResponse {
-  status?: RootAssessmentResponseStatus
-  candidates?: RootCandidateResponse[]
-  evidence?: EvidenceResponse[]
-  reason?: string
+  status: RootAssessmentResponseStatus
+  /** Ranked candidates in descending score order for RANKED; empty for UNDETERMINED */
+  candidates: RootCandidateResponse[]
+  /** Nonempty root assessment evidence for RANKED; empty for UNDETERMINED */
+  evidence: EvidenceResponse[]
+  /**
+   * Null for RANKED; stable reason code such as INSUFFICIENT_EVIDENCE for UNDETERMINED
+   * @nullable
+   */
+  reason: string | null
 }
