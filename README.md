@@ -39,6 +39,8 @@ $env:SPRING_PROFILES_ACTIVE='demo'; docker compose up --build
 
 После запуска веб-интерфейс доступен на [http://localhost:3000](http://localhost:3000), REST API — на `http://localhost:8080`, Swagger UI — на [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html). Порт фронта задаётся переменной `FRONTEND_PORT`. В compose браузер отправляет запросы на `/api` тому же nginx, который раздаёт интерфейс, а nginx проксирует их бэкенду внутри Docker-сети. При локальной разработке тот же путь проксирует Vite.
 
+nginx отдаёт `index.html` и SPA fallback с `Cache-Control: no-cache`, хешированные файлы `/assets` — с `Cache-Control: public, max-age=31536000, immutable`; заголовки кэширования `/api` задаёт бэкенд.
+
 При первом старте Docker Compose соберёт бэкенд и фронтенд, запустит PostgreSQL и применит миграции Flyway. Остановить контейнеры можно командой `docker compose down`.
 
 ## Конфигурация
