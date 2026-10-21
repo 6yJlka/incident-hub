@@ -1,0 +1,116 @@
+{
+  "services": [
+    {
+      "id": 1,
+      "code": "ANALYTICS",
+      "name": "Operations Analytics",
+      "tier": "TIER_3"
+    },
+    {
+      "id": 2,
+      "code": "API_GATEWAY",
+      "name": "API Gateway",
+      "tier": "TIER_1"
+    },
+    {
+      "id": 3,
+      "code": "BILLING_WORKER",
+      "name": "Billing Worker",
+      "tier": "TIER_2"
+    },
+    {
+      "id": 4,
+      "code": "CORE_DATABASE",
+      "name": "Core Database",
+      "tier": "TIER_1"
+    },
+    {
+      "id": 5,
+      "code": "CUSTOMER_PORTAL",
+      "name": "Customer Portal",
+      "tier": "TIER_2"
+    },
+    {
+      "id": 6,
+      "code": "EVENT_BUS",
+      "name": "Event Bus",
+      "tier": "TIER_1"
+    },
+    {
+      "id": 7,
+      "code": "IDENTITY_API",
+      "name": "Identity API",
+      "tier": "TIER_1"
+    },
+    {
+      "id": 8,
+      "code": "NOTIFICATION_SERVICE",
+      "name": "Notification Service",
+      "tier": "TIER_2"
+    },
+    {
+      "id": 9,
+      "code": "PAYMENT_API",
+      "name": "Payment API",
+      "tier": "TIER_1"
+    },
+    {
+      "id": 10,
+      "code": "SUPPORT_DESK",
+      "name": "Support Desk",
+      "tier": "TIER_3"
+    }
+  ],
+  "edges": [
+    {
+      "dependentId": 1,
+      "dependencyId": 3,
+      "type": "DATA"
+    },
+    {
+      "dependentId": 2,
+      "dependencyId": 7,
+      "type": "SYNC"
+    },
+    {
+      "dependentId": 3,
+      "dependencyId": 6,
+      "type": "ASYNC"
+    },
+    {
+      "dependentId": 3,
+      "dependencyId": 9,
+      "type": "ASYNC"
+    },
+    {
+      "dependentId": 5,
+      "dependencyId": 2,
+      "type": "SYNC"
+    },
+    {
+      "dependentId": 5,
+      "dependencyId": 9,
+      "type": "SYNC"
+    },
+    {
+      "dependentId": 7,
+      "dependencyId": 4,
+      "type": "DATA"
+    },
+    {
+      "dependentId": 8,
+      "dependencyId": 6,
+      "type": "ASYNC"
+    },
+    {
+      "dependentId": 9,
+      "dependencyId": 4,
+      "type": "DATA"
+    },
+    {
+      "dependentId": 10,
+      "dependencyId": 5,
+      "type": "SYNC"
+    }
+  ]
+}

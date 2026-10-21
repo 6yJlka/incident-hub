@@ -52,6 +52,25 @@ class DemoDataMigrationIntegrationTest extends PostgreSQLIntegrationTest {
     private EntityManager entityManager;
 
     @Test
+    void experimentDemoGraphMatchesMigratedCatalogByCodes() {
+        var graph = new ru.donskikh.incidenthub.experiment.io.DemoGraphLoader().load();
+        var services = jdbcTemplate.queryForList("select code, name, tier from business_services order by code");
+        assertThat(services).isEqualTo(graph.services().stream().map(service -> java.util.Map.<String, Object>of(
+                "code", service.code(), "name", service.name(), "tier", service.tier().name())).toList());
+        var codes = new java.util.TreeMap<Long, String>();
+        graph.services().forEach(service -> codes.put(service.id(), service.code()));
+        var edges = jdbcTemplate.queryForList("""
+                select a.code as dependent, b.code as dependency, d.type
+                from service_dependencies d
+                join business_services a on a.id = d.dependent_id
+                join business_services b on b.id = d.dependency_id
+                order by a.code, b.code
+                """);
+        assertThat(edges).isEqualTo(graph.edges().stream().map(edge -> java.util.Map.<String, Object>of(
+                "dependent", codes.get(edge.dependentId()), "dependency", codes.get(edge.dependencyId()), "type", edge.type().name())).toList());
+    }
+
+    @Test
     void appliesDemoMigrationsAndLoadsAConsistentDataset() {
         assertThat(appliedVersions()).containsExactly(
                 "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"

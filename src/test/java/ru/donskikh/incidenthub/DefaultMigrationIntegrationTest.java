@@ -22,6 +22,16 @@ class DefaultMigrationIntegrationTest extends PostgreSQLIntegrationTest {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
+    @Autowired
+    private org.springframework.context.ApplicationContext context;
+
+    @Test
+    void doesNotRegisterExperimentBeans() {
+        assertThat(java.util.Arrays.stream(context.getBeanDefinitionNames())
+                .map(context::getType).filter(java.util.Objects::nonNull).map(Class::getName))
+                .noneMatch(name -> name.startsWith("ru.donskikh.incidenthub.experiment."));
+    }
+
     @Test
     void doesNotApplyDemoMigrationInDefaultProfile() {
         List<String> versions = jdbcTemplate.queryForList(
