@@ -15,7 +15,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class CorrelationJsonCodecTest {
     static Stream<Evidence> evidence() {
         return Stream.of(new Evidence.TemporalProximity(12, Duration.ofSeconds(-20)),
-                new Evidence.EarliestAlert(12, 42), new Evidence.DependencyPath(List.of(42L, 43L)), new Evidence.Migrated());
+                new Evidence.EarliestAlert(12, 42), new Evidence.DependencyPath(List.of(42L, 43L)), new Evidence.Migrated(), new Evidence.PageRankScore(42, .75, 3, .85, 50, 1e-13));
     }
 
     @ParameterizedTest

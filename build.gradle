@@ -95,3 +95,12 @@ tasks.withType(JavaCompile).configureEach {
 tasks.withType(Test).configureEach {
     systemProperty 'file.encoding', 'UTF-8'
 }
+
+
+tasks.register('runExperiment', JavaExec) {
+    group = 'experiment'
+    description = 'Replay correlators and calculate metrics without Spring or a database'
+    classpath = sourceSets.experiment.runtimeClasspath
+    mainClass = 'ru.donskikh.incidenthub.experiment.cli.ExperimentRunnerMain'
+    dependsOn tasks.named('experimentClasses')
+}

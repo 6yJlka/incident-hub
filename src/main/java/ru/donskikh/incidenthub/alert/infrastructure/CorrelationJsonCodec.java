@@ -70,7 +70,8 @@ public final class CorrelationJsonCodec {
             @JsonSubTypes.Type(value = Evidence.TemporalProximity.class, name = "TEMPORAL_PROXIMITY"),
             @JsonSubTypes.Type(value = Evidence.EarliestAlert.class, name = "EARLIEST_ALERT"),
             @JsonSubTypes.Type(value = Evidence.DependencyPath.class, name = "DEPENDENCY_PATH"),
-            @JsonSubTypes.Type(value = Evidence.Migrated.class, name = "MIGRATED")
+            @JsonSubTypes.Type(value = Evidence.Migrated.class, name = "MIGRATED"),
+            @JsonSubTypes.Type(value = Evidence.PageRankScore.class, name = "PAGERANK_SCORE")
     })
     private interface EvidenceTypes {}
 

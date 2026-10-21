@@ -231,9 +231,10 @@ class OpenApiIntegrationTest extends PostgreSQLIntegrationTest {
                 "TEMPORAL_PROXIMITY", Map.entry("TemporalProximityEvidence", Set.of("type", "alertId", "distanceToGroup")),
                 "EARLIEST_ALERT", Map.entry("EarliestAlertEvidence", Set.of("type", "alertId", "serviceId")),
                 "DEPENDENCY_PATH", Map.entry("DependencyPathEvidence", Set.of("type", "serviceIds")),
-                "MIGRATED", Map.entry("MigratedEvidence", Set.of("type")));
+                "MIGRATED", Map.entry("MigratedEvidence", Set.of("type")),
+                "PAGERANK_SCORE", Map.entry("PageRankScoreEvidence", Set.of("type", "serviceId", "score", "anomalyWeight", "damping", "iterations", "residual")));
         var evidence = schemas.get("EvidenceResponse");
-        assertThat(evidence.get("oneOf")).hasSize(4);
+        assertThat(evidence.get("oneOf")).hasSize(5);
         assertThat(evidence.at("/discriminator/propertyName").asText()).isEqualTo("type");
         variants.forEach((type, variant) -> {
             String reference = "#/components/schemas/" + variant.getKey();
@@ -291,7 +292,7 @@ class OpenApiIntegrationTest extends PostgreSQLIntegrationTest {
     static Stream<EvidenceResponse> evidenceResponses() {
         return Stream.of(new EvidenceResponse.TemporalProximity(101, "PT-20S"),
                 new EvidenceResponse.EarliestAlert(101, 42),
-                new EvidenceResponse.DependencyPath(List.of(42L, 43L)), new EvidenceResponse.Migrated());
+                new EvidenceResponse.DependencyPath(List.of(42L, 43L)), new EvidenceResponse.Migrated(), new EvidenceResponse.PageRankScore(42, .75, 3, .85, 50, 1e-13));
     }
 
     static Stream<RootAssessmentResponse> assessmentResponses() {

@@ -29,6 +29,15 @@ public sealed interface Evidence {
         }
     }
 
+    record PageRankScore(long serviceId, double score, double anomalyWeight, double damping,
+                         int iterations, double residual) implements Evidence {
+        public PageRankScore {
+            if (serviceId <= 0 || !Double.isFinite(score) || score < 0 || !Double.isFinite(anomalyWeight) || anomalyWeight <= 0
+                    || !Double.isFinite(damping) || damping < 0 || damping >= 1 || iterations <= 0
+                    || !Double.isFinite(residual) || residual < 0) throw new IllegalArgumentException("Invalid PageRank evidence");
+        }
+    }
+
     record Migrated() implements Evidence {}
 
     static List<Evidence> requireEvidence(List<Evidence> evidence) {

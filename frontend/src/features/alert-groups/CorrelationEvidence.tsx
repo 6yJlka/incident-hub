@@ -55,6 +55,16 @@ export function CorrelationEvidence({
               services: item.serviceIds.map(serviceCode).join(' → '),
             })
             break
+          case 'PAGERANK_SCORE':
+            text = t('groups.evidence.pageRank', {
+              service: serviceCode(item.serviceId),
+              score: item.score.toPrecision(4),
+              weight: item.anomalyWeight,
+              damping: item.damping,
+              iterations: item.iterations,
+              residual: item.residual.toExponential(2),
+            })
+            break
           case 'MIGRATED':
             text = t('groups.evidence.migrated')
             break

@@ -190,7 +190,8 @@ CHECK проверяет `UNDETERMINED ⇔ probable_root_service_id is null`, н
 Неопределённая оценка хранится как
 `{"formatVersion":1,"assessment":{"status":"UNDETERMINED","reason":"INSUFFICIENT_EVIDENCE"}}`.
 Документ связи: `{"formatVersion":1,"items":[{"type":"TEMPORAL_PROXIMITY","alertId":102,"distanceToGroup":"PT20S"}]}`.
-Остальные варианты evidence: `{"type":"DEPENDENCY_PATH","serviceIds":[42,43]}` и `{"type":"MIGRATED"}`.
+Вариант ранга: `PAGERANK_SCORE` с полями `serviceId`, `score`, `anomalyWeight`,
+`damping`, `iterations`, `residual`. Остальные варианты evidence: `{"type":"DEPENDENCY_PATH","serviceIds":[42,43]}` и `{"type":"MIGRATED"}`.
 Имена Java-классов не входят в JSON. Неизвестные версии, типы и невалидные документы отклоняются.
 
 Карточка API отдаёт `rootAssessment` со статусом, кандидатами (включая коды и названия услуг),
@@ -198,7 +199,7 @@ CHECK проверяет `UNDETERMINED ⇔ probable_root_service_id is null`, н
 `linkStrength` и `linkEvidence`. Список групп отдаёт `rootAssessmentStatus` и nullable top-1.
 Кандидаты загружаются одним пакетным запросом; число запросов не зависит от их количества.
 
-В OpenAPI `EvidenceResponse` описан как `oneOf` четырёх самостоятельных объектных схем
+В OpenAPI `EvidenceResponse` описан как `oneOf` пяти самостоятельных объектных схем
 с discriminator `type` и явным mapping. Поля вариантов обязательны, `type` имеет одно
 допустимое значение; лишние поля запрещены. Обратных `allOf`-ссылок на объединение нет.
 Схемы задаёт `CorrelationOpenApiConfiguration`, ссылки на кастомайзер есть у DTO.
@@ -211,7 +212,7 @@ CHECK проверяет `UNDETERMINED ⇔ probable_root_service_id is null`, н
 
 Тесты разбирают сгенерированный `/v3/api-docs` OpenAPI-парсером с разрешением ссылок и
 отклоняют любые его ошибки и предупреждения. Отдельно проверяется отсутствие циклического
-наследования Evidence. Все четыре DTO Evidence и обе оценки корня сериализуются ObjectMapper
+наследования Evidence. Все пять DTO Evidence и обе оценки корня сериализуются ObjectMapper
 приложения и проверяются JSON Schema validator по сгенерированной схеме: лишние поля и
 отсутствующие обязательные поля приводят к ошибке, включая вложенные кандидаты.
 
@@ -377,12 +378,33 @@ erDiagram
 `./gradlew.bat generateExperiment --args="--config src/experiment/resources/experiment/configs/demo.json --output build/experiments/demo.json"`.
 Доступны дерево, слоистый граф, ромбы, циклы и копия демо-каталога V7;
 истинный и искажённый наблюдаемый графы разделены. Поток алертов не содержит
-разметки отказов; истина хранится отдельно в архиве. Прогона корреляторов
-и метрик пока нет. Формальная модель, все параметры и упрощения описаны в
-[docs/research/simulator.md](docs/research/simulator.md), примеры конфигураций —
-в [src/experiment/resources/experiment/configs](src/experiment/resources/experiment/configs).
+разметки отказов; истина хранится отдельно в архиве. Прогон и метрики доступны
+через отдельную задачу `runExperiment`. Примеры конфигураций — в [src/experiment/resources/experiment/configs](src/experiment/resources/experiment/configs).
 
 Вероятность обнаружения задаётся `detection.detectionProbability` (по умолчанию
 1.0) и `detection.probabilityOverrides` по сервисам. Её снижение только скрывает
 часть алертов, сохраняя остальные ключи, времена и сигналы; распространение и
 список отказов не меняются. Полностью необнаруженный отказ остаётся в разметке.
+
+
+### Серии экспериментов (7.5–7.6)
+
+Source set `experiment` поддерживает replay потока в памяти, временной baseline
+и наивный baseline с персонализированным PageRank для оценки предполагаемого
+корня. Продуктовый обработчик пока передаёт пустой снимок графа; подключение
+каталога к коррелятору не входит в этот заход.
+
+```powershell
+./gradlew.bat runExperiment --args="--config src/experiment/resources/experiment/series/time_window.json --output build/experiments/time-window"
+./gradlew.bat runExperiment --args="--config src/experiment/resources/experiment/series/naive_graph_root.json --output build/experiments/naive"
+```
+
+Оба примера используют одинаковые параметры генерации и 30 seed. Результаты:
+`runs.csv` по прогонам и `summary.csv` со средним, выборочным стандартным
+отклонением и числом определённых значений. CSV содержит параметры и версии.
+Показатели включают качество группировки, ошибочные объединения, поглощение
+шума, дробление, отношение числа групп к числу алертов, условную и строгую
+локализацию с покрытием Ranked. Пустая ячейка означает неопределённое значение,
+а не ноль. Отказы без видимых алертов и без видимого алерта корня учитываются
+отдельно. Результаты синтетического сравнения не являются оценкой эффективности
+в промышленной эксплуатации.
