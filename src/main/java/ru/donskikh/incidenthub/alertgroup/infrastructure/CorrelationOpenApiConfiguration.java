@@ -30,14 +30,21 @@ public class CorrelationOpenApiConfiguration {
             schemas.put("DependencyPathEvidence", variant("DEPENDENCY_PATH", Map.of(
                     "serviceIds", new ArraySchema().items(identifier()).minItems(2))));
             schemas.put("MigratedEvidence", variant("MIGRATED", Map.of()));
+            schemas.put("PageRankScoreEvidence", variant("PAGERANK_SCORE", Map.of(
+                    "serviceId", identifier(), "score", new io.swagger.v3.oas.models.media.NumberSchema().format("double").minimum(java.math.BigDecimal.ZERO),
+                    "anomalyWeight", new io.swagger.v3.oas.models.media.NumberSchema().format("double").exclusiveMinimum(true).minimum(java.math.BigDecimal.ZERO),
+                    "damping", new io.swagger.v3.oas.models.media.NumberSchema().format("double").minimum(java.math.BigDecimal.ZERO).maximum(java.math.BigDecimal.ONE).exclusiveMaximum(true),
+                    "iterations", new IntegerSchema().minimum(java.math.BigDecimal.ONE),
+                    "residual", new io.swagger.v3.oas.models.media.NumberSchema().format("double").minimum(java.math.BigDecimal.ZERO))));
             var discriminator = new Discriminator().propertyName("type")
                     .mapping("TEMPORAL_PROXIMITY", reference("TemporalProximityEvidence"))
                     .mapping("EARLIEST_ALERT", reference("EarliestAlertEvidence"))
                     .mapping("DEPENDENCY_PATH", reference("DependencyPathEvidence"))
-                    .mapping("MIGRATED", reference("MigratedEvidence"));
+                    .mapping("MIGRATED", reference("MigratedEvidence"))
+                    .mapping("PAGERANK_SCORE", reference("PageRankScoreEvidence"));
             var evidence = new ComposedSchema().discriminator(discriminator);
             for (String name : List.of("TemporalProximityEvidence", "EarliestAlertEvidence",
-                    "DependencyPathEvidence", "MigratedEvidence")) {
+                    "DependencyPathEvidence", "MigratedEvidence", "PageRankScoreEvidence")) {
                 evidence.addOneOfItem(new Schema<>().$ref(reference(name)));
             }
             schemas.put("EvidenceResponse", evidence);

@@ -22,6 +22,8 @@ export const ru = {
         within: 'Внутри интервала группы',
         earliest: 'Самый ранний алерт #{{alertId}}: {{service}}',
         path: 'Путь зависимостей: {{services}}',
+        pageRank:
+          'PageRank {{service}}: score {{score}}, вес сигналов {{weight}}, damping {{damping}}, итераций {{iterations}}, невязка {{residual}}',
         migrated: 'Перенесено при миграции; исходное обоснование отсутствует',
       },
       id: 'ID',

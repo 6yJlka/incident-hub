@@ -90,7 +90,8 @@ public class CorrelateAlertsService {
             CorrelationDecision decision = Objects.requireNonNull(correlator.correlate(
                     new CorrelationAlert(alert.getId(), alert.getBusinessService().getId(), alert.getOccurredAt(),
                             alert.getSignalType(), alert.getSeverity()),
-                    new CorrelationContext(List.copyOf(snapshots.values()))
+                    new CorrelationContext(List.copyOf(snapshots.values()),
+                            ru.donskikh.incidenthub.alert.correlation.DependencyGraphSnapshot.empty())
             ), "Correlation decision must not be null");
             var rootService = decision.rootAssessment() instanceof RootAssessment.Ranked ranked
                     ? serviceRepository.getReferenceById(ranked.candidates().getFirst().serviceId()) : null;

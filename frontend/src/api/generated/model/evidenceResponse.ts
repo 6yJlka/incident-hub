@@ -8,6 +8,7 @@
 import type { DependencyPathEvidence } from './dependencyPathEvidence'
 import type { EarliestAlertEvidence } from './earliestAlertEvidence'
 import type { MigratedEvidence } from './migratedEvidence'
+import type { PageRankScoreEvidence } from './pageRankScoreEvidence'
 import type { TemporalProximityEvidence } from './temporalProximityEvidence'
 
 export type EvidenceResponse =
@@ -15,3 +16,4 @@ export type EvidenceResponse =
   | EarliestAlertEvidence
   | DependencyPathEvidence
   | MigratedEvidence
+  | PageRankScoreEvidence
