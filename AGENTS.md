@@ -51,6 +51,15 @@ Run frontend checks sequentially, never in parallel: `api:check` regenerates
 the client and temporarily removes `src/api/generated`, which breaks tests
 running at the same time.
 
+Experiment (separate Gradle source set `experiment`, no Spring, no database):
+
+```
+./gradlew generateExperiment
+./gradlew runExperiment
+```
+
+Outputs go only to `build/experiments/`.
+
 If you redirect command output to log files, write them under `build/`
 (for example `build/logs/`), never into the repository root, and do not
 leave temporary files behind at the end of a pass.
@@ -179,3 +188,16 @@ It is designed outside the code; never invent, propose or change its algorithm.
 Implement it only from a specification given in an explicit task. If the
 specification turns out to be incomplete or contradictory, stop and describe
 the problem instead of filling the gap yourself.**
+
+Research documents live in `docs/research/` and are **local only** (the folder is
+in `.gitignore`): they become text of unpublished research reports, and publishing
+them would trigger plagiarism checks against the author. Read and update them as
+asked, never commit them, never quote them in README, commit messages or code
+comments. `docs/research/problem-statement.md` is the primary source of
+requirements for the method, metrics and experiments; if the plan or the code
+contradicts it, it wins — stop and report the contradiction.
+
+The experiment is isolated in the `experiment` source set: product code never
+depends on it, it never contains Spring or JPA, and the product jar never
+contains its classes. Generation is reproducible by seed; any change of the
+algorithm or the order of random draws requires a new `modelVersion`.
