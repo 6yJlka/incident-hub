@@ -1,0 +1,547 @@
+{
+  "formatVersion" : 1,
+  "modelVersion" : "1",
+  "parameters" : {
+    "graph" : {
+      "spec" : {
+        "type" : "DEMO"
+      },
+      "seed" : 42,
+      "tier" : "TIER_2",
+      "edgeType" : "SYNC"
+    },
+    "distortion" : {
+      "missingEdgeRate" : 0.0,
+      "spuriousEdgeRate" : 0.0,
+      "seed" : 42
+    },
+    "spuriousEdgeType" : "SYNC",
+    "scenario" : {
+      "start" : "2026-01-01T00:00:00Z",
+      "injectionPeriod" : "PT10M",
+      "failures" : {
+        "type" : "SELECTED",
+        "count" : 2,
+        "firstStartOffset" : "PT0S",
+        "spacing" : "PT10S",
+        "mode" : "PATH_CONNECTED_TO_FIRST"
+      },
+      "propagationProbability" : 0.8,
+      "propagationDelay" : {
+        "type" : "UNIFORM",
+        "minimum" : "PT1S",
+        "maximum" : "PT5S"
+      },
+      "detection" : {
+        "defaultDistribution" : {
+          "type" : "UNIFORM",
+          "minimum" : "PT0S",
+          "maximum" : "PT30S"
+        },
+        "overrides" : { }
+      },
+      "noise" : {
+        "ratePerMinute" : 1.0
+      },
+      "signals" : {
+        "root" : {
+          "types" : [ {
+            "value" : "AVAILABILITY",
+            "weight" : 1
+          }, {
+            "value" : "ERROR_RATE",
+            "weight" : 1
+          }, {
+            "value" : "LATENCY",
+            "weight" : 1
+          }, {
+            "value" : "SATURATION",
+            "weight" : 1
+          } ],
+          "severities" : [ {
+            "value" : "CRITICAL",
+            "weight" : 1
+          }, {
+            "value" : "INFO",
+            "weight" : 1
+          }, {
+            "value" : "WARNING",
+            "weight" : 1
+          } ]
+        },
+        "propagated" : {
+          "types" : [ {
+            "value" : "AVAILABILITY",
+            "weight" : 1
+          }, {
+            "value" : "ERROR_RATE",
+            "weight" : 1
+          }, {
+            "value" : "LATENCY",
+            "weight" : 1
+          }, {
+            "value" : "SATURATION",
+            "weight" : 1
+          } ],
+          "severities" : [ {
+            "value" : "CRITICAL",
+            "weight" : 1
+          }, {
+            "value" : "INFO",
+            "weight" : 1
+          }, {
+            "value" : "WARNING",
+            "weight" : 1
+          } ]
+        },
+        "noise" : {
+          "types" : [ {
+            "value" : "AVAILABILITY",
+            "weight" : 1
+          }, {
+            "value" : "ERROR_RATE",
+            "weight" : 1
+          }, {
+            "value" : "LATENCY",
+            "weight" : 1
+          }, {
+            "value" : "SATURATION",
+            "weight" : 1
+          } ],
+          "severities" : [ {
+            "value" : "CRITICAL",
+            "weight" : 1
+          }, {
+            "value" : "INFO",
+            "weight" : 1
+          }, {
+            "value" : "WARNING",
+            "weight" : 1
+          } ]
+        }
+      }
+    },
+    "scenarioSeed" : 1
+  },
+  "randomSeeds" : {
+    "failures" : -6076880981634588744,
+    "noise" : -3579045345045363600,
+    "signals" : 1714679764317775587
+  },
+  "trueGraph" : {
+    "services" : [ {
+      "id" : 1,
+      "code" : "ANALYTICS",
+      "name" : "Operations Analytics",
+      "tier" : "TIER_3"
+    }, {
+      "id" : 2,
+      "code" : "API_GATEWAY",
+      "name" : "API Gateway",
+      "tier" : "TIER_1"
+    }, {
+      "id" : 3,
+      "code" : "BILLING_WORKER",
+      "name" : "Billing Worker",
+      "tier" : "TIER_2"
+    }, {
+      "id" : 4,
+      "code" : "CORE_DATABASE",
+      "name" : "Core Database",
+      "tier" : "TIER_1"
+    }, {
+      "id" : 5,
+      "code" : "CUSTOMER_PORTAL",
+      "name" : "Customer Portal",
+      "tier" : "TIER_2"
+    }, {
+      "id" : 6,
+      "code" : "EVENT_BUS",
+      "name" : "Event Bus",
+      "tier" : "TIER_1"
+    }, {
+      "id" : 7,
+      "code" : "IDENTITY_API",
+      "name" : "Identity API",
+      "tier" : "TIER_1"
+    }, {
+      "id" : 8,
+      "code" : "NOTIFICATION_SERVICE",
+      "name" : "Notification Service",
+      "tier" : "TIER_2"
+    }, {
+      "id" : 9,
+      "code" : "PAYMENT_API",
+      "name" : "Payment API",
+      "tier" : "TIER_1"
+    }, {
+      "id" : 10,
+      "code" : "SUPPORT_DESK",
+      "name" : "Support Desk",
+      "tier" : "TIER_3"
+    } ],
+    "edges" : [ {
+      "dependentId" : 1,
+      "dependencyId" : 3,
+      "type" : "DATA"
+    }, {
+      "dependentId" : 2,
+      "dependencyId" : 7,
+      "type" : "SYNC"
+    }, {
+      "dependentId" : 3,
+      "dependencyId" : 6,
+      "type" : "ASYNC"
+    }, {
+      "dependentId" : 3,
+      "dependencyId" : 9,
+      "type" : "ASYNC"
+    }, {
+      "dependentId" : 5,
+      "dependencyId" : 2,
+      "type" : "SYNC"
+    }, {
+      "dependentId" : 5,
+      "dependencyId" : 9,
+      "type" : "SYNC"
+    }, {
+      "dependentId" : 7,
+      "dependencyId" : 4,
+      "type" : "DATA"
+    }, {
+      "dependentId" : 8,
+      "dependencyId" : 6,
+      "type" : "ASYNC"
+    }, {
+      "dependentId" : 9,
+      "dependencyId" : 4,
+      "type" : "DATA"
+    }, {
+      "dependentId" : 10,
+      "dependencyId" : 5,
+      "type" : "SYNC"
+    } ]
+  },
+  "observation" : {
+    "observedGraph" : {
+      "services" : [ {
+        "id" : 1,
+        "code" : "ANALYTICS",
+        "name" : "Operations Analytics",
+        "tier" : "TIER_3"
+      }, {
+        "id" : 2,
+        "code" : "API_GATEWAY",
+        "name" : "API Gateway",
+        "tier" : "TIER_1"
+      }, {
+        "id" : 3,
+        "code" : "BILLING_WORKER",
+        "name" : "Billing Worker",
+        "tier" : "TIER_2"
+      }, {
+        "id" : 4,
+        "code" : "CORE_DATABASE",
+        "name" : "Core Database",
+        "tier" : "TIER_1"
+      }, {
+        "id" : 5,
+        "code" : "CUSTOMER_PORTAL",
+        "name" : "Customer Portal",
+        "tier" : "TIER_2"
+      }, {
+        "id" : 6,
+        "code" : "EVENT_BUS",
+        "name" : "Event Bus",
+        "tier" : "TIER_1"
+      }, {
+        "id" : 7,
+        "code" : "IDENTITY_API",
+        "name" : "Identity API",
+        "tier" : "TIER_1"
+      }, {
+        "id" : 8,
+        "code" : "NOTIFICATION_SERVICE",
+        "name" : "Notification Service",
+        "tier" : "TIER_2"
+      }, {
+        "id" : 9,
+        "code" : "PAYMENT_API",
+        "name" : "Payment API",
+        "tier" : "TIER_1"
+      }, {
+        "id" : 10,
+        "code" : "SUPPORT_DESK",
+        "name" : "Support Desk",
+        "tier" : "TIER_3"
+      } ],
+      "edges" : [ {
+        "dependentId" : 1,
+        "dependencyId" : 3,
+        "type" : "DATA"
+      }, {
+        "dependentId" : 2,
+        "dependencyId" : 7,
+        "type" : "SYNC"
+      }, {
+        "dependentId" : 3,
+        "dependencyId" : 6,
+        "type" : "ASYNC"
+      }, {
+        "dependentId" : 3,
+        "dependencyId" : 9,
+        "type" : "ASYNC"
+      }, {
+        "dependentId" : 5,
+        "dependencyId" : 2,
+        "type" : "SYNC"
+      }, {
+        "dependentId" : 5,
+        "dependencyId" : 9,
+        "type" : "SYNC"
+      }, {
+        "dependentId" : 7,
+        "dependencyId" : 4,
+        "type" : "DATA"
+      }, {
+        "dependentId" : 8,
+        "dependencyId" : 6,
+        "type" : "ASYNC"
+      }, {
+        "dependentId" : 9,
+        "dependencyId" : 4,
+        "type" : "DATA"
+      }, {
+        "dependentId" : 10,
+        "dependencyId" : 5,
+        "type" : "SYNC"
+      } ]
+    },
+    "alerts" : [ {
+      "externalKey" : "194e3b94fd8284cc50f81b88f1d82bfc",
+      "serviceId" : 1,
+      "occurredAt" : "2026-01-01T00:00:11.270Z",
+      "signalType" : "SATURATION",
+      "severity" : "INFO"
+    }, {
+      "externalKey" : "26927f1e0b13155d4fa34a6737def83b",
+      "serviceId" : 6,
+      "occurredAt" : "2026-01-01T00:00:23.328Z",
+      "signalType" : "SATURATION",
+      "severity" : "INFO"
+    }, {
+      "externalKey" : "09259bf2a13ee423d50067f7859830c4",
+      "serviceId" : 1,
+      "occurredAt" : "2026-01-01T00:00:27.473Z",
+      "signalType" : "LATENCY",
+      "severity" : "CRITICAL"
+    }, {
+      "externalKey" : "a75ead7e531e163b8db7061c98f85c6a",
+      "serviceId" : 8,
+      "occurredAt" : "2026-01-01T00:00:37.405Z",
+      "signalType" : "AVAILABILITY",
+      "severity" : "CRITICAL"
+    }, {
+      "externalKey" : "c52aa1ea01de59b9adecd580be1335ee",
+      "serviceId" : 3,
+      "occurredAt" : "2026-01-01T00:00:40.176Z",
+      "signalType" : "SATURATION",
+      "severity" : "CRITICAL"
+    }, {
+      "externalKey" : "08059776520b2cf80afb415cb04337a6",
+      "serviceId" : 8,
+      "occurredAt" : "2026-01-01T00:00:48.481Z",
+      "signalType" : "SATURATION",
+      "severity" : "WARNING"
+    }, {
+      "externalKey" : "720285ec218a19d3824061e868f8c34c",
+      "serviceId" : 6,
+      "occurredAt" : "2026-01-01T00:00:51.760Z",
+      "signalType" : "LATENCY",
+      "severity" : "WARNING"
+    }, {
+      "externalKey" : "5ec90fd2d3eba0865c581ce83f6155b1",
+      "serviceId" : 1,
+      "occurredAt" : "2026-01-01T00:01:18.672Z",
+      "signalType" : "SATURATION",
+      "severity" : "WARNING"
+    }, {
+      "externalKey" : "5dea149ce5c71feca258c1dfd645bbd1",
+      "serviceId" : 7,
+      "occurredAt" : "2026-01-01T00:01:50.880Z",
+      "signalType" : "AVAILABILITY",
+      "severity" : "CRITICAL"
+    }, {
+      "externalKey" : "fa942467fd8a1a48ebf7de8320210f63",
+      "serviceId" : 4,
+      "occurredAt" : "2026-01-01T00:02:14.684Z",
+      "signalType" : "ERROR_RATE",
+      "severity" : "WARNING"
+    }, {
+      "externalKey" : "51ccbb30a1e4d798f8a73939c1fcbc0b",
+      "serviceId" : 1,
+      "occurredAt" : "2026-01-01T00:03:01.088Z",
+      "signalType" : "ERROR_RATE",
+      "severity" : "INFO"
+    }, {
+      "externalKey" : "3772edd2aefce5eac9b33239401a4e91",
+      "serviceId" : 1,
+      "occurredAt" : "2026-01-01T00:03:09.787Z",
+      "signalType" : "AVAILABILITY",
+      "severity" : "CRITICAL"
+    }, {
+      "externalKey" : "264db18006db0bf50459ac0b58d57c3c",
+      "serviceId" : 7,
+      "occurredAt" : "2026-01-01T00:03:49.790Z",
+      "signalType" : "SATURATION",
+      "severity" : "CRITICAL"
+    }, {
+      "externalKey" : "dcca425d656f280142b88f30a79c652d",
+      "serviceId" : 8,
+      "occurredAt" : "2026-01-01T00:04:19.026Z",
+      "signalType" : "AVAILABILITY",
+      "severity" : "CRITICAL"
+    }, {
+      "externalKey" : "7ffeafc038dbd4822d99c56789647ce2",
+      "serviceId" : 5,
+      "occurredAt" : "2026-01-01T00:04:47.264Z",
+      "signalType" : "LATENCY",
+      "severity" : "WARNING"
+    }, {
+      "externalKey" : "19a7eaa7688d36b52634f1049c395151",
+      "serviceId" : 5,
+      "occurredAt" : "2026-01-01T00:04:53.190Z",
+      "signalType" : "SATURATION",
+      "severity" : "CRITICAL"
+    }, {
+      "externalKey" : "7a88a0adbad0b6b948b7d1c2a5f17e4c",
+      "serviceId" : 3,
+      "occurredAt" : "2026-01-01T00:05:52.133Z",
+      "signalType" : "SATURATION",
+      "severity" : "CRITICAL"
+    }, {
+      "externalKey" : "3c1751b6109ca03d4c8425af15e522d2",
+      "serviceId" : 6,
+      "occurredAt" : "2026-01-01T00:06:20.533Z",
+      "signalType" : "SATURATION",
+      "severity" : "INFO"
+    }, {
+      "externalKey" : "0e7f7b42e3217f86dd73d732d399aa68",
+      "serviceId" : 1,
+      "occurredAt" : "2026-01-01T00:06:30.141Z",
+      "signalType" : "AVAILABILITY",
+      "severity" : "WARNING"
+    }, {
+      "externalKey" : "65bab5723ed267fb625f0405ee1c12ca",
+      "serviceId" : 9,
+      "occurredAt" : "2026-01-01T00:07:09.430Z",
+      "signalType" : "AVAILABILITY",
+      "severity" : "CRITICAL"
+    }, {
+      "externalKey" : "164545f4b05b48f3707eb7781ffd4bb3",
+      "serviceId" : 10,
+      "occurredAt" : "2026-01-01T00:07:37.729Z",
+      "signalType" : "ERROR_RATE",
+      "severity" : "INFO"
+    }, {
+      "externalKey" : "47c86a31cb90a74ba7b34e006e35bc0e",
+      "serviceId" : 7,
+      "occurredAt" : "2026-01-01T00:08:03.018Z",
+      "signalType" : "SATURATION",
+      "severity" : "INFO"
+    }, {
+      "externalKey" : "a1cbc7f39b1a1561877c13d98ff5039c",
+      "serviceId" : 1,
+      "occurredAt" : "2026-01-01T00:09:40.107Z",
+      "signalType" : "LATENCY",
+      "severity" : "CRITICAL"
+    } ]
+  },
+  "truth" : {
+    "byAlertKey" : {
+      "08059776520b2cf80afb415cb04337a6" : {
+        "kind" : "NOISE"
+      },
+      "09259bf2a13ee423d50067f7859830c4" : {
+        "kind" : "FAILURE",
+        "failureId" : "F2"
+      },
+      "0e7f7b42e3217f86dd73d732d399aa68" : {
+        "kind" : "NOISE"
+      },
+      "164545f4b05b48f3707eb7781ffd4bb3" : {
+        "kind" : "NOISE"
+      },
+      "194e3b94fd8284cc50f81b88f1d82bfc" : {
+        "kind" : "FAILURE",
+        "failureId" : "F1"
+      },
+      "19a7eaa7688d36b52634f1049c395151" : {
+        "kind" : "NOISE"
+      },
+      "264db18006db0bf50459ac0b58d57c3c" : {
+        "kind" : "NOISE"
+      },
+      "26927f1e0b13155d4fa34a6737def83b" : {
+        "kind" : "FAILURE",
+        "failureId" : "F2"
+      },
+      "3772edd2aefce5eac9b33239401a4e91" : {
+        "kind" : "NOISE"
+      },
+      "3c1751b6109ca03d4c8425af15e522d2" : {
+        "kind" : "NOISE"
+      },
+      "47c86a31cb90a74ba7b34e006e35bc0e" : {
+        "kind" : "NOISE"
+      },
+      "51ccbb30a1e4d798f8a73939c1fcbc0b" : {
+        "kind" : "NOISE"
+      },
+      "5dea149ce5c71feca258c1dfd645bbd1" : {
+        "kind" : "NOISE"
+      },
+      "5ec90fd2d3eba0865c581ce83f6155b1" : {
+        "kind" : "NOISE"
+      },
+      "65bab5723ed267fb625f0405ee1c12ca" : {
+        "kind" : "NOISE"
+      },
+      "720285ec218a19d3824061e868f8c34c" : {
+        "kind" : "NOISE"
+      },
+      "7a88a0adbad0b6b948b7d1c2a5f17e4c" : {
+        "kind" : "NOISE"
+      },
+      "7ffeafc038dbd4822d99c56789647ce2" : {
+        "kind" : "NOISE"
+      },
+      "a1cbc7f39b1a1561877c13d98ff5039c" : {
+        "kind" : "NOISE"
+      },
+      "a75ead7e531e163b8db7061c98f85c6a" : {
+        "kind" : "FAILURE",
+        "failureId" : "F2"
+      },
+      "c52aa1ea01de59b9adecd580be1335ee" : {
+        "kind" : "FAILURE",
+        "failureId" : "F2"
+      },
+      "dcca425d656f280142b88f30a79c652d" : {
+        "kind" : "NOISE"
+      },
+      "fa942467fd8a1a48ebf7de8320210f63" : {
+        "kind" : "NOISE"
+      }
+    },
+    "failures" : [ {
+      "id" : "F1",
+      "rootServiceId" : 1,
+      "startedAt" : "2026-01-01T00:00:00Z"
+    }, {
+      "id" : "F2",
+      "rootServiceId" : 6,
+      "startedAt" : "2026-01-01T00:00:10Z"
+    } ]
+  }
+}

@@ -25,13 +25,16 @@ public final class ScenarioGenerator {
         var failureRandom = new Random(seeds.failures());
         var noiseRandom = new Random(seeds.noise());
         var signalRandom = new Random(seeds.signals());
+        var detectionRandom = new Random(seeds.detection());
         var serviceIds = graph.services().stream().map(service -> service.id()).toList();
-        if (!serviceIds.containsAll(parameters.detection().overrides().keySet())) {
+        if (!serviceIds.containsAll(parameters.detection().overrides().keySet())
+                || !serviceIds.containsAll(parameters.detection().probabilityOverrides().keySet())) {
             throw new IllegalArgumentException("Detection override references a service outside the true graph");
         }
         var failures = failures(graph, parameters, failureRandom);
         var alerts = new ArrayList<ScenarioAlert>();
         var labels = new TreeMap<String, TruthLabel>();
+        var hidden = new TreeSet<String>();
         for (Failure failure : failures) {
             var times = propagate(graph, failure, parameters, failureRandom);
             for (var entry : times.entrySet()) {
@@ -44,6 +47,10 @@ public final class ScenarioGenerator {
                 alerts.add(new ScenarioAlert(key, entry.getKey(), parameters.start().plusMillis(Math.addExact(entry.getValue(), detection)),
                         signal.type(), signal.severity()));
                 labels.put(key, new TruthLabel.FailureReference(failure.id()));
+                double probability = parameters.detection().probabilityOverrides()
+                        .getOrDefault(entry.getKey(), parameters.detection().detectionProbability());
+                // Draw for every activation, including probabilities 0 and 1, to keep filtering monotone.
+                if (detectionRandom.nextDouble() >= probability) hidden.add(key);
             }
         }
         double rate = parameters.noise().ratePerMinute();
@@ -64,6 +71,9 @@ public final class ScenarioGenerator {
                 labels.put(key, new TruthLabel.Noise());
             }
         }
+        // Reserve hidden keys until noise generation finishes, preserving collision handling as well.
+        alerts.removeIf(alert -> hidden.contains(alert.externalKey()));
+        hidden.forEach(labels::remove);
         return new ScenarioSample(alerts, new GroundTruth(labels, failures));
     }
 

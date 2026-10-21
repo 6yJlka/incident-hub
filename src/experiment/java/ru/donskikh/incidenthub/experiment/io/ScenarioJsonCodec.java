@@ -14,6 +14,9 @@ import tools.jackson.databind.DeserializationFeature;
 import tools.jackson.databind.MapperFeature;
 import tools.jackson.databind.SerializationFeature;
 import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.ObjectNode;
+import ru.donskikh.incidenthub.experiment.scenario.ScenarioSeeds;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -40,7 +43,14 @@ public final class ScenarioJsonCodec {
     }
 
     public GeneratedScenario read(byte[] json) {
-        return MAPPER.readValue(Objects.requireNonNull(json, "json must not be null"), GeneratedScenario.class);
+        JsonNode document = MAPPER.readTree(Objects.requireNonNull(json, "json must not be null"));
+        JsonNode parameters = document.path("parameters");
+        applyDetectionDefaults(parameters);
+        if (document.path("randomSeeds") instanceof ObjectNode seeds && !seeds.has("detection")
+                && parameters.path("scenarioSeed").isIntegralNumber()) {
+            seeds.put("detection", ScenarioSeeds.from(parameters.path("scenarioSeed").asLong()).detection());
+        }
+        return MAPPER.treeToValue(document, GeneratedScenario.class);
     }
 
     public byte[] writeParameters(GenerationParameters parameters) {
@@ -48,11 +58,20 @@ public final class ScenarioJsonCodec {
     }
 
     public GenerationParameters readParameters(byte[] json) {
-        return MAPPER.readValue(Objects.requireNonNull(json, "json must not be null"), GenerationParameters.class);
+        JsonNode document = MAPPER.readTree(Objects.requireNonNull(json, "json must not be null"));
+        applyDetectionDefaults(document);
+        return MAPPER.treeToValue(document, GenerationParameters.class);
     }
 
     public ServiceGraph readGraph(byte[] json) {
         return MAPPER.readValue(Objects.requireNonNull(json, "json must not be null"), ServiceGraph.class);
+    }
+
+    private void applyDetectionDefaults(JsonNode parameters) {
+        if (parameters.path("scenario").path("detection") instanceof ObjectNode detection) {
+            if (!detection.has("detectionProbability")) detection.put("detectionProbability", 1.0);
+            if (!detection.has("probabilityOverrides")) detection.set("probabilityOverrides", MAPPER.createObjectNode());
+        }
     }
 
     private byte[] bytes(Object value) {

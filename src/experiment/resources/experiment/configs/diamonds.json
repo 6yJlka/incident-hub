@@ -21,7 +21,9 @@
         "minimum": "PT0S",
         "type": "UNIFORM"
       },
-      "overrides": {}
+      "detectionProbability": 1.0,
+      "overrides": {},
+      "probabilityOverrides": {}
     },
     "failures": {
       "count": 2,

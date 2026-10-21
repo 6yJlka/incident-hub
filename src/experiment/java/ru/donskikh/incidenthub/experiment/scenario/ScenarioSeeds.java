@@ -1,9 +1,9 @@
 package ru.donskikh.incidenthub.experiment.scenario;
 
-public record ScenarioSeeds(long failures, long noise, long signals) {
+public record ScenarioSeeds(long failures, long noise, long signals, long detection) {
     public static ScenarioSeeds from(long seed) {
         return new ScenarioSeeds(mix(seed ^ 0x4641494c55524553L), mix(seed ^ 0x4e4f495345000001L),
-                mix(seed ^ 0x5349474e414c5301L));
+                mix(seed ^ 0x5349474e414c5301L), mix(seed ^ 0x444554454354494fL));
     }
 
     private static long mix(long value) {

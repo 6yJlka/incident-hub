@@ -51,10 +51,5 @@ public record GeneratedScenario(int formatVersion, String modelVersion, Generati
                 throw new IllegalArgumentException("Noise must lie within the injection period");
             }
         }
-        truth.failures().forEach(failure -> {
-            if (!seen.getOrDefault(failure.id(), new TreeSet<>()).contains(failure.rootServiceId())) {
-                throw new IllegalArgumentException("Every failure must produce its root alert");
-            }
-        });
     }
 }

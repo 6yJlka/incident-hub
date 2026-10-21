@@ -32,7 +32,7 @@ public final class ExperimentDefaults {
                 new ScenarioParameters(Instant.parse("2026-01-01T00:00:00Z"), Duration.ofMinutes(10),
                         new FailurePlan.Selected(2, Duration.ZERO, Duration.ofSeconds(10), FailurePlan.RootSelectionMode.PATH_CONNECTED_TO_FIRST),
                         .8, new DelayDistribution.Uniform(Duration.ofSeconds(1), Duration.ofSeconds(5)),
-                        new DetectionModel(new DelayDistribution.Uniform(Duration.ZERO, Duration.ofSeconds(30)), Map.of()),
+                        new DetectionModel(new DelayDistribution.Uniform(Duration.ZERO, Duration.ofSeconds(30)), Map.of(), 1.0, Map.of()),
                         new NoiseModel(1), new SignalModel(uniformSignals, uniformSignals, uniformSignals)), 42);
     }
 }

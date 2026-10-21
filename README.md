@@ -381,3 +381,8 @@ erDiagram
 и метрик пока нет. Формальная модель, все параметры и упрощения описаны в
 [docs/research/simulator.md](docs/research/simulator.md), примеры конфигураций —
 в [src/experiment/resources/experiment/configs](src/experiment/resources/experiment/configs).
+
+Вероятность обнаружения задаётся `detection.detectionProbability` (по умолчанию
+1.0) и `detection.probabilityOverrides` по сервисам. Её снижение только скрывает
+часть алертов, сохраняя остальные ключи, времена и сигналы; распространение и
+список отказов не меняются. Полностью необнаруженный отказ остаётся в разметке.
